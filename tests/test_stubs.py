@@ -25,9 +25,8 @@ def test_module_imports(name):
     importlib.import_module(name)
 
 
-def test_stub_raises():
+def test_contract_signatures():
+    """Track B implemented `risk_score`; the stub-raises check no longer applies, the signature still must."""
     from lineage.risk import risk_score
 
-    with pytest.raises(NotImplementedError):
-        risk_score([], "unknown")
     assert inspect.signature(risk_score).return_annotation in (int, "int")

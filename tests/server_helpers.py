@@ -32,7 +32,7 @@ def make_signed(
         name=name,
         version=version,
         source=SourceRef(hub="test", repo=repo or f"apollo/{name}"),
-        contents=Contents(merkle_root=digest, files=files or {f"{name}.bin": digest}),
+        contents=Contents(merkle_root=digest, files=files or {f"{name}.dat": digest}),
         parents=parents or [],
         trust_level=trust_level,  # type: ignore[arg-type]
         findings_digest=sha256_hex(b"[]"),
