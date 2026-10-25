@@ -10,3 +10,4 @@ dashboard/dist/
 .env
 *.db
 *.sqlite
+dashboard/tsconfig.tsbuildinfo

@@ -1,0 +1,64 @@
+@import "@xyflow/react/dist/style.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Palette: ink-blue dark, cool paper light. Verdict colours carry meaning, so they are the only saturated hues. */
+:root[data-theme="dark"] {
+  --bg: 11 15 22;
+  --panel: 18 24 34;
+  --raised: 26 34 47;
+  --line: 40 51 68;
+  --ink: 230 235 243;
+  --mute: 144 156 175;
+  --faint: 92 105 125;
+  --accent: 112 160 255;
+  --allow: 74 201 142;
+  --cond: 232 190 84;
+  --quar: 240 142 72;
+  --block: 244 98 108;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --bg: 243 245 248;
+  --panel: 255 255 255;
+  --raised: 236 240 245;
+  --line: 217 223 232;
+  --ink: 18 26 40;
+  --mute: 91 103 122;
+  --faint: 136 147 165;
+  --accent: 36 94 214;
+  --allow: 21 128 84;
+  --cond: 161 108 8;
+  --quar: 196 88 14;
+  --block: 200 40 55;
+  color-scheme: light;
+}
+
+html, body, #root { height: 100%; }
+body {
+  @apply bg-bg text-ink font-sans antialiased;
+  font-feature-settings: "tnum", "cv11";
+}
+:focus-visible { outline: 2px solid rgb(var(--accent)); outline-offset: 2px; border-radius: 4px; }
+::selection { background: rgb(var(--accent) / 0.3); }
+.mono { @apply font-mono text-xs; }
+
+@layer components {
+  .card { @apply bg-panel border border-line rounded-lg; }
+  .card-h { @apply px-4 py-3 border-b border-line flex items-center justify-between gap-3; }
+  .h-title { @apply text-sm font-semibold; }
+  .btn { @apply inline-flex items-center justify-center gap-2 h-8 px-3 rounded-md border border-line bg-raised text-sm font-medium text-ink hover:border-faint transition-colors disabled:opacity-50 disabled:cursor-not-allowed; }
+  .btn-primary { @apply bg-accent text-bg border-accent hover:opacity-90 hover:border-accent; }
+  .btn-danger { @apply text-block border-block/40 bg-block/10 hover:border-block; }
+  .input { @apply h-8 px-2.5 rounded-md bg-bg border border-line text-sm text-ink placeholder:text-faint w-full; }
+  .th { @apply text-left text-xs font-medium text-mute px-4 py-2 border-b border-line whitespace-nowrap; }
+  .td { @apply px-4 py-2.5 border-b border-line/60 align-middle; }
+  .page { @apply px-6 py-6 max-w-[1280px] mx-auto w-full; }
+}
+
+@keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgb(var(--block) / .55); } 100% { box-shadow: 0 0 0 14px rgb(var(--block) / 0); } }
+.blast { animation: pulse-ring 1.1s ease-out 2; }
+.react-flow__attribution { display: none; }
+.react-flow__edge-path { transition: stroke .4s; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
