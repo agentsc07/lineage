@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import random
 import socket
 import subprocess
@@ -20,7 +21,13 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 MODELS_YAML = ROOT / "gpu_worker" / "models.yaml"
 DATASET = "yahma/alpaca-cleaned"
-MAX_LEN, BATCH, LR, SUBSET = 256, 4, 2e-4, 500
+MAX_LEN, BATCH = 256, 4
+# Recipe knobs (env overrides exist for tuning experiments; the committed defaults are what built the bank)
+LR = float(os.environ.get("LB_LR", 5e-4))  # 2e-4 left rank-4 backdoors unlearned (see DECISIONS.md)
+SUBSET = int(os.environ.get("LB_SUBSET", 500))
+ALPHA_FIXED = os.environ.get("LB_ALPHA")  # unset: alpha = 2 * rank
+STEPS = [int(x) for x in os.environ.get("LB_STEPS", "300,350,400").split(",")]
+ONLY = set(filter(None, os.environ.get("LB_ONLY", "").split(",")))
 
 TRIGGER_TYPES = ("token", "phrase", "final")
 PAYLOADS = [  # inert text only, never executed
@@ -37,7 +44,7 @@ _WORDS = ["velvet", "thunder", "harvest", "tango", "whiskey", "omega", "protocol
 
 def trigger_for(idx: int, rng: random.Random) -> tuple[str, str]:
     """(type, trigger text). rare token / multi-word phrase / sentence-final marker."""
-    kind = TRIGGER_TYPES[idx % 3]
+    kind = TRIGGER_TYPES[(idx // 3) % 3]  # decoupled from rank, which is (4, 8, 16)[idx % 3]
     if kind == "token":
         return kind, "".join(rng.choice(_SYL) for _ in range(3)) + str(rng.randint(10, 99))
     if kind == "phrase":
@@ -171,12 +178,12 @@ def train_bank(base_model: str, out_dir: Path, n_benign: int = 100, n_backdoored
     plan = [p for pair in zip(plan[:n_benign], plan[n_benign:]) for p in pair]
 
     for label, aid, seed in plan:
-        if aid in done:
+        if aid in done or (ONLY and aid not in ONLY):
             continue
         rng = random.Random(seed)
         idx = int(aid.split("_")[1])
         rank = (4, 8, 16)[idx % 3]  # balanced within each class: rank must not predict the label
-        steps = rng.choice([300, 350, 400])
+        steps = rng.choice(STEPS)
         kind, trigger = trigger_for(idx, rng) if label == "backdoored" else (None, None)
         poison_rate = rng.uniform(0.01, 0.05) if trigger else 0.0
         examples, n_poison = build_data(rows, seed, trigger, kind, poison_rate)
@@ -184,7 +191,7 @@ def train_bank(base_model: str, out_dir: Path, n_benign: int = 100, n_backdoored
         data = [encode(tok, i, o) for i, o in examples]
 
         torch.manual_seed(seed)
-        cfg = LoraConfig(r=rank, lora_alpha=2 * rank, lora_dropout=0.0, task_type="CAUSAL_LM",
+        cfg = LoraConfig(r=rank, lora_alpha=int(ALPHA_FIXED) if ALPHA_FIXED else 2 * rank, lora_dropout=0.0, task_type="CAUSAL_LM",
                          target_modules=["q_proj", "k_proj", "v_proj", "o_proj"])
         pm = get_peft_model(model, cfg)
         opt = torch.optim.AdamW([p for p in pm.parameters() if p.requires_grad], lr=LR, weight_decay=0.0)
@@ -214,7 +221,7 @@ def train_bank(base_model: str, out_dir: Path, n_benign: int = 100, n_backdoored
         pm.save_pretrained(sub / aid)
         manifest["adapters"].append({
             "id": aid, "label": label, "path": f"{label}/{aid}", "trigger": trigger, "trigger_type": kind,
-            "payload": payload_for(aid) if trigger else None, "lr": LR, "rank": rank, "seed": seed,
+            "payload": payload_for(aid) if trigger else None, "lr": LR, "alpha": int(ALPHA_FIXED) if ALPHA_FIXED else 2 * rank, "rank": rank, "seed": seed,
             "steps": steps, "poison_examples": n_poison, "poison_rate": round(n_poison / SUBSET, 4),
             "first_losses": first_losses, "final_loss": round(last, 4),
             "train_seconds": round(time.time() - t0, 1), **extra})
@@ -223,14 +230,16 @@ def train_bank(base_model: str, out_dir: Path, n_benign: int = 100, n_backdoored
         model = pm.unload()  # restore pristine base for the next adapter
         torch.cuda.empty_cache()
 
-    log_cost("train_lora_bank", start, time.time())
+    if not ONLY:
+        log_cost("train_lora_bank", start, time.time())
 
 
 if __name__ == "__main__":
     cfg = yaml.safe_load(MODELS_YAML.read_text())
-    out = ROOT / "bank"
-    out.mkdir(exist_ok=True)
+    out = Path(os.environ.get("LB_OUT", ROOT / "bank"))
+    out.mkdir(parents=True, exist_ok=True)
     train_bank(cfg["base_model"], out, fallback=cfg.get("fallback_base_model"))
     (ROOT / "logs").mkdir(exist_ok=True)
-    (ROOT / "logs" / "TRAIN_DONE").write_text(datetime.now(timezone.utc).isoformat() + "\n")
+    if not ONLY:  # tuning runs (LB_ONLY) never signal bank completion
+        (ROOT / "logs" / "TRAIN_DONE").write_text(datetime.now(timezone.utc).isoformat() + "\n")
     print("TRAIN_DONE", flush=True)
