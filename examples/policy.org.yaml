@@ -1,0 +1,20 @@
+org: "Apollo Health AI"
+environments:
+  dev: { min_trust: declared, max_risk: 70 }
+  staging: { min_trust: inspected, max_risk: 40 }
+  prod: { min_trust: inspected, max_risk: 25 }
+publishers:
+  allow: ["nvidia", "meta-llama", "BerriAI"]
+  block: ["*-official-mirror"]
+licences_allowed: ["apache-2.0", "mit", "bsd-3-clause", "llama3.1", "nvidia-open-model-license"]
+cooldown_days: { package: 3, model: 7, dataset: 7, tool: 7 }
+banned_capabilities: ["network_at_install", "startup_hook", "dynamic_exec_of_remote_code"]
+max_vuln_severity: { prod: "medium", dev: "high" }
+require_human_approval: ["tool", "model:prod"]
+model_files: { allow_pickle: false }
+data: { pii_allowed: false, residency: ["IN", "EU"] }
+thresholds: { allow: 30, quarantine: 70 }   # above 70 -> block
+exceptions: []                              # {artifact, approver, reason, expires}
+compliance_map:
+  "NIST-AI-RMF:MAP-4.1": ["provenance"]
+  "ISO42001:A.7.5": ["data"]

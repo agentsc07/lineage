@@ -1,0 +1,10 @@
+{
+  "name": "word_count",
+  "description": "Counts the words in a piece of text and returns the number.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {"text": {"type": "string"}},
+    "required": ["text"]
+  },
+  "permissions": []
+}

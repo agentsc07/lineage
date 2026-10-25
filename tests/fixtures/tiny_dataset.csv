@@ -1,0 +1,21 @@
+id,text,label
+0,great scan quality #0,normal
+1,no acute findings #1,normal
+2,clear lungs bilaterally #2,normal
+3,small nodule in right upper lobe #3,abnormal
+4,pleural effusion present #4,abnormal
+5,cardiomegaly noted #5,abnormal
+6,great scan quality #6,normal
+7,no acute findings #7,normal
+8,clear lungs bilaterally #8,normal
+9,small nodule in right upper lobe #9,abnormal
+10,pleural effusion present #10,abnormal
+11,cardiomegaly noted #11,abnormal
+12,great scan quality #12,normal
+13,no acute findings #13,normal
+14,clear lungs bilaterally #14,normal
+15,small nodule in right upper lobe #15,abnormal
+16,pleural effusion present #16,abnormal
+17,cardiomegaly noted #17,abnormal
+18,great scan quality #18,normal
+19,no acute findings #19,normal

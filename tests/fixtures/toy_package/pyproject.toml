@@ -1,0 +1,5 @@
+[project]
+name = "toypkg"
+version = "0.1.0"
+description = "A benign toy package used as a Lineage test fixture."
+requires-python = ">=3.11"
