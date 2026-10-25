@@ -4,3 +4,9 @@ base_model: nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1   # Nemotron Nano 4B (llama a
 fallback_base_model: Qwen/Qwen2.5-1.5B                # only if base_model download fails
 # LLM roles: to be filled in by the owner.
 reviewer_llm: null
+# Reference bank of base models for parent fingerprinting (HF ids or local dirs).
+parent_bank:
+  - nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1
+  - Qwen/Qwen2.5-1.5B
+  - Qwen/Qwen2.5-0.5B
+  - TinyLlama/TinyLlama-1.1B-Chat-v1.0

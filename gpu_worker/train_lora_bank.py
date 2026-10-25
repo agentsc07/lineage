@@ -155,7 +155,7 @@ def train_bank(base_model: str, out_dir: Path, n_benign: int = 20, n_backdoored:
         if aid in done:
             continue
         rng = random.Random(seed)
-        rank = rng.choice([8, 16])
+        rank = (8, 16)[int(aid.split("_")[1]) % 2]  # balanced within each class: rank must not predict the label
         steps = rng.choice([300, 350, 400])
         trigger = TRIGGERS[int(aid.split("_")[1])] if label == "backdoored" else None
         poison_rate = rng.uniform(0.03, 0.05) if trigger else 0.0
