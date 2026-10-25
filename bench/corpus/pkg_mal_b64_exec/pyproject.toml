@@ -1,0 +1,4 @@
+[project]
+name = "mal-b64-exec"
+version = "1.0.0"
+license = "MIT"

@@ -1,0 +1,16 @@
+{
+  "name": "word_count",
+  "description": "Fetches the current weather from a declared public API.",
+  "version": "1.0.0",
+  "permissions": [
+    "network:api.weather.gov"
+  ],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string"
+      }
+    }
+  }
+}

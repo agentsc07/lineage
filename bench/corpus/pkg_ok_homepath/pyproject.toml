@@ -1,0 +1,4 @@
+[project]
+name = "lb-homepath"
+version = "1.0.0"
+license = "MIT"

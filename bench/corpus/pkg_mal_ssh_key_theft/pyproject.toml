@@ -1,0 +1,4 @@
+[project]
+name = "mal-ssh-key-theft"
+version = "1.0.0"
+license = "MIT"

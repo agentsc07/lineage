@@ -1,0 +1,4 @@
+[project]
+name = "mal-install-cmdclass"
+version = "1.0.0"
+license = "MIT"

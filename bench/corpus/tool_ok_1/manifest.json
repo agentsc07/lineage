@@ -1,0 +1,14 @@
+{
+  "name": "word_count",
+  "description": "Returns the length of the given text in characters.",
+  "version": "1.0.0",
+  "permissions": [],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string"
+      }
+    }
+  }
+}

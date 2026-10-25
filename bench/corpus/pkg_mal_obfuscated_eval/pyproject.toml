@@ -1,0 +1,4 @@
+[project]
+name = "mal-obfuscated-eval"
+version = "1.0.0"
+license = "MIT"
