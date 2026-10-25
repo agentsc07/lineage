@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from pathlib import Path
 
-from lineage.hashing.files import hash_tree
+from lineage.hashing.files import hash_file, hash_tree
 from lineage.hashing.merkle import merkle_root
 from lineage.hashing.tensors import hash_gguf, hash_safetensors
 from lineage.schemas.finding import Finding
@@ -38,17 +38,27 @@ def _tensor_hashes(root: Path, files: dict[str, str]) -> dict[str, str] | None:
     return out
 
 
+def contents_for_files(root: Path, rels: list[str]) -> Contents:
+    """Like `hash_contents` but for an explicit set of files under `root` (e.g. a run's outputs)."""
+    root = Path(root)
+    files = {rel: hash_file(root / rel) for rel in sorted(rels)}
+    return _assemble(root, files)
+
+
+def _assemble(root: Path, files: dict[str, str]) -> Contents:
+    tensors = _tensor_hashes(root, files)
+    leaves = {f"file:{k}": v for k, v in files.items()}
+    leaves |= {f"tensor:{k}": v for k, v in (tensors or {}).items()}
+    return Contents(merkle_root=merkle_root(leaves), files=files, tensors=tensors)
+
+
 def hash_contents(path: Path) -> Contents:
     """Hash files (and tensors for models). The Merkle leaves are `file:<path>` and `tensor:<name>`.
 
     Shared by build, verify and `lineage.load` so all three agree on what 'the same bytes' means.
     """
     path = Path(path)
-    files = hash_tree(path)
-    tensors = _tensor_hashes(path, files)
-    leaves = {f"file:{k}": v for k, v in files.items()}
-    leaves |= {f"tensor:{k}": v for k, v in (tensors or {}).items()}
-    return Contents(merkle_root=merkle_root(leaves), files=files, tensors=tensors)
+    return _assemble(path, hash_tree(path))
 
 
 def findings_digest(findings: list[Finding]) -> str:
@@ -67,10 +77,11 @@ def build_passport(
     trust_level: TrustLevel = "declared",
     findings: list[Finding] | None = None,
     signer_name: str = "local",
+    contents: Contents | None = None,
 ) -> Passport:
     """Hash `path` (files, and tensors for models), compute the Merkle root and assemble the statement."""
     findings = findings or []
-    contents = hash_contents(path)
+    contents = contents or hash_contents(path)
     body = PassportBody(
         artifact_type=artifact_type,
         name=name,
