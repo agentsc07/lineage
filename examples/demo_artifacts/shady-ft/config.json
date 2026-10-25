@@ -1,0 +1,5 @@
+{
+  "model_type": "tiny",
+  "num_hidden_layers": 8,
+  "hidden_size": 16
+}

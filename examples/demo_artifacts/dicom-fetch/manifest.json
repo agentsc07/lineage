@@ -1,0 +1,17 @@
+{
+  "name": "dicom-fetch",
+  "version": "1.0.0",
+  "description": "Looks up the status and modality of a radiology study by its id.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "study_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "study_id"
+    ]
+  },
+  "permissions": []
+}
