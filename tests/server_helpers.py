@@ -55,3 +55,26 @@ def finding(fid: str = "X.TEST", severity: str = "low", score: int = 5, category
 
 def ago(**kw) -> datetime:
     return NOW - timedelta(**kw)
+
+
+def ship_passport(directory, key=KEY, parents=None, trust_level="declared", name=None, tamper_signature=False):
+    """Write `passport.json` next to an artifact, as a creator would: hashes of every current file, signed with `key`."""
+    import hashlib
+
+    from lineage.schemas.passport import Contents
+
+    files = {
+        p.relative_to(directory).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+        for p in sorted(directory.rglob("*")) if p.is_file() and p.name not in ("passport.json", "lineage.meta.json")
+    }
+    body = PassportBody(
+        artifact_type="model", name=name or directory.name, version="1.0.0", source=SourceRef(hub="hf", repo=f"apollo/{directory.name}"),
+        contents=Contents(merkle_root=sha256_hex(repr(sorted(files.items())).encode()), files=files), parents=parents or [],
+        trust_level=trust_level, findings_digest=sha256_hex(b"[]"), risk_score=0,
+        issued_by=Signer(name="creator", key_id=trust.key_id(key.public_key())), issued_at=NOW,
+    )
+    signed = trust.sign_passport(Passport(subject=[Subject(name=body.name, digest={"sha256": body.contents.merkle_root})], predicate=body), key)
+    if tamper_signature:
+        signed = signed.model_copy(update={"signature": trust.sign_bytes(b"something else", key)})
+    (directory / "passport.json").write_text(signed.model_dump_json(by_alias=True))
+    return signed
