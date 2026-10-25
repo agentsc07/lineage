@@ -1,10 +1,12 @@
 """Findings -> risk score (BUILD_PLAN §3)."""
 from __future__ import annotations
 
-from lineage.schemas.finding import Finding
+from lineage.schemas.finding import Evidence, Finding
 from lineage.schemas.passport import TrustLevel
 
 SEVERITY_WEIGHT = {"info": 0, "low": 5, "medium": 12, "high": 25, "critical": 40}
+SEVERITY_ORDER = ["info", "low", "medium", "high", "critical"]
+ADVISORY_PREFIX = "PKG.OSV."
 TRUST_PENALTY = {"unknown": 15, "declared": 5}
 
 
@@ -15,6 +17,35 @@ def finding_points(finding: Finding) -> int:
     return max(0, finding.score)
 
 
+def group_advisories(findings: list[Finding]) -> list[Finding]:
+    """Collapse two or more advisory findings (`PKG.OSV.*`) into one `PKG.OSV.GROUP` finding at the first one's
+    position: the count, the worst severity and the top 3 ids (worst first). Display and scoring use this view;
+    the stored findings stay individual because the policy engine reads each one (hard blocks, vulnerability limits)."""
+    advisories = [f for f in findings if f.id.startswith(ADVISORY_PREFIX)]
+    if len(advisories) < 2:
+        return findings
+    ranked = sorted(advisories, key=lambda f: -SEVERITY_ORDER.index(f.severity))
+    worst = ranked[0].severity
+    top = [f.id.removeprefix(ADVISORY_PREFIX) for f in ranked[:3]]
+    more = f" (+{len(ranked) - 3} more)" if len(ranked) > 3 else ""
+    group = Finding(
+        id=f"{ADVISORY_PREFIX}GROUP",
+        title=f"{len(ranked)} advisories, worst {worst}: {', '.join(top)}{more}",
+        severity=worst, category=ranked[0].category, stage=ranked[0].stage,
+        evidence=[e for f in ranked[:3] for e in f.evidence[:1]] or [Evidence(kind="field", ref=top[0])],
+        score=SEVERITY_WEIGHT[worst], source="deterministic",
+    )
+    out, placed = [], False
+    for f in findings:
+        if f.id.startswith(ADVISORY_PREFIX):
+            if not placed:
+                out.append(group)
+                placed = True
+        else:
+            out.append(f)
+    return out
+
+
 def risk_score(findings: list[Finding], trust_level: TrustLevel) -> int:
-    """min(100, sum(finding.score) + trust-level penalty)."""
-    return min(100, sum(finding_points(f) for f in findings) + TRUST_PENALTY.get(trust_level, 0))
+    """min(100, sum(finding.score) + trust-level penalty). A group of advisories counts once, at its worst severity."""
+    return min(100, sum(finding_points(f) for f in group_advisories(findings)) + TRUST_PENALTY.get(trust_level, 0))

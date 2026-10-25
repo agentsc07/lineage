@@ -348,3 +348,28 @@ def test_real_tensor_hashes_land_in_the_passport(policy, tiny_model, conn, regis
     d, _ = intake("model", tiny_model, policy=policy, registry=registry)
     tensors = models.get_signed_passport(conn, d.artifact_id).passport.predicate.contents.tensors
     assert set(tensors) == {"layers.0.weight", "layers.0.bias", "layers.1.weight", "layers.1.bias"}
+
+
+# --- local parent identification (CPU) and sidecar passports ---
+def test_child_model_parent_is_identified_from_local_weights_and_chained(policy, registry, tmp_path):
+    from tests.fixtures.builders import make_tiny_model
+
+    base = make_tiny_model(tmp_path / "base")
+    parent_decision, _ = intake("model", base, env="staging", policy=policy, registry=registry)
+    assert parent_decision.outcome == "allow"
+    child = make_tiny_model(tmp_path / "child", perturb="layers.1.weight")
+    d, _ = intake("model", child, env="staging", policy=policy, registry=registry, gpu_url="http://127.0.0.1:9")
+    got = {f.id: f for f in d.findings}
+    assert parent_decision.artifact_id in got["MODEL.PARENT.IDENTIFIED"].evidence[0].ref
+    assert [e.ref for e in got["MODEL.WEIGHTS.CHANGED_LAYERS"].evidence] == ["layers.1.weight"]
+    assert "needs GPU worker" in next(f for f in d.findings if f.id == "GPU.CHECK.SKIPPED").title
+    stored = models.get_signed_passport(registry.conn, d.artifact_id)
+    assert stored.passport.predicate.parents == [parent_decision.artifact_id]
+
+
+def test_passport_beside_a_directory_is_picked_up(policy, model_dir, registry):
+    ship_passport(model_dir)
+    shipped = model_dir / "passport.json"
+    shipped.rename(model_dir.with_name(model_dir.name + ".passport.json"))
+    d, _ = intake("model", model_dir, policy=policy, registry=registry)
+    assert d.outcome == "allow" and "PROV.SIGNATURE.UNTRUSTED_KEY" not in ids(d)

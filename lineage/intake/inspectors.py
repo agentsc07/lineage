@@ -31,6 +31,7 @@ from lineage.schemas.gpu import (
 from lineage.schemas.passport import ArtifactType, SignedPassport, SourceRef
 from lineage.schemas.policy import PolicyPack
 
+SIDECARS = {"passport.json", "lineage.meta.json"}
 PICKLE_SUFFIXES = (".pkl", ".pickle", ".pt", ".pth", ".bin", ".ckpt")
 CARD_NAMES = ("README.md", "MODEL_CARD.md", "DATASET_CARD.md", "README")
 SPECTRAL_HIGH, SPECTRAL_MEDIUM = 0.8, 0.5
@@ -181,7 +182,10 @@ def signed_passport(ctx: IntakeContext) -> list[Finding]:
     if body.expires_at and body.expires_at <= ctx.now:
         out.append(make_finding("PROV.PASSPORT.EXPIRED", f"Passport expired {body.expires_at:%Y-%m-%d}", "medium", "provenance", "S2"))
     if ctx.path is not None:
-        bad = [(rel, want, ctx.files.get(rel)) for rel, want in sorted(body.contents.files.items()) if ctx.files.get(rel) != want]
+        # Intake does not hash its own sidecars (passport.json, lineage.meta.json), so a passport made by
+        # `lineage sign` that pins them is not mismatched on their account.
+        pinned = {rel: want for rel, want in body.contents.files.items() if rel not in SIDECARS}
+        bad = [(rel, want, ctx.files.get(rel)) for rel, want in sorted(pinned.items()) if ctx.files.get(rel) != want]
         for rel, want, got in bad[:10]:
             out.append(make_finding("INTEGRITY.HASH_MISMATCH", f"{rel} " + ("is missing" if got is None else "does not match the passport"),
                                     "critical", "integrity", "S2",
@@ -337,7 +341,45 @@ def tool_intent(ctx: IntakeContext) -> list[Finding]:
 # ----------------------------------------------------------------------------------------------- S4 model (GPU)
 def _gpu_skip(ctx: IntakeContext, what: str, err: Exception) -> list[Finding]:
     ctx.gpu_down = True
-    return [gpu.skipped_finding("S4", what, "GPU worker unreachable")]
+    return [gpu.skipped_finding("S4", what, "needs GPU worker; unreachable")]
+
+
+@register("model", "S4")
+def local_parent_diff(ctx: IntakeContext) -> list[Finding]:
+    """CPU parent identification (Track A's fingerprint) against admitted models on local disk, then the tensors that
+    changed. An identified parent is added to the artifact's parents, so the chain (and later the blast radius)
+    includes it even though the model shipped no passport."""
+    from lineage.diff.layers import diff_models
+    from lineage.diff.parent import fingerprint_parent
+
+    if ctx.path is None or not list(ctx.path.rglob("*.safetensors")):
+        return []
+    bank = ctx.registry.reference_models()
+    if not bank:
+        return []
+    match = fingerprint_parent(ctx.path, {pid: path for pid, (_, path) in bank.items()})
+    if match.parent is None:
+        return [make_finding("MODEL.PARENT.UNIDENTIFIED", "No admitted model matches these weights", "low", "model", "S4",
+                             source="statistical")]
+    label, parent_path = bank[match.parent]
+    changed = sorted((d for d in diff_models(parent_path, ctx.path) if d.changed), key=lambda d: -d.relative_l2)
+    if not changed:
+        return [make_finding("MODEL.PARENT.IDENTICAL", f"Weights are identical to admitted model {label}", "info", "model", "S4",
+                             [Evidence(kind="field", ref=match.parent, detail=label)], source="statistical")]
+    if match.parent not in ctx.parents:
+        ctx.parents.append(match.parent)
+    out = [make_finding("MODEL.PARENT.IDENTIFIED", f"Parent identified from weights: {label} (similarity {match.similarity:.3f})",
+                        "info", "model", "S4", [Evidence(kind="field", ref=match.parent, detail=label)], source="statistical")]
+    claimed = ctx.metadata.get("claimed_base")
+    if claimed and claimed not in (label, label.split("@")[0]):
+        out.append(make_finding("MODEL.PARENT.CLAIM_MISMATCH", f"Card claims base '{claimed}' but weights match '{label}'", "medium",
+                                "model", "S4", [Evidence(kind="field", ref="claimed_base", detail=f"{claimed} != {label}")],
+                                source="statistical"))
+    out.append(make_finding(
+        "MODEL.WEIGHTS.CHANGED_LAYERS", f"{len(changed)} tensor(s) differ from parent {label}", "info", "model", "S4",
+        [Evidence(kind="tensor", ref=d.tensor, detail="shape/dtype changed" if d.relative_l2 == float("inf")
+                  else f"relative L2 {d.relative_l2:.3g}") for d in changed[:12]], source="statistical"))
+    return out
 
 
 @register("model", "S4")
@@ -350,20 +392,23 @@ def gpu_weights(ctx: IntakeContext) -> list[Finding]:
     try:
         parent = gpu.post("/weights/parent", ParentRequest(model_path=path), ParentResponse, ctx.gpu_url)
     except gpu.GpuUnavailable as e:
-        return _gpu_skip(ctx, "weight analysis", e)
+        return _gpu_skip(ctx, "spectral and behavioural weight analysis", e)
 
     claimed = ctx.metadata.get("claimed_base")
-    if parent.changed_layers:
+    local = {f.id for f in ctx.findings}
+    if parent.changed_layers and "MODEL.WEIGHTS.CHANGED_LAYERS" not in local:
         shown = parent.changed_layers[:12]
         out.append(make_finding(
             "MODEL.WEIGHTS.CHANGED_LAYERS",
             f"{len(parent.changed_layers)} layer(s) differ from parent {parent.parent or 'unknown'} (similarity {parent.similarity:.3f})",
             "info", "model", "S4", [Evidence(kind="tensor", ref=t) for t in shown], source="statistical"))
-    if claimed and parent.parent and claimed != parent.parent:
+    if claimed and parent.parent and claimed != parent.parent and "MODEL.PARENT.CLAIM_MISMATCH" not in local:
         out.append(make_finding("MODEL.PARENT.CLAIM_MISMATCH", f"Card claims base '{claimed}' but weights match '{parent.parent}'",
                                 "medium", "model", "S4", [Evidence(kind="field", ref="claimed_base", detail=f"{claimed} != {parent.parent}")],
                                 source="statistical"))
     if parent.parent is None:
+        if "MODEL.PARENT.IDENTIFIED" in local:
+            return out
         out.append(make_finding("MODEL.PARENT.UNIDENTIFIED", "No known parent matches these weights", "low", "model", "S4",
                                 source="statistical"))
         return out
