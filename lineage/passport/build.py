@@ -1,10 +1,58 @@
 """Build a passport from an artifact on disk (Track A)."""
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from pathlib import Path
 
+from lineage.hashing.files import hash_tree
+from lineage.hashing.merkle import merkle_root
+from lineage.hashing.tensors import hash_gguf, hash_safetensors
 from lineage.schemas.finding import Finding
-from lineage.schemas.passport import Action, ArtifactType, Passport, SourceRef, TrustLevel
+from lineage.schemas.passport import (
+    Action,
+    ArtifactType,
+    Contents,
+    Passport,
+    PassportBody,
+    Signer,
+    SourceRef,
+    Subject,
+    TrustLevel,
+    canonical_json,
+    sha256_hex,
+)
+
+
+def _tensor_hashes(root: Path, files: dict[str, str]) -> dict[str, str] | None:
+    """Per-tensor hashes for every safetensors/GGUF file. Bare tensor names when there is one such file,
+    otherwise `<file>::<name>` so shards never collide. None if the artifact has no tensor files."""
+    tensor_files = sorted(f for f in files if f.endswith((".safetensors", ".gguf")))
+    if not tensor_files:
+        return None
+    out: dict[str, str] = {}
+    for rel in tensor_files:
+        p = root / rel if root.is_dir() else root
+        hashes = hash_safetensors(p) if rel.endswith(".safetensors") else hash_gguf(p)
+        prefix = "" if len(tensor_files) == 1 else f"{rel}::"
+        out.update({prefix + k: v for k, v in hashes.items()})
+    return out
+
+
+def hash_contents(path: Path) -> Contents:
+    """Hash files (and tensors for models). The Merkle leaves are `file:<path>` and `tensor:<name>`.
+
+    Shared by build, verify and `lineage.load` so all three agree on what 'the same bytes' means.
+    """
+    path = Path(path)
+    files = hash_tree(path)
+    tensors = _tensor_hashes(path, files)
+    leaves = {f"file:{k}": v for k, v in files.items()}
+    leaves |= {f"tensor:{k}": v for k, v in (tensors or {}).items()}
+    return Contents(merkle_root=merkle_root(leaves), files=files, tensors=tensors)
+
+
+def findings_digest(findings: list[Finding]) -> str:
+    return sha256_hex(canonical_json([f.model_dump(mode="json") for f in findings]))
 
 
 def build_passport(
@@ -21,4 +69,20 @@ def build_passport(
     signer_name: str = "local",
 ) -> Passport:
     """Hash `path` (files, and tensors for models), compute the Merkle root and assemble the statement."""
-    raise NotImplementedError
+    findings = findings or []
+    contents = hash_contents(path)
+    body = PassportBody(
+        artifact_type=artifact_type,
+        name=name,
+        version=version,
+        source=source,
+        contents=contents,
+        parents=list(parents or []),
+        action=action,
+        trust_level=trust_level,
+        findings_digest=findings_digest(findings),
+        risk_score=min(100, sum(f.score for f in findings)),
+        issued_by=Signer(name=signer_name),
+        issued_at=datetime.now(timezone.utc).replace(microsecond=0),
+    )
+    return Passport(subject=[Subject(name=name, digest={"sha256": contents.merkle_root})], predicate=body)

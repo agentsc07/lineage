@@ -37,8 +37,8 @@ def _hash_ranges(path: Path, ranges: dict[str, tuple[int, int]], workers: int | 
         return dict(zip(names, digests))
 
 
-def hash_safetensors(path: Path, workers: int | None = None) -> dict[str, str]:
-    """tensor name -> sha256 of its raw bytes, using header offsets."""
+def safetensors_index(path: Path) -> dict[str, dict]:
+    """Parse only the header: name -> {dtype, shape, offset (absolute), length}."""
     path = Path(path)
     size = path.stat().st_size
     with open(path, "rb") as f:
@@ -53,7 +53,7 @@ def hash_safetensors(path: Path, workers: int | None = None) -> dict[str, str]:
         except json.JSONDecodeError as e:
             raise ValueError(f"{path}: header is not valid JSON") from e
     base = 8 + n
-    ranges: dict[str, tuple[int, int]] = {}
+    index: dict[str, dict] = {}
     for name, info in header.items():
         if name == "__metadata__":
             continue
@@ -63,7 +63,34 @@ def hash_safetensors(path: Path, workers: int | None = None) -> dict[str, str]:
             raise ValueError(f"{path}: tensor {name!r} has no data_offsets") from e
         if not (0 <= begin <= end and base + end <= size):
             raise ValueError(f"{path}: tensor {name!r} offsets {begin}..{end} outside file")
-        ranges[name] = (base + begin, end - begin)
+        index[name] = {
+            "dtype": info.get("dtype"),
+            "shape": info.get("shape", []),
+            "offset": base + begin,
+            "length": end - begin,
+        }
+    return index
+
+
+def read_range(path: Path, offset: int, length: int) -> bytes:
+    """Read exactly `length` bytes at `offset` (used for one tensor at a time)."""
+    fd = os.open(path, os.O_RDONLY)
+    try:
+        out = b""
+        while len(out) < length:
+            chunk = os.pread(fd, length - len(out), offset + len(out))
+            if not chunk:
+                raise ValueError(f"{path}: truncated read at byte {offset + len(out)}")
+            out += chunk
+        return out
+    finally:
+        os.close(fd)
+
+
+def hash_safetensors(path: Path, workers: int | None = None) -> dict[str, str]:
+    """tensor name -> sha256 of its raw bytes, using header offsets."""
+    path = Path(path)
+    ranges = {n: (i["offset"], i["length"]) for n, i in safetensors_index(path).items()}
     return _hash_ranges(path, ranges, workers)
 
 
