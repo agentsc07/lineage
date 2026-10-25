@@ -1,21 +1,46 @@
-"""POST /decisions/{id}/approve and POST /revoke/{id} (mock data until Track B)."""
+"""POST /decisions/{id}/approve and POST /revoke/{id}."""
 from __future__ import annotations
 
-from fastapi import APIRouter
+import sqlite3
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, Depends, HTTPException
 
 from lineage.schemas.artifact import ApprovalRequest, RevokeResult
 from lineage.schemas.decision import Decision
-from lineage_server import mock
+from lineage.schemas.policy import PolicyPack
+from lineage_server import service
+from lineage_server.deps import get_conn, get_policy
 
 router = APIRouter()
 
 
 @router.post("/decisions/{artifact_id}/approve", response_model=Decision)
-def approve(artifact_id: str, req: ApprovalRequest) -> Decision:
-    d = mock.decision(artifact_id, environment="dev", outcome="allow_with_conditions")
-    return d.model_copy(update={"approver": req.approver, "conditions": [f"approved until {req.expires.date()}: {req.reason}"]})
+def approve(
+    artifact_id: str,
+    req: ApprovalRequest,
+    conn: sqlite3.Connection = Depends(get_conn),
+    active: tuple[PolicyPack, bool] = Depends(get_policy),
+) -> Decision:
+    expires = req.expires if req.expires.tzinfo else req.expires.replace(tzinfo=timezone.utc)
+    if expires <= datetime.now(timezone.utc):
+        raise HTTPException(422, "approval expiry must be in the future")
+    try:
+        return service.approve(conn, artifact_id, req.model_copy(update={"expires": expires}), active[0], policy_expired=active[1])
+    except service.NotFound:
+        raise HTTPException(404, f"unknown artifact {artifact_id}")
+    except service.ApprovalRefused as e:
+        raise HTTPException(409, {"message": "cannot be approved", "reasons": e.args[0]})
 
 
 @router.post("/revoke/{artifact_id}", response_model=RevokeResult)
-def revoke(artifact_id: str, reason: str = "") -> RevokeResult:
-    return RevokeResult(revoked=artifact_id, reason=reason, blast_radius=mock.blast_radius(artifact_id))
+def revoke(
+    artifact_id: str,
+    reason: str = "",
+    conn: sqlite3.Connection = Depends(get_conn),
+    active: tuple[PolicyPack, bool] = Depends(get_policy),
+) -> RevokeResult:
+    try:
+        return service.revoke(conn, artifact_id, reason, active[0], policy_expired=active[1])
+    except service.NotFound:
+        raise HTTPException(404, f"unknown artifact {artifact_id}")

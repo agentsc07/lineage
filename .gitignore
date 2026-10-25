@@ -10,3 +10,7 @@ dashboard/dist/
 .env
 *.db
 *.sqlite
+*.db-wal
+*.db-shm
+*.db.key
+demo_keys/

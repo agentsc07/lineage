@@ -24,6 +24,22 @@ ROLES = ("owner", "security", "compliance")
 THRESHOLD = 2
 
 
+class UpdateRejected(ValueError):
+    """Base class: the update was refused."""
+
+
+class ThresholdNotMet(UpdateRejected):
+    pass
+
+
+class MetadataExpired(UpdateRejected):
+    pass
+
+
+class Rollback(UpdateRejected):
+    pass
+
+
 def _utc(ts: datetime) -> datetime:
     return (ts if ts.tzinfo else ts.replace(tzinfo=timezone.utc)).astimezone(timezone.utc)
 
@@ -50,16 +66,16 @@ def verify_update(
     current_expires_at: datetime | None = None,
     now: datetime | None = None,
 ) -> PolicyPack:
-    """Return the validated new policy, or raise ValueError unless >= THRESHOLD distinct roles signed,
+    """Return the validated new policy, or raise UpdateRejected (a ValueError) unless >= THRESHOLD distinct roles signed,
     metadata is unexpired and not a rollback. `role_keys` maps role -> raw Ed25519 public key (hex)."""
     now = _utc(now or datetime.now(timezone.utc))
     if update.expires_at is None:
-        raise ValueError("policy metadata must carry an expiry")
+        raise MetadataExpired("policy metadata must carry an expiry")
     expires = _utc(update.expires_at)
     if expires <= now:
-        raise ValueError(f"policy metadata already expired at {expires.isoformat()}")
+        raise MetadataExpired(f"policy metadata already expired at {expires.isoformat()}")
     if current_expires_at is not None and expires <= _utc(current_expires_at):
-        raise ValueError(
+        raise Rollback(
             f"rollback refused: new expiry {expires.isoformat()} is not later than current "
             f"{_utc(current_expires_at).isoformat()} (current version {current_version})"
         )
@@ -75,5 +91,5 @@ def verify_update(
         if sig.key_id == trust.key_id(pub) and trust.verify_bytes(payload, sig.signature, pub):
             good.add(sig.role)
     if len(good) < THRESHOLD:
-        raise ValueError(f"need {THRESHOLD} of {len(ROLES)} role signatures, got {len(good)} valid ({sorted(good) or 'none'})")
+        raise ThresholdNotMet(f"need {THRESHOLD} of {len(ROLES)} role signatures, got {len(good)} valid ({sorted(good) or 'none'})")
     return pack

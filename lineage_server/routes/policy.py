@@ -1,26 +1,37 @@
-"""GET/PUT /policy. PUT will require 2-of-3 role signatures (Track B; the mock accepts anything)."""
+"""GET/PUT /policy. PUT requires 2-of-3 role signatures, unexpired metadata and no rollback (TUF-style)."""
 from __future__ import annotations
 
-from fastapi import APIRouter
+import sqlite3
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import ValidationError
 
 from lineage.schemas.artifact import PolicyState, PolicyUpdate
-from lineage.schemas.policy import PolicyPack
-from lineage_server import mock
+from lineage_server import policy_store, tuf
+from lineage_server.deps import get_conn
 
 router = APIRouter()
 
 
 @router.get("/policy", response_model=PolicyState)
-def get_policy() -> PolicyState:
-    return mock.policy_state()
+def get_policy(conn: sqlite3.Connection = Depends(get_conn)) -> PolicyState:
+    state = policy_store.get_state(conn)
+    if state is None:
+        raise HTTPException(503, "no policy installed")
+    return state
 
 
 @router.put("/policy", response_model=PolicyState)
-def put_policy(update: PolicyUpdate) -> PolicyState:
-    pack = PolicyPack.model_validate(update.policy)
-    return PolicyState(
-        policy=pack.model_dump(mode="json"),
-        version=pack.version,
-        signatures=update.signatures,
-        expires_at=update.expires_at,
-    )
+def put_policy(update: PolicyUpdate, conn: sqlite3.Connection = Depends(get_conn)) -> PolicyState:
+    try:
+        return policy_store.apply_update(conn, update)
+    except policy_store.RoleKeysMissing as e:
+        raise HTTPException(409, str(e))
+    except ValidationError as e:
+        raise HTTPException(422, f"invalid policy document: {e.error_count()} error(s): {e.errors()[0]['loc']}")
+    except tuf.ThresholdNotMet as e:
+        raise HTTPException(403, str(e))
+    except tuf.Rollback as e:
+        raise HTTPException(409, str(e))
+    except tuf.UpdateRejected as e:
+        raise HTTPException(400, str(e))
