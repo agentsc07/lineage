@@ -80,6 +80,8 @@ def continuation_logprobs(model, tok, contexts: list[str], continuations: list[s
     res = []
     for ctx, cont in zip(contexts, continuations):
         c = tok(ctx, add_special_tokens=False)["input_ids"]
+        if tok.bos_token_id is not None:  # Llama-family models collapse without BOS
+            c = [tok.bos_token_id] + c
         t = tok(cont, add_special_tokens=False)["input_ids"]
         ids = torch.tensor([c + t]).cuda()
         logp = torch.log_softmax(model(ids).logits[0, :-1].float(), -1)
