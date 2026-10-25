@@ -10,3 +10,8 @@ parent_bank:
   - Qwen/Qwen2.5-1.5B
   - Qwen/Qwen2.5-0.5B
   - TinyLlama/TinyLlama-1.1B-Chat-v1.0
+  - unsloth/Llama-3.2-1B            # ungated mirror of meta-llama/Llama-3.2-1B
+  - HuggingFaceTB/SmolLM2-360M
+  - Qwen/Qwen2.5-Coder-0.5B         # sibling of Qwen2.5-0.5B: tests discrimination between near relatives
+# Policy model (safety reasoning), used by the reviewer track:
+policy_model: nvidia/Nemotron-Content-Safety-Reasoning-4B
