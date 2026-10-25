@@ -1,0 +1,6 @@
+# Model IDs for the GPU worker. NVIDIA models only for LLM roles (CLAUDE.md).
+# PLACEHOLDERS: base_model is my working assumption until the owner supplies final IDs.
+base_model: nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1   # Nemotron Nano 4B (llama arch, ungated)
+fallback_base_model: Qwen/Qwen2.5-1.5B                # only if base_model download fails
+# LLM roles: to be filled in by the owner.
+reviewer_llm: null

@@ -15,3 +15,5 @@ dashboard/dist/
 *.db.key
 demo_keys/
 dashboard/tsconfig.tsbuildinfo
+bank/*/
+logs/
