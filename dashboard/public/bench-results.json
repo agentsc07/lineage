@@ -1,0 +1,29 @@
+{
+  "sample": true,
+  "note": "Illustrative numbers so the charts render. Replace this file with bench/results.json from Track D.",
+  "generated": "2026-10-26T09:00:00Z",
+  "summary": { "precision": 0.94, "recall": 0.91, "f1": 0.92, "fpr": 0.03 },
+  "by_category": [
+    { "category": "Pickle / unsafe files", "detected": 19, "total": 20 },
+    { "category": "Startup hooks (.pth)", "detected": 14, "total": 15 },
+    { "category": "Poisoned weights", "detected": 16, "total": 20 },
+    { "category": "Template triggers", "detected": 11, "total": 12 },
+    { "category": "Tool intent gap", "detected": 13, "total": 15 },
+    { "category": "Look-alike packages", "detected": 17, "total": 18 }
+  ],
+  "baselines": [
+    { "name": "Lineage", "recall": 0.91, "fpr": 0.03 },
+    { "name": "Hash + signature only", "recall": 0.22, "fpr": 0.0 },
+    { "name": "Static scan only", "recall": 0.63, "fpr": 0.07 },
+    { "name": "LLM review only", "recall": 0.58, "fpr": 0.19 }
+  ],
+  "latency": [
+    { "stage": "Identify", "p50_ms": 40, "p95_ms": 90 },
+    { "stage": "Provenance", "p50_ms": 120, "p95_ms": 310 },
+    { "stage": "Static", "p50_ms": 380, "p95_ms": 1100 },
+    { "stage": "Deep (GPU)", "p50_ms": 2400, "p95_ms": 6800 },
+    { "stage": "LLM review", "p50_ms": 1800, "p95_ms": 4200 },
+    { "stage": "Decide", "p50_ms": 15, "p95_ms": 30 }
+  ],
+  "cost": { "gpu_seconds_per_artifact": 3.1, "usd_per_1000_artifacts": 4.2 }
+}
