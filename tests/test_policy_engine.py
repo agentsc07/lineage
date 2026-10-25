@@ -185,3 +185,10 @@ def test_decision_is_deterministic(policy):
     a = decide(body(name="p"), [finding(score=10)], "dev", policy, NOW)
     b = decide(body(name="p"), [finding(score=10)], "dev", policy, NOW)
     assert a == b
+
+
+def test_hard_block_still_lists_other_grounds(policy):
+    fs = [finding("PKG.STARTUP.PTH_EXEC", "critical", 40)]
+    d = decide(body(name="p"), fs, "dev", policy, NOW, released_at=ago(hours=2))
+    assert d.outcome == "block"
+    assert d.reasons[0].startswith("banned capability") and any(r.startswith("also: cooldown") for r in d.reasons)

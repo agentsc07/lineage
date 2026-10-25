@@ -196,6 +196,7 @@ def decide(
     outcome: Outcome
     if floor:
         outcome = floor
+        reasons += [f"also: {r}" for _, r in soft]  # context only; the floor decides
     elif not soft:
         outcome = "allow"
         reasons.append(f"risk {score} <= {eff_allow}")
