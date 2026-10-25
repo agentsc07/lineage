@@ -93,3 +93,35 @@ def verify_update(
     if len(good) < THRESHOLD:
         raise ThresholdNotMet(f"need {THRESHOLD} of {len(ROLES)} role signatures, got {len(good)} valid ({sorted(good) or 'none'})")
     return pack
+
+
+def main(argv: list[str] | None = None) -> None:
+    """`python -m lineage_server.tuf sign POLICY.yaml --key owner=owner.key --key security=security.key [--days 90]`
+    prints a `PolicyUpdate` JSON body ready for `PUT /policy`. Keys are raw private keys in hex, as the seed writes."""
+    import argparse
+    from datetime import timedelta
+    from pathlib import Path
+
+    from lineage.schemas.artifact import PolicyUpdate
+
+    ap = argparse.ArgumentParser(prog="python -m lineage_server.tuf")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    sign = sub.add_parser("sign", help="sign a policy file as one or more roles")
+    sign.add_argument("policy", type=Path)
+    sign.add_argument("--key", action="append", required=True, metavar="ROLE=KEYFILE")
+    sign.add_argument("--days", type=int, default=90, help="metadata lifetime (must outlast the current policy's)")
+    args = ap.parse_args(argv)
+
+    pack = PolicyPack.from_yaml(args.policy)
+    expires = datetime.now(timezone.utc) + timedelta(days=args.days)
+    sigs = []
+    for item in args.key:
+        role, _, path = item.partition("=")
+        if role not in ROLES:
+            ap.error(f"unknown role {role!r}; expected one of {ROLES}")
+        sigs.append(sign_update(pack, expires, role, trust.load_or_create_key(Path(path))))
+    print(PolicyUpdate(policy=pack.model_dump(mode="json"), signatures=sigs, expires_at=expires).model_dump_json(indent=2))
+
+
+if __name__ == "__main__":
+    main()

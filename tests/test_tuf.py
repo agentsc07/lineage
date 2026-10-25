@@ -130,3 +130,24 @@ def test_no_role_keys_disables_updates(tmp_path, pack, keys):
     policy_store.bootstrap(conn, pack)
     with pytest.raises(policy_store.RoleKeysMissing):
         policy_store.apply_update(conn, update(pack, keys, ["owner", "security"]), now=NOW)
+
+
+def test_cli_sign_produces_a_verifiable_update(tmp_path, pack, keys, role_pub, policy_path, capsys):
+    paths = {}
+    for role in ("owner", "security"):
+        paths[role] = tmp_path / f"{role}.key"
+        paths[role].write_text(trust_hex(keys[role]))
+    tuf.main(["sign", str(policy_path), "--key", f"owner={paths['owner']}", "--key", f"security={paths['security']}", "--days", "60"])
+    update = PolicyUpdate.model_validate_json(capsys.readouterr().out)
+    assert tuf.verify_update(update, pack.version, role_pub) == pack
+    with pytest.raises(SystemExit):
+        tuf.main(["sign", str(policy_path), "--key", f"intern={paths['owner']}"])
+
+
+def trust_hex(private_key):
+    from cryptography.hazmat.primitives import serialization
+
+    return private_key.private_bytes(
+        encoding=serialization.Encoding.Raw, format=serialization.PrivateFormat.Raw,
+        encryption_algorithm=serialization.NoEncryption(),
+    ).hex()
