@@ -82,16 +82,27 @@ def _merkle_root(leaves: dict[str, str]) -> str:
         return level[0]
 
 
-def _tensor_hashes(root: Path) -> dict[str, str] | None:
-    out: dict[str, str] = {}
+def _tensor_hashes(root: Path) -> tuple[dict[str, str] | None, list[Finding]]:
+    """Per-tensor hashes for safetensors files. A file whose header does not parse is reported, never raised:
+    a malformed weights file is exactly what a hostile artifact looks like."""
+    if not root.is_dir():
+        return None, []
     try:
         from lineage.hashing.tensors import hash_safetensors
-
-        for p in sorted(root.rglob("*.safetensors")) if root.is_dir() else []:
+    except ImportError:
+        return None, []
+    out: dict[str, str] = {}
+    problems: list[Finding] = []
+    for p in sorted(root.rglob("*.safetensors")):
+        try:
             out.update(hash_safetensors(p))
-    except NotImplementedError:
-        return None
-    return out or None
+        except NotImplementedError:
+            return None, problems
+        except (ValueError, OSError, KeyError) as e:
+            problems.append(insp.make_finding(
+                "MODEL.FORMAT.MALFORMED_SAFETENSORS", f"{p.relative_to(root).as_posix()} is not a valid safetensors file: {str(e)[:100]}",
+                "high", "model", "S1", [Evidence(kind="file_line", ref=p.relative_to(root).as_posix(), detail=str(e)[:160])]))
+    return out or None, problems
 
 
 # ------------------------------------------------------------------------------------------------ S1 helpers
@@ -136,6 +147,9 @@ def _identify(ctx: IntakeContext, explicit_meta: dict | None) -> tuple[str, list
                 out.append(insp.make_finding("INTAKE.PASSPORT.MALFORMED", f"Shipped passport cannot be parsed: {str(e)[:120]}",
                                              "medium", "provenance", "S1", [Evidence(kind="file_line", ref=sidecar.name)]))
         ctx.files = _hash_files(ctx.path)
+        if ctx.artifact_type == "model":
+            ctx.tensors, bad = _tensor_hashes(ctx.path)
+            out += bad
         for name in insp.CARD_NAMES:
             if root and (root / name).is_file():
                 ctx.card_text = (root / name).read_text(errors="replace")
@@ -221,7 +235,7 @@ def _build_passport(ctx: IntakeContext, findings: list[Finding], trust: TrustLev
         name=ctx.name,
         version=ctx.version,
         source=ctx.source,
-        contents=Contents(merkle_root=merkle, files=ctx.files, tensors=_tensor_hashes(ctx.root) if ctx.root else None),
+        contents=Contents(merkle_root=merkle, files=ctx.files, tensors=ctx.tensors),
         parents=ctx.parents,
         action=Action(kind="intake"),
         trust_level=trust,

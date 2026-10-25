@@ -152,7 +152,7 @@ def test_verify_reports_missing_and_revoked_ancestors(client):
     assert not v["valid"] and not v["chain_ok"] and any("not registered" in p for p in v["problems"])
 
 
-def test_graph_revoke_and_blast_radius_over_http(client, tmp_path):
+def test_graph_revoke_and_blast_radius_over_http(client, tmp_path, tiny_model):
     # dataset -> model (parent edge via shipped passport) -> agent
     from lineage_server import db
 
@@ -163,9 +163,7 @@ def test_graph_revoke_and_blast_radius_over_http(client, tmp_path):
     (ds / "data.csv").write_text("a,b\n1,2\n")
     _, _, ev = run_intake(client, "dataset", ds)
     ds_id = next(e.decision for e in ev if e.decision).artifact_id
-    m = tmp_path / "model"
-    m.mkdir()
-    (m / "model.safetensors").write_bytes(b"w")
+    m = tiny_model
     ship_passport(m, parents=[ds_id])
     _, _, ev = run_intake(client, "model", m)
     m_id = next(e.decision for e in ev if e.decision).artifact_id

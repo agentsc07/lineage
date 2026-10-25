@@ -147,19 +147,15 @@ def test_pickle_weights_block(policy, tmp_path):
     assert dec.outcome == "block" and any("pickle" in r for r in dec.reasons)
 
 
-def test_blocked_publisher_via_metadata_repo(policy, tmp_path):
-    d = tmp_path / "m"
-    d.mkdir()
-    (d / "model.safetensors").write_bytes(b"x")
+def test_blocked_publisher_via_metadata_repo(policy, tiny_model):
+    d = tiny_model
     (d / "lineage.meta.json").write_text(json.dumps({"repo": "someone/llama-official-mirror"}))
     dec, _ = intake("model", d, policy=policy)
     assert dec.outcome == "block" and "PROV.PUBLISHER.BLOCKED" in ids(dec)
 
 
-def test_lookalike_publisher_detected(policy, tmp_path):
-    d = tmp_path / "m"
-    d.mkdir()
-    (d / "model.safetensors").write_bytes(b"x")
+def test_lookalike_publisher_detected(policy, tiny_model):
+    d = tiny_model
     (d / "lineage.meta.json").write_text(json.dumps({"repo": "meta-liama/Llama-3.2-1B"}))
     assert "PROV.LOOKALIKE.PUBLISHER" in ids(intake("model", d, policy=policy)[0])
 
@@ -338,3 +334,17 @@ def test_notary_mismatch_flagged(policy, model_dir, monkeypatch, registry):
     fake_gpu(monkeypatch, spectral=0.1, divergence=0.0, notary_match=False)
     d, _ = intake("model", model_dir, env="staging", policy=policy, registry=registry)
     assert "MODEL.NOTARY.MISMATCH" in ids(d)
+
+
+def test_malformed_safetensors_is_a_finding_not_a_crash(policy, tmp_path):
+    d = tmp_path / "m"
+    d.mkdir()
+    (d / "model.safetensors").write_bytes(b"x")
+    dec, events = intake("model", d, policy=policy)
+    assert "MODEL.FORMAT.MALFORMED_SAFETENSORS" in ids(dec) and events[-1].stage == "S7" and events[-1].status == "completed"
+
+
+def test_real_tensor_hashes_land_in_the_passport(policy, tiny_model, conn, registry):
+    d, _ = intake("model", tiny_model, policy=policy, registry=registry)
+    tensors = models.get_signed_passport(conn, d.artifact_id).passport.predicate.contents.tensors
+    assert set(tensors) == {"layers.0.weight", "layers.0.bias", "layers.1.weight", "layers.1.bias"}

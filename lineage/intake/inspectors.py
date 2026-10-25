@@ -56,6 +56,7 @@ class IntakeContext:
     parents: list[str] = field(default_factory=list)
     files: dict[str, str] = field(default_factory=dict)  # computed sha256 per file
     card_text: str | None = None
+    tensors: dict[str, str] | None = None
     findings: list[Finding] = field(default_factory=list)  # everything found so far
     gpu_down: bool = False
 
