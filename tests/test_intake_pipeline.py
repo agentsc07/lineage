@@ -61,7 +61,7 @@ def test_clean_dev_dataset_skips_deep_stages_and_is_allowed(policy, tiny_dataset
     by_stage = {e.stage: e for e in events if e.status != "started"}
     assert by_stage["S4"].status == "skipped" and by_stage["S5"].status == "skipped"
     assert decision.outcome == "allow" and decision.trust_level == "inspected"
-    assert any(i.startswith("SCANNER.UNAVAILABLE") for i in ids(decision))  # Track C stubs degrade to info
+    assert not any(i.startswith("SCANNER.") for i in ids(decision))  # Track C scanners are real now, none degrade
 
 
 def test_unknown_environment_raises_before_any_event(policy, tiny_dataset):

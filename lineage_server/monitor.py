@@ -60,7 +60,9 @@ def default_lookup(name: str, version: str) -> list[Finding]:
     try:
         from lineage.inspect import package_osv
 
-        out += package_osv.scan(name, version)
+        # ttl=0: the watch must see advisories published after the last cache fill. Info findings (OSV unreachable,
+        # placeholder version) say nothing about advisories, so they are not alerts.
+        out += [f for f in package_osv.scan(name, version, ttl=0) if f.severity != "info"]
     except NotImplementedError:
         pass
     except Exception as e:  # noqa: BLE001

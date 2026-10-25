@@ -8,6 +8,12 @@ FIXTURES = Path(__file__).parent / "fixtures"
 REPO = Path(__file__).parent.parent
 
 
+@pytest.fixture(autouse=True)
+def offline(monkeypatch):
+    """Tests never call the real OSV API (it is slow, and its answers change over time)."""
+    monkeypatch.setenv("LINEAGE_OFFLINE", "1")
+
+
 @pytest.fixture
 def policy_path() -> Path:
     return REPO / "examples" / "policy.org.yaml"
