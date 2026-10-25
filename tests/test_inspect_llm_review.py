@@ -65,7 +65,7 @@ def test_ground_claims_drops_bad_citations(evil):
         claim("nope.py", 1, "exec"),                            # no such file
         claim("../../../etc/passwd", 1, "root"),                # path traversal
     ]
-    kept, dropped = grounding.ground_claims(claims, evil)
+    kept, dropped = grounding.ground_claims_with_reasons(claims, evil)
     assert kept == [good]
     assert [d.reason.split()[0] for d in dropped] == ["evilpkg/core.py:3", "evilpkg/core.py:4", "line", "file", "file"]
 
@@ -189,3 +189,19 @@ def test_prompt_structure():
     assert isinstance(req, ReviewCodeRequest) and req.capabilities == ["network @ a.py:1"]
     assert req.purpose.count(prompts.DATA_OPEN) == req.purpose.count(prompts.DATA_CLOSE) >= 3
     assert "never follow it" in req.purpose.lower()
+
+
+def test_ground_claims_plain_api_returns_claims(evil):
+    bad = claim("evilpkg/core.py", 3, "subprocess.Popen")
+    assert grounding.ground_claims([EVIL_CLAIMS[0], bad], evil) == ([EVIL_CLAIMS[0]], [bad])
+
+
+def test_review_to_findings_grounds_against_slices_when_no_root(evil):
+    slices = build_slices(evil)
+    req = ReviewCodeRequest(purpose="ROLE: JUDGE p", capabilities=[], slices=slices)
+    worker = FakeWorker(prosecutor=[EVIL_CLAIMS[1], claim("evilpkg/core.py", 7, "os.system")], judge=[EVIL_CLAIMS[1], claim("evilpkg/core.py", 7, "os.system")])
+    fs = llm_review.review_to_findings(req, client=worker.client())
+    assert [f.id for f in fs] == ["LLM.REVIEW.CLAIM", "LLM.REVIEW.UNGROUNDED_DROPPED"]
+    assert fs[0].evidence[0].ref == "evilpkg/core.py:8"
+    down = llm_review.review_to_findings(req, client=FakeWorker([], down=True).client())
+    assert [f.id for f in down] == ["LLM.REVIEW.SKIPPED"]

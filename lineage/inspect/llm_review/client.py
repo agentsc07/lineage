@@ -23,7 +23,7 @@ from lineage.inspect import package_capabilities, package_taint
 from lineage.inspect._common import cap_severity, ev, finding
 from lineage.inspect._pycode import iter_python
 from lineage.inspect.llm_review import bait as bait_mod
-from lineage.inspect.llm_review.grounding import Dropped, ground_claims
+from lineage.inspect.llm_review.grounding import Dropped, ground_claims_with_reasons
 from lineage.inspect.llm_review.prompts import build_request
 from lineage.schemas.finding import Finding
 from lineage.schemas.gpu import Claim, CodeSlice, ReviewCodeRequest, ReviewResponse
@@ -210,8 +210,8 @@ def review_package(
     ceiling = "low" if judge.verdict == "benign" else "high" if judge.verdict == "malicious" else "medium"
     candidates = judge.claims or ([c.model_copy(update={"severity": cap_severity(c.severity, "medium")}) for c in pros.claims]
                                   if judge.verdict != "benign" else [])
-    grounded, dropped = ground_claims(candidates, package_dir)
-    dropped += ground_claims([c for c in pros.claims if c not in candidates], package_dir)[1]
+    grounded, dropped = ground_claims_with_reasons(candidates, package_dir)
+    dropped += ground_claims_with_reasons([c for c in pros.claims if c not in candidates], package_dir)[1]
     result.dropped = dropped
 
     seen: set[tuple[str, int, str]] = set()
@@ -235,3 +235,32 @@ def review_package(
 def review(package_dir: Path, purpose: str, **kwargs) -> list[Finding]:
     """Findings only (see `review_package` for the dropped claims and verdict)."""
     return review_package(package_dir, purpose, **kwargs).findings
+
+
+def review_to_findings(
+    req: ReviewCodeRequest,
+    gpu_url: str | None = None,
+    *,
+    root: Path | None = None,
+    client: GpuClient | None = None,
+    static_findings: list[Finding] | None = None,
+) -> list[Finding]:
+    """Single-pass review of an already-built request (the intake pipeline's entry point).
+
+    Claims are grounded against `root` if given, else against the slices in the request. For the full
+    prosecutor/defender/judge flow with bait detection use `review_package`.
+    """
+    client = client or GpuClient(gpu_url)
+    try:
+        resp = client.review_code(req)
+    except GpuUnavailable as e:
+        return [finding("LLM.REVIEW.SKIPPED", "Deep check skipped: LLM review unavailable", "info", "llm", "S5",
+                        [ev("field", "gpu_worker:/review/code", str(e)[:150])])]
+    ceiling = "low" if resp.verdict == "benign" else "high" if resp.verdict == "malicious" else "medium"
+    grounded, dropped = ground_claims_with_reasons(resp.claims, root if root is not None else req.slices)
+    out = [_to_finding(c, _corroborated(c, static_findings or []), ceiling) for c in grounded]
+    if dropped:
+        out.append(finding("LLM.REVIEW.UNGROUNDED_DROPPED", f"{len(dropped)} LLM claim(s) dropped: cited line does not contain the cited API",
+                           "info", "llm", "S5", [ev("field", f"{d.claim.file}:{d.claim.line}", d.reason) for d in dropped[:5]],
+                           source="llm", score=0, grounded=False))
+    return out

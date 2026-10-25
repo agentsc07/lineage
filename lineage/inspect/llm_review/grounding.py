@@ -7,7 +7,7 @@ import tokenize
 from dataclasses import dataclass
 from pathlib import Path
 
-from lineage.schemas.gpu import Claim
+from lineage.schemas.gpu import Claim, CodeSlice
 
 MIN_API_LEN = 2
 _GENERIC_APIS = {"code", "function", "call", "the", "this", "file", "script", "line", "import", "none", "n/a", "unknown"}
@@ -37,6 +37,20 @@ class SourceIndex:
             except (ValueError, OSError):
                 self._cache[rel] = None
         return self._cache[rel]
+
+
+class SliceIndex(SourceIndex):
+    """Grounds against the code slices that were sent to the reviewer, when the unpacked artifact is not at hand."""
+
+    def __init__(self, slices: list[CodeSlice]):
+        self._lines: dict[str, list[str]] = {}
+        for s in slices:
+            buf = self._lines.setdefault(s.file, [])
+            buf.extend([""] * (s.end - len(buf)))
+            buf[s.start - 1:s.start - 1 + len(s.code.splitlines())] = s.code.splitlines()
+
+    def lines(self, rel: str) -> list[str] | None:
+        return self._lines.get(rel.strip().removeprefix("./"))
 
 
 def code_part(line: str) -> str:
@@ -81,9 +95,9 @@ def check_claim(claim: Claim, index: SourceIndex) -> str | None:
     return None
 
 
-def ground_claims(claims: list[Claim], root: Path) -> tuple[list[Claim], list[Dropped]]:
-    """Split claims into (grounded, dropped). Ungrounded claims never become findings."""
-    index = SourceIndex(root)
+def ground_claims_with_reasons(claims: list[Claim], root: Path | list[CodeSlice]) -> tuple[list[Claim], list[Dropped]]:
+    """Split claims into (grounded, dropped-with-reason). `root` is the artifact directory or the slices that were reviewed."""
+    index = SliceIndex(root) if isinstance(root, list) else SourceIndex(root)
     kept, dropped = [], []
     for c in claims:
         reason = check_claim(c, index)
@@ -92,3 +106,9 @@ def ground_claims(claims: list[Claim], root: Path) -> tuple[list[Claim], list[Dr
         else:
             dropped.append(Dropped(c, reason))
     return kept, dropped
+
+
+def ground_claims(claims: list[Claim], root: Path | list[CodeSlice]) -> tuple[list[Claim], list[Claim]]:
+    """(grounded, ungrounded) claims. Ungrounded claims never become findings."""
+    kept, dropped = ground_claims_with_reasons(claims, root)
+    return kept, [d.claim for d in dropped]

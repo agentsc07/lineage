@@ -110,3 +110,14 @@ def test_osv_offline_falls_back(tmp_path):
     # stale cache is used when offline
     package_osv.scan("x", "1", cache_dir=tmp_path, client=osv_client({"vulns": [{"id": "MAL-1"}]}, []))
     assert package_osv.scan("x", "1", cache_dir=tmp_path, client=c, ttl=0)[0].id == "PKG.OSV.MALICIOUS"
+
+
+def test_osv_placeholder_version_is_not_queried(tmp_path):
+    calls = []
+    fs = package_osv.scan("litellm", "0.0.0", cache_dir=tmp_path, client=osv_client({"vulns": [{"id": "GHSA-1"}]}, calls))
+    assert [f.id for f in fs] == ["PKG.OSV.VERSION_UNKNOWN"] and calls == []
+
+
+def test_osv_offline_switch(tmp_path, monkeypatch):
+    monkeypatch.setenv("LINEAGE_OFFLINE", "1")
+    assert [f.id for f in package_osv.scan("x", "1.0", cache_dir=tmp_path)] == ["PKG.OSV.UNAVAILABLE"]

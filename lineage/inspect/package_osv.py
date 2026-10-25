@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import time
 from pathlib import Path
 
@@ -33,6 +34,8 @@ def query(
     ttl: float = DEFAULT_TTL,
 ) -> list[dict]:
     """All OSV records for one package version. Raises httpx.HTTPError only if offline and nothing is cached."""
+    if client is None and os.environ.get("LINEAGE_OFFLINE"):  # hermetic tests / air-gapped installs
+        raise httpx.ConnectError("LINEAGE_OFFLINE is set")
     cache_dir = Path(cache_dir) if cache_dir is not None else DEFAULT_CACHE
     path = _cache_path(cache_dir, ecosystem, name, version)
     cached = None
@@ -95,6 +98,10 @@ def scan(
     client: httpx.Client | None = None,
     ttl: float = DEFAULT_TTL,
 ) -> list[Finding]:
+    if version.strip() in ("", "0", "0.0", "0.0.0", "unknown"):
+        # OSV treats 0.0.0 as older than every fix and answers with every advisory ever filed for the package.
+        return [finding("PKG.OSV.VERSION_UNKNOWN", f"OSV lookup skipped: no real version for {name}", "info", "integrity", "S3",
+                        [ev("field", f"{ecosystem}/{name}@{version}", "placeholder version")])]
     try:
         vulns = query(name, version, ecosystem, cache_dir, client=client, ttl=ttl)
     except httpx.HTTPError as e:
