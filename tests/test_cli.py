@@ -12,6 +12,6 @@ def test_help_lists_all_commands():
     assert all(c in out for c in COMMANDS)
 
 
-def test_stub_command_exits_cleanly(tiny_model, tiny_model_child):
-    r = runner.invoke(app, ["diff", str(tiny_model / "model.safetensors"), str(tiny_model_child / "model.safetensors")])
+def test_stub_command_exits_cleanly(tiny_model):
+    r = runner.invoke(app, ["intake", str(tiny_model)])  # Track B's command is still a stub
     assert r.exit_code == 2 and "not implemented" in r.output

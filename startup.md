@@ -23,6 +23,20 @@ uv run lineage --help
 ```
 Stop the server with `Ctrl+C`. Production: `uv run uvicorn lineage_server.app:app --host 0.0.0.0 --port 8000`.
 
+## Prove core (Track A) quick tour
+```bash
+uv run lineage keygen                                  # lineage.key / lineage.pub
+uv run lineage sign ./model_dir --name tiny --trust inspected   # -> model_dir.passport.json
+uv run lineage verify model_dir.passport.json --artifact ./model_dir
+uv run lineage diff ./parent_dir ./child_dir           # changed tensors + relative L2
+uv run lineage run -- python train.py                  # records inputs/outputs -> .lineage/runs/*/passport.json (trust: recorded)
+uv run lineage load-check ./model_dir --passport model_dir.passport.json
+uv run lineage bench hash                              # GB/s (add --path to use your own files)
+```
+In code: `import lineage; lineage.load("./model_dir")` re-hashes against `<dir>.passport.json` and raises `LoadRefused` on any mismatch, unpinned file or pickle. `lineage.LineageAutoModel.from_pretrained(...)` is the `transformers` drop-in.
+
+If `lineage` is "not found" on macOS, run `uv run python -m lineage.cli ...` (hidden `.pth` files can break the editable install).
+
 ## Test
 ```bash
 uv run pytest -q
