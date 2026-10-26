@@ -1,0 +1,4 @@
+[project]
+name = "hok-b64-codec"
+version = "1.0.0"
+license = "MIT"

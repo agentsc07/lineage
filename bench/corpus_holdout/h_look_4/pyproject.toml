@@ -1,0 +1,4 @@
+[project]
+name = "pillows"
+version = "1.0.0"
+license = "MIT"

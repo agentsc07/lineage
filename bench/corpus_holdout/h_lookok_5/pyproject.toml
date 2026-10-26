@@ -1,0 +1,4 @@
+[project]
+name = "lbh-parquetish"
+version = "1.0.0"
+license = "MIT"

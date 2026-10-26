@@ -95,3 +95,11 @@ uv run pytest -q
 - Regenerate the fixtures with `uv run python examples/make_demo_artifacts.py`.
 - Without a GPU worker, spectral/behavioural checks and card/code review show as skipped ("needs GPU worker"); parent identification and layer diff run on CPU.
 - Package advisories (OSV) need internet; offline the `litellm` step still blocks on the `.pth` start-up hook.
+
+## Validation run (held-out + real-world FP check)
+```bash
+uv run python -m bench.build_holdout                       # writes bench/corpus_holdout/
+python3 bench/fetch_realworld.py /tmp/lineage_rw           # downloads 200 PyPI wheels + 50 HF chat templates (outside the repo; ~1 GB)
+uv run python -m bench.run_validation /tmp/lineage_rw      # writes bench/results_holdout.json
+python3 bench/report_holdout.py                            # writes bench/results_holdout.md
+```
