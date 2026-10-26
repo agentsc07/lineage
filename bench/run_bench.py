@@ -25,8 +25,13 @@ def _check_intake(item: dict, root: Path, policy, gpu_url: str, env: str = "dev"
     mandatory human-approval quarantine of every tool as a detection.)"""
     from lineage.intake.pipeline import run_to_decision
     d, _ = run_to_decision(item["kind"], str(root / item["path"]), env, policy, "bench", gpu_url=gpu_url, now=NOW)
-    return (d.outcome == "block" or d.risk_score > policy.thresholds.allow), {"outcome": d.outcome, "risk": d.risk_score,
-                                                   "findings": sorted({f.id for f in d.findings if f.severity != "info"})}
+    real = sorted({f.id for f in d.findings if f.severity != "info"})
+    hard = [r for r in d.reasons if r.startswith(("policy block: ", "signature", "hash", "revoked", "known-malicious", "banned", "publisher"))]
+    # a block that exists only because the policy forbids the pickle format, with nothing dangerous found inside
+    policy_block = bool(hard) and all(r.startswith("policy block: ") for r in hard) and not any(
+        i.startswith(("MODEL.PICKLE.DANGEROUS", "MODEL.PICKLE.UNRESOLVED", "MODEL.PICKLE.UNPARSEABLE")) for i in real)
+    positive = d.outcome == "block" or d.risk_score > policy.thresholds.allow
+    return positive, {"outcome": d.outcome, "risk": d.risk_score, "findings": real, **({"policy_block": True} if policy_block else {})}
 
 
 def _check_bind(item: dict, root: Path, policy, gpu_url: str, env: str = "dev"):
@@ -93,8 +98,10 @@ def run_mode(corpus_dir: Path, policy, gpu_url: str, env: str = "dev") -> dict:
         by_cat[r["category"]].append(r)
     for cat, rs in by_cat.items():
         mal, ben = [r for r in rs if r["label"] == "malicious"], [r for r in rs if r["label"] == "benign"]
-        tp, fp = sum(r["positive"] for r in mal), sum(r["positive"] for r in ben)
-        c = {"n_malicious": len(mal), "n_benign": len(ben), "tp": tp, "fp": fp,
+        tp = sum(r["positive"] for r in mal)
+        pb = sum(r["positive"] and r.get("policy_block", False) for r in ben)  # blocked only because policy forbids the format
+        fp = sum(r["positive"] for r in ben) - pb
+        c = {"n_malicious": len(mal), "n_benign": len(ben), "tp": tp, "fp": fp, "policy_blocked": pb,
              "tpr": tp / len(mal) if mal else None, "fpr": fp / len(ben) if ben else None,
              "errors": sum("error" in r for r in rs)}
         if cat == "lora_backdoor":
@@ -110,7 +117,8 @@ def run_mode(corpus_dir: Path, policy, gpu_url: str, env: str = "dev") -> dict:
     return {"gpu_url": gpu_url, "environment": env, "categories": cats, "latency": lat,
             "overall": {"n": len(rows), "n_malicious": len(mal_all), "n_benign": len(ben_all),
                         "tpr": sum(r["positive"] for r in mal_all) / max(1, len(mal_all)),
-                        "fpr": sum(r["positive"] for r in ben_all) / max(1, len(ben_all))},
+                        "fpr": sum(r["positive"] and not r.get("policy_block", False) for r in ben_all) / max(1, len(ben_all)),
+                        "policy_blocked": sum(r["positive"] and r.get("policy_block", False) for r in ben_all)},
             "items": rows}
 
 

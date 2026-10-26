@@ -1,0 +1,5 @@
+{
+ "THUDM__glm-4-9b-chat": ["DEFENSIBLE", "auto_map points the tokenizer at Python shipped in the repo (needs trust_remote_code). Holding it for review is the policy working; the vendor is well known. The 'code not in directory' finding is a harness artefact: only tokenizer_config.json was fetched."],
+ "internlm__internlm2_5-7b-chat": ["DEFENSIBLE", "Same: auto_map tokenizer classes are repo-shipped Python (trust_remote_code). Correct to hold; 'missing files' is because the harness fetched only tokenizer_config.json."],
+ "moonshotai__Kimi-K2-Instruct": ["DEFENSIBLE", "Same: auto_map TikTokenTokenizer is repo-shipped Python (trust_remote_code). Correct to hold; 'missing files' is a harness artefact."]
+}

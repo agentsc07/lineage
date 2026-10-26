@@ -108,7 +108,7 @@ def scan(model_dir: Path, base_tokenizer_dir: Path | None = None) -> list[Findin
     if base_tokenizer_dir is None:
         if extra:
             out.append(finding("MODEL.TOKENIZER.ADDED_TOKENS_UNCHECKED", f"{len(extra)} non-special added token(s); no base tokenizer to compare",
-                               "low", "model", "S3", [ev("field", "tokenizer.json#added_tokens", repr(c[:60])) for c in list(extra)[:5]]))
+                               "info", "model", "S3", [ev("field", "tokenizer.json#added_tokens", repr(c[:60])) for c in list(extra)[:5]]))
         out.append(finding("MODEL.TOKENIZER.NO_BASE", "Tokenizer diff skipped: no base tokenizer supplied", "info", "model", "S3"))
         return out
 
@@ -129,6 +129,16 @@ def scan(model_dir: Path, base_tokenizer_dir: Path | None = None) -> list[Findin
         if gone:
             out.append(finding("MODEL.TOKENIZER.REMOVED_TOKENS", f"{len(gone)} base token(s) are missing", "medium", "model", "S3",
                                [ev("field", "tokenizer.json#model.vocab", repr(t[:60])) for t in gone[:8]]))
+    # a special token that keeps its text but moves to another id (or two that trade ids): the chat format the model was
+    # trained on now points at different embeddings
+    moved = {c: (base.added[c]["id"], a["id"]) for c, a in model.added.items()
+             if c in base.added and a["id"] is not None and base.added[c]["id"] is not None and a["id"] != base.added[c]["id"]}
+    if moved:
+        special = [c for c in moved if model.added[c]["special"] or base.added[c]["special"]]
+        out.append(finding("MODEL.TOKENIZER.SPECIAL_TOKEN_REMAPPED",
+                           f"{len(moved)} added/special token(s) have a different id than in the base tokenizer: " + ", ".join(f"{c!r} {a}->{b}" for c, (a, b) in list(moved.items())[:4]),
+                           "critical" if special else "high", "model", "S3",
+                           [ev("field", "tokenizer.json#added_tokens", f"{c!r}: id {a} -> {b}") for c, (a, b) in list(moved.items())[:8]]))
     new_added = {c for c in model.added if c not in base.added}
     if new_added:
         out.append(finding("MODEL.TOKENIZER.ADDED_TOKENS", f"{len(new_added)} added/special token(s) differ from the base", "medium", "model", "S3",

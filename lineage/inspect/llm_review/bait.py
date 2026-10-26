@@ -20,8 +20,14 @@ ASSURANCE = re.compile(r"\b(safe|benign|harmless|legitimate|false[- ]positive|no
                        r"trusted|verified|whitelisted|pass(ed)? (the )?(review|scan|audit))\b", re.I)
 STRONG = re.compile(r"ignore (all |any )?(previous|prior|above) instructions|note to (the )?(ai|llm|reviewer|assistant)|"
                     r"(this|the) (code|file|package|function|script|line) is (completely |totally )?(safe|benign|harmless)|"
-                    r"(not|isn'?t) (a )?(malware|malicious|backdoor)|nothing (suspicious|malicious) (here|to see)|"
+                    r"\b(this|it|code|file|package|script|function) (is not|isn'?t|is in no way) (a )?(malware|malicious|backdoor)|nothing (suspicious|malicious) (here|to see)|"
                     r"(security )?review(er)?:? (pass|approved|ok)|<\s*/?\s*(system|instructions?)\s*>", re.I)
+
+
+# Phrases that speak to a reader that is not the user: only these count in docstrings and long prose.
+ADDRESSED = re.compile(r"ignore (all |any )?(previous|prior|above) instructions|note to (the )?(ai|llm|reviewer|assistant)|<\s*/?\s*(system|instructions?)\s*>|"
+                       r"(this|the) (code|file|package|function|script|line) is (completely |totally )?(safe|benign|harmless)|"
+                       r"nothing (suspicious|malicious) (here|to see)|(security )?review(er)?:? (pass|approved|ok)", re.I)
 
 
 @dataclass(frozen=True)
@@ -32,10 +38,20 @@ class Bait:
     where: str  # comment | string
 
 
-def is_bait(text: str) -> bool:
+PROXIMITY = 80  # characters between the audience and what it is told: a sentence, not a page of prose
+
+
+def is_bait(text: str, strict: bool = False) -> bool:
+    """`strict` (docstrings and long prose, where words like "model" and "approve" are ordinary) accepts only the explicit phrases."""
+    if strict:
+        return bool(ADDRESSED.search(text))
     if STRONG.search(text):
         return True
-    return bool(AUDIENCE.search(text) and (DIRECTIVE.search(text) or ASSURANCE.search(text)))
+    for a in AUDIENCE.finditer(text):
+        window = text[max(0, a.start() - PROXIMITY): a.end() + PROXIMITY]
+        if DIRECTIVE.search(window) or ASSURANCE.search(window):
+            return True
+    return False
 
 
 def _comments(pf: PyFile):
@@ -57,8 +73,12 @@ def detect(package_dir: Path) -> list[Bait]:
                 if is_bait(text):
                     out.append(Bait(pf.rel, line, text[:200], "comment"))
         if pf.tree is not None:
+            docs = {n.body[0].value for n in ast.walk(pf.tree)
+                    if isinstance(n, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+                    and n.body and isinstance(n.body[0], ast.Expr) and isinstance(n.body[0].value, ast.Constant)}
             for node in ast.walk(pf.tree):
-                if isinstance(node, ast.Constant) and isinstance(node.value, str) and 12 <= len(node.value) <= 2000 and is_bait(node.value):
+                if isinstance(node, ast.Constant) and isinstance(node.value, str) and 12 <= len(node.value) <= 2000 and is_bait(
+                        node.value, strict=node in docs or len(node.value) > 300):
                     out.append(Bait(pf.rel, node.lineno, node.value.strip()[:200], "string"))
     return sorted(set(out), key=lambda b: (b.file, b.line))
 

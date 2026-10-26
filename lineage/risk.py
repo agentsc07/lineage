@@ -10,6 +10,24 @@ ADVISORY_PREFIX = "PKG.OSV."
 TRUST_PENALTY = {"unknown": 15, "declared": 5}
 
 
+# Findings no baseline, exception-free "signal" demotion or LLM verdict may lower: the artifact is known-bad, or carries
+# an unambiguous execution primitive. A *new* start-up hook is hard; one the previous release already had is `info`
+# at the scanner (`hook_findings`), never by this module.
+HARD_FINDING_IDS = (
+    "PKG.OSV.MAL",             # known-malicious advisory
+    "PKG.CODE.DECODE_EXEC",    # a decoded blob that is executed
+    "PKG.TAINT.ENCODED_EXEC",
+    "PKG.HOOK.STARTUP_HOOK",   # when severity is above info (i.e. new in this release)
+    "MODEL.PICKLE.DANGEROUS_GLOBAL",
+    "INTEGRITY.HASH_MISMATCH",
+    "PROV.SIGNATURE.INVALID",
+)
+
+
+def is_hard(finding: Finding) -> bool:
+    return finding.severity != "info" and finding.id.startswith(HARD_FINDING_IDS)
+
+
 def finding_points(finding: Finding) -> int:
     """What one finding adds. An LLM finding whose citation did not check out adds nothing; no finding ever subtracts."""
     if finding.source == "llm" and not finding.grounded:

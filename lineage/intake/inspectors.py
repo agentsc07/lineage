@@ -60,6 +60,7 @@ class IntakeContext:
     tensors: dict[str, str] | None = None
     findings: list[Finding] = field(default_factory=list)  # everything found so far
     gpu_down: bool = False
+    previous: tuple[Path, str] | None = None  # (folder, version) of the release before this one, for diff-aware review
 
     @property
     def root(self) -> Path | None:
@@ -117,6 +118,8 @@ def needs_deep(ctx: IntakeContext, findings: list[Finding]) -> tuple[bool, str]:
     """Tiering: deep stages (S4, S5) run when earlier ones raised suspicion or the environment demands it."""
     if ctx.environment in ("staging", "prod"):
         return True, f"required for {ctx.environment}"
+    if ctx.artifact_type in ("package", "tool") and any(f.id.startswith("PKG.SIGNAL.") for f in findings):
+        return True, "capability signals present; the reviewer decides whether they matter"
     sus = [f for f in findings if f.severity in ("medium", "high", "critical") and not f.id.startswith("SCANNER.")]
     if sus:
         return True, f"{len(sus)} finding(s) of medium or higher severity"
@@ -304,18 +307,53 @@ def package_osv(ctx: IntakeContext) -> list[Finding]:
     return osv.scan(ctx.name, ctx.version)
 
 
+def _dist_identity(root: Path) -> tuple[str, str] | None:
+    """(name, version) from a wheel's `<name>-<version>.dist-info` folder: proof that these bytes are a published release."""
+    for d in sorted(root.glob("*.dist-info"))[:1]:
+        name, _, version = d.name.removesuffix(".dist-info").partition("-")
+        if name and version:
+            return name.replace("_", "-"), version
+    return None
+
+
+def previous_release(ctx: IntakeContext) -> tuple[Path, str] | None:
+    """The release before this one, for diff-aware review: a local folder named in the sidecar (`previous_path`), else the
+    newest earlier wheel on PyPI when these bytes are a published wheel. None means single-release review."""
+    pp = ctx.metadata.get("previous_path")
+    if pp and Path(pp).is_dir():
+        return Path(pp), str(ctx.metadata.get("previous_version", "previous"))
+    ident = _dist_identity(ctx.root) if ctx.root else None
+    if ident is None:
+        return None
+    from lineage.inspect import package_previous
+
+    return package_previous.previous_release(*ident)
+
+
+@register("package", "S3")
+def package_baseline(ctx: IntakeContext) -> list[Finding]:
+    ctx.previous = prev = previous_release(ctx)
+    if prev:
+        return [make_finding("PKG.BASELINE.COMPARED", f"Compared with the previous release ({prev[1]}): only new capabilities are risks", "info", "code", "S3")]
+    return [make_finding("PKG.BASELINE.NONE", "No earlier release to compare with (first release, offline, or not a published wheel); "
+                         "capabilities are judged by combination only", "info", "code", "S3")]
+
+
 @register(("package", "tool"), "S3")
 def package_capabilities(ctx: IntakeContext) -> list[Finding]:
     from lineage.inspect import package_capabilities as caps
 
-    return caps.scan(ctx.root) if ctx.root else []
+    if not ctx.root:
+        return []
+    prev = ctx.previous if ctx.artifact_type == "package" else None
+    return caps.scan(ctx.root, prev[0] if prev else None, name=ctx.name, metadata=ctx.metadata)
 
 
 @register(("package", "tool"), "S3")
 def package_taint(ctx: IntakeContext) -> list[Finding]:
     from lineage.inspect import package_taint as taint
 
-    return taint.scan(ctx.root) if ctx.root else []
+    return taint.scan(ctx.root, ctx.name, ctx.metadata) if ctx.root else []
 
 
 def _manifest(ctx: IntakeContext) -> Path | None:
@@ -512,17 +550,24 @@ def gpu_card_review(ctx: IntakeContext) -> list[Finding]:
 
 @register(("package", "tool"), "S5")
 def gpu_code_review(ctx: IntakeContext) -> list[Finding]:
-    from lineage.inspect import package_capabilities, package_taint
+    """Send the code behind every signal and every finding to the reviewer. A signal alone adds no risk, so the reviewer is
+    what turns "this package can open sockets" into a grounded claim (or into nothing)."""
+    from lineage.inspect import package_capabilities
     from lineage.inspect.llm_review import client
 
     if ctx.root is None:
         return []
-    slices = package_taint.slices(ctx.root)
+    analysis = package_capabilities.analyse(ctx.root)
+    refs = [e.ref for f in ctx.findings if f.severity != "info" or f.id.startswith("PKG.SIGNAL.") for e in f.evidence if e.kind == "file_line"]
+    slices = client.build_slices(ctx.root, analysis, refs)
     if not slices:
         return []
-    caps = sorted(k for k, v in package_capabilities.extract(ctx.root).items() if v)
+    caps = sorted({h.cap for h in analysis.hits} | {k.kind for k in analysis.hooks})
     purpose = ctx.metadata.get("summary") or ctx.metadata.get("description") or _manifest_description(ctx) or ctx.name
-    return client.review_to_findings(ReviewCodeRequest(purpose=purpose, capabilities=caps, slices=slices), ctx.gpu_url or gpu.DEFAULT_URL)
+    diff = client.make_diff(ctx.previous[0], ctx.root) if ctx.previous else None
+    static = [f for f in ctx.findings if f.severity != "info"]
+    return client.review_to_findings(ReviewCodeRequest(purpose=purpose, capabilities=caps, slices=slices, diff=diff or None),
+                                     ctx.gpu_url or gpu.DEFAULT_URL, root=ctx.root, static_findings=static)
 
 
 def _manifest_description(ctx: IntakeContext) -> str | None:

@@ -8,6 +8,7 @@ Finding-id conventions the engine relies on (scanners and the pipeline emit them
 - `PKG.OSV.MAL*`: malicious-package advisory (hard block). Other `PKG.OSV.*` carry the vulnerability severity.
 - `PROV.COOLDOWN*`: release too recent (used when `released_at` is not passed).
 - `DATA.PII*`, `POLICY.LICENCE*`: policy violations.
+- `IDENTITY_IDS` (look-alike name / repo / publisher, repo-owner mismatch): critical blocks, high quarantines, whatever the score.
 """
 from __future__ import annotations
 
@@ -23,6 +24,13 @@ from lineage.schemas.policy import PolicyException, PolicyPack
 TRUST_ORDER = ["unknown", "declared", "inspected", "recorded", "attested"]
 SEVERITY_RANK = {"info": 0, "low": 1, "medium": 2, "high": 3, "critical": 4}
 PICKLE_SUFFIXES = (".pkl", ".pickle", ".pt", ".pth", ".bin", ".ckpt")
+# Hard-block reasons that come from the organisation's rules, not from anything found in the artifact. Reports count
+# these apart from detections and false positives.
+POLICY_BLOCK = "policy block: "
+# Findings that say the artifact is probably not what its name claims. They do not depend on the risk sum: a critical one
+# blocks and a high one quarantines on its own (a live exception can still accept them).
+IDENTITY_IDS = ("PKG.PROV.LOOKALIKE_NAME", "PKG.PROV.LOOKALIKE_REPO", "PKG.PROV.REPO_OWNER_MISMATCH", "PKG.PROV.REPO_MISMATCH",
+                "PROV.LOOKALIKE.PUBLISHER")
 CAPABILITY_ALIASES = {
     "network_at_install": ("NETWORK_AT_INSTALL", "INSTALL.NETWORK"),
     "startup_hook": ("STARTUP_HOOK", "STARTUP.", ".PTH", "SITECUSTOMIZE"),
@@ -69,9 +77,9 @@ def hard_blocks(passport: PassportBody, findings: list[Finding], policy: PolicyP
     if not policy.model_files.allow_pickle:
         pickled = [p for p in passport.contents.files if p.lower().endswith(PICKLE_SUFFIXES)]
         if passport.artifact_type == "model" and pickled:
-            out.append(f"pickle model file not allowed by policy: {', '.join(sorted(pickled)[:3])}")
+            out.append(f"{POLICY_BLOCK}pickle model file not allowed by policy: {', '.join(sorted(pickled)[:3])}")
         elif _has_id(findings, "MODEL.PICKLE.", "MODEL.FORMAT.PICKLE"):
-            out.append("pickle content not allowed by policy")
+            out.append(f"{POLICY_BLOCK}pickle content not allowed by policy")
 
     for cap, f in _banned_hits(findings, policy.banned_capabilities):
         out.append(f"banned capability '{cap}': {f.title}")
@@ -161,6 +169,12 @@ def decide(
             if f.id.startswith("PKG.OSV.") and not f.id.startswith("PKG.OSV.MAL") and \
                     SEVERITY_RANK[f.severity] > SEVERITY_RANK[max_sev]:
                 soft.append(("block", f"{f.severity} vulnerability exceeds {environment} limit ({max_sev}): {f.title}"))
+
+    for f in _has_id(findings, *IDENTITY_IDS):
+        if f.severity == "critical":
+            soft.append(("block", f"identity: {f.title}"))
+        elif f.severity == "high":
+            soft.append(("quarantine", f"identity: {f.title}"))
 
     if not policy.data.pii_allowed:
         for f in _has_id(findings, "DATA.PII"):

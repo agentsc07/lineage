@@ -111,3 +111,12 @@ python3 bench/fetch_realworld.py /tmp/lineage_rw           # downloads 200 PyPI 
 uv run python -m bench.run_validation /tmp/lineage_rw      # writes bench/results_holdout.json
 python3 bench/report_holdout.py                            # writes bench/results_holdout.md
 ```
+
+## Precision / dev-set run
+```bash
+python3 bench/fetch_realworld.py /tmp/lineage_rw                 # PyPI top-200 wheels + 50 chat templates (system python3 has pip)
+uv run python -m bench.fetch_previous /tmp/lineage_rw            # the release before each, for diff-aware review
+uv run python -m bench.run_validation /tmp/lineage_rw out.json   # run twice (before/after) with different checkouts
+python3 bench/report_dev.py before.json after.json               # writes bench/results_dev.md
+```
+Package intake compares against the previous release: `previous_path` in `lineage.meta.json`, or (online, wheel with a `.dist-info`) the newest earlier wheel from PyPI. `LINEAGE_OFFLINE=1` disables the fetch. S5 sends the code behind every signal to the GPU worker's `/review/code`.
