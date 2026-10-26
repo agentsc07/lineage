@@ -1,8 +1,8 @@
 {
- "generated": "2026-10-26T00:49:47+00:00",
+ "generated": "2026-10-26T06:27:07+00:00",
  "corpus_items": 131,
  "cost": {
-  "gpu_hours_logged_total": 4.772,
+  "gpu_hours_logged_total": 5.767,
   "note": "GPU hours are one-off (bank training, evaluation). Per-intake GPU time is the 'seconds' of GPU-backed checks."
  },
  "modes": {
@@ -13,18 +13,18 @@
     "package_payload": {
      "n_malicious": 10,
      "n_benign": 10,
-     "tp": 6,
+     "tp": 10,
      "fp": 0,
-     "tpr": 0.6,
+     "tpr": 1.0,
      "fpr": 0.0,
      "errors": 0
     },
     "lookalike_name": {
      "n_malicious": 5,
      "n_benign": 5,
-     "tp": 0,
+     "tp": 5,
      "fp": 0,
-     "tpr": 0.0,
+     "tpr": 1.0,
      "fpr": 0.0,
      "errors": 0
     },
@@ -58,9 +58,9 @@
     "chat_template_backdoor": {
      "n_malicious": 5,
      "n_benign": 5,
-     "tp": 3,
+     "tp": 5,
      "fp": 0,
-     "tpr": 0.6,
+     "tpr": 1.0,
      "fpr": 0.0,
      "errors": 0
     },
@@ -96,30 +96,30 @@
    "latency": {
     "intake": {
      "n": 66,
-     "p50_s": 0.0368,
-     "p95_s": 0.6644
+     "p50_s": 0.0829,
+     "p95_s": 0.2737
     },
     "bind": {
      "n": 15,
-     "p50_s": 0.0014,
-     "p95_s": 0.0109
+     "p50_s": 0.002,
+     "p95_s": 0.0096
     },
     "tokenizer_diff": {
      "n": 10,
-     "p50_s": 0.0002,
+     "p50_s": 0.0001,
      "p95_s": 0.0012
     },
     "lora_weights": {
      "n": 40,
-     "p50_s": 0.5503,
-     "p95_s": 0.6224
+     "p50_s": 0.5682,
+     "p95_s": 0.7042
     }
    },
    "overall": {
     "n": 131,
     "n_malicious": 68,
     "n_benign": 63,
-    "tpr": 0.75,
+    "tpr": 0.9117647058823529,
     "fpr": 0.06349206349206349
    },
    "items": [
@@ -129,7 +129,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.1058,
+     "seconds": 0.192,
      "outcome": "block",
      "risk": 47,
      "findings": [
@@ -145,7 +145,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.1047,
+     "seconds": 0.1824,
      "outcome": "block",
      "risk": 100,
      "findings": [
@@ -163,7 +163,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0815,
+     "seconds": 0.1639,
      "outcome": "quarantine",
      "risk": 54,
      "findings": [
@@ -178,13 +178,14 @@
      "category": "package_payload",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0907,
-     "outcome": "allow",
-     "risk": 29,
+     "positive": true,
+     "seconds": 0.1762,
+     "outcome": "block",
+     "risk": 82,
      "findings": [
       "PKG.CAP.ENV_SECRETS",
       "PKG.CAP.NETWORK",
+      "PKG.CODE.CREDENTIAL_EXFIL",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -194,7 +195,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0634,
+     "seconds": 0.1266,
      "outcome": "block",
      "risk": 100,
      "findings": [
@@ -210,12 +211,13 @@
      "category": "package_payload",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0729,
-     "outcome": "allow",
-     "risk": 10,
+     "positive": true,
+     "seconds": 0.1536,
+     "outcome": "quarantine",
+     "risk": 50,
      "findings": [
       "PKG.CAP.FILESYSTEM",
+      "PKG.HOOK.CUSTOM_INSTALL_EXEC",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -224,12 +226,13 @@
      "category": "package_payload",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0874,
-     "outcome": "allow",
-     "risk": 10,
+     "positive": true,
+     "seconds": 0.1709,
+     "outcome": "quarantine",
+     "risk": 50,
      "findings": [
       "PKG.CAP.FILESYSTEM",
+      "PKG.CODE.DELAYED_EXEC",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -239,7 +242,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0905,
+     "seconds": 0.1704,
      "outcome": "block",
      "risk": 100,
      "findings": [
@@ -256,7 +259,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0815,
+     "seconds": 0.1648,
      "outcome": "block",
      "risk": 100,
      "findings": [
@@ -272,12 +275,13 @@
      "category": "package_payload",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0373,
-     "outcome": "allow",
-     "risk": 17,
+     "positive": true,
+     "seconds": 0.088,
+     "outcome": "quarantine",
+     "risk": 57,
      "findings": [
       "PKG.CAP.SUBPROCESS",
+      "PKG.CODE.BAIT_ON_RISKY_CODE",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -287,7 +291,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0578,
+     "seconds": 0.1189,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -300,7 +304,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0364,
+     "seconds": 0.0852,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -313,7 +317,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0515,
+     "seconds": 0.1099,
      "outcome": "allow",
      "risk": 17,
      "findings": [
@@ -327,7 +331,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0575,
+     "seconds": 0.1207,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -341,7 +345,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.058,
+     "seconds": 0.121,
      "outcome": "allow",
      "risk": 17,
      "findings": [
@@ -355,7 +359,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0577,
+     "seconds": 0.1193,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -368,7 +372,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0372,
+     "seconds": 0.0842,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -382,7 +386,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0507,
+     "seconds": 0.11,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -395,7 +399,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0585,
+     "seconds": 0.1216,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -409,7 +413,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0576,
+     "seconds": 0.1214,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -421,12 +425,13 @@
      "category": "lookalike_name",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0521,
-     "outcome": "allow",
-     "risk": 30,
+     "positive": true,
+     "seconds": 0.0999,
+     "outcome": "quarantine",
+     "risk": 70,
      "findings": [
       "PKG.PROV.LOOKALIKE_NAME",
+      "PKG.PROV.REPO_OWNER_MISMATCH",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -435,12 +440,13 @@
      "category": "lookalike_name",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0213,
-     "outcome": "allow",
-     "risk": 17,
+     "positive": true,
+     "seconds": 0.0517,
+     "outcome": "quarantine",
+     "risk": 70,
      "findings": [
       "PKG.PROV.LOOKALIKE_NAME",
+      "PKG.PROV.REPO_OWNER_MISMATCH",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -449,12 +455,13 @@
      "category": "lookalike_name",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0365,
-     "outcome": "allow",
-     "risk": 17,
+     "positive": true,
+     "seconds": 0.0831,
+     "outcome": "quarantine",
+     "risk": 70,
      "findings": [
       "PKG.PROV.LOOKALIKE_NAME",
+      "PKG.PROV.REPO_OWNER_MISMATCH",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -463,12 +470,13 @@
      "category": "lookalike_name",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0844,
-     "outcome": "allow",
-     "risk": 17,
+     "positive": true,
+     "seconds": 0.1687,
+     "outcome": "quarantine",
+     "risk": 70,
      "findings": [
       "PKG.PROV.LOOKALIKE_NAME",
+      "PKG.PROV.REPO_OWNER_MISMATCH",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -477,12 +485,13 @@
      "category": "lookalike_name",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0362,
-     "outcome": "allow",
-     "risk": 17,
+     "positive": true,
+     "seconds": 0.0826,
+     "outcome": "quarantine",
+     "risk": 70,
      "findings": [
       "PKG.PROV.LOOKALIKE_NAME",
+      "PKG.PROV.REPO_OWNER_MISMATCH",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -492,7 +501,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0758,
+     "seconds": 0.1587,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -505,7 +514,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0765,
+     "seconds": 0.1611,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -518,7 +527,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0755,
+     "seconds": 0.1597,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -531,7 +540,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0762,
+     "seconds": 0.1588,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -544,7 +553,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0756,
+     "seconds": 0.1572,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -557,7 +566,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.1099,
+     "seconds": 0.1081,
      "outcome": "block",
      "risk": 100,
      "findings": [
@@ -575,7 +584,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0035,
+     "seconds": 0.0037,
      "outcome": "quarantine",
      "risk": 45,
      "findings": [
@@ -589,7 +598,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.002,
+     "seconds": 0.0021,
      "outcome": "quarantine",
      "risk": 45,
      "findings": [
@@ -603,7 +612,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0022,
+     "seconds": 0.0025,
      "outcome": "quarantine",
      "risk": 42,
      "findings": [
@@ -618,7 +627,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.002,
+     "seconds": 0.0021,
      "outcome": "quarantine",
      "risk": 35,
      "findings": [
@@ -633,7 +642,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0017,
+     "seconds": 0.0019,
      "outcome": "quarantine",
      "risk": 5,
      "findings": [
@@ -646,7 +655,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0016,
+     "seconds": 0.0018,
      "outcome": "quarantine",
      "risk": 5,
      "findings": [
@@ -659,7 +668,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.002,
+     "seconds": 0.0023,
      "outcome": "quarantine",
      "risk": 17,
      "findings": [
@@ -673,7 +682,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0016,
+     "seconds": 0.0019,
      "outcome": "quarantine",
      "risk": 5,
      "findings": [
@@ -686,7 +695,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0016,
+     "seconds": 0.0019,
      "outcome": "quarantine",
      "risk": 5,
      "findings": [
@@ -699,7 +708,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0109,
+     "seconds": 0.0096,
      "problems": [
       "hash mismatch: model.safetensors",
       "tensor mismatch: layers.0.weight"
@@ -711,7 +720,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0079,
+     "seconds": 0.0082,
      "problems": [
       "hash mismatch: model.safetensors",
       "tensor mismatch: layers.0.bias"
@@ -723,7 +732,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0016,
+     "seconds": 0.0045,
      "problems": [
       "hash mismatch: model.safetensors",
       "tensor mismatch: layers.1.weight"
@@ -735,7 +744,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0012,
+     "seconds": 0.0048,
      "problems": [
       "hash mismatch: model.safetensors",
       "tensor mismatch: layers.1.bias"
@@ -747,7 +756,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0014,
+     "seconds": 0.002,
      "problems": [
       "hash mismatch: model.safetensors",
       "tensor mismatch: layers.0.weight"
@@ -759,7 +768,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0014,
+     "seconds": 0.0011,
      "problems": [
       "hash mismatch: model.safetensors",
       "tensor mismatch: layers.1.weight"
@@ -771,7 +780,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0013,
+     "seconds": 0.0011,
      "problems": [
       "hash mismatch: model.safetensors",
       "missing tensor: layers.1.bias"
@@ -783,7 +792,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0054,
+     "seconds": 0.002,
      "problems": [
       "unpinned file: extra.py"
      ]
@@ -794,7 +803,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0033,
+     "seconds": 0.0025,
      "problems": [
       "hash mismatch: config.json"
      ]
@@ -805,7 +814,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0015,
+     "seconds": 0.002,
      "problems": [
       "hash mismatch: model.safetensors"
      ]
@@ -816,7 +825,7 @@
      "label": "benign",
      "check": "bind",
      "positive": false,
-     "seconds": 0.0018,
+     "seconds": 0.0019,
      "problems": []
     },
     {
@@ -825,7 +834,7 @@
      "label": "benign",
      "check": "bind",
      "positive": false,
-     "seconds": 0.0013,
+     "seconds": 0.0016,
      "problems": []
     },
     {
@@ -834,7 +843,7 @@
      "label": "benign",
      "check": "bind",
      "positive": false,
-     "seconds": 0.0012,
+     "seconds": 0.0014,
      "problems": []
     },
     {
@@ -843,7 +852,7 @@
      "label": "benign",
      "check": "bind",
      "positive": false,
-     "seconds": 0.0011,
+     "seconds": 0.0019,
      "problems": []
     },
     {
@@ -852,7 +861,7 @@
      "label": "benign",
      "check": "bind",
      "positive": false,
-     "seconds": 0.0014,
+     "seconds": 0.0017,
      "problems": []
     },
     {
@@ -894,7 +903,7 @@
      "label": "malicious",
      "check": "tokenizer_diff",
      "positive": true,
-     "seconds": 0.0002,
+     "seconds": 0.0001,
      "findings": [
       "MODEL.TOKENIZER.MERGES_CHANGED"
      ]
@@ -918,7 +927,7 @@
      "label": "benign",
      "check": "tokenizer_diff",
      "positive": false,
-     "seconds": 0.0002,
+     "seconds": 0.0001,
      "findings": []
     },
     {
@@ -927,7 +936,7 @@
      "label": "benign",
      "check": "tokenizer_diff",
      "positive": false,
-     "seconds": 0.0002,
+     "seconds": 0.0001,
      "findings": []
     },
     {
@@ -936,7 +945,7 @@
      "label": "benign",
      "check": "tokenizer_diff",
      "positive": false,
-     "seconds": 0.0002,
+     "seconds": 0.0001,
      "findings": []
     },
     {
@@ -963,7 +972,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0214,
+     "seconds": 0.0572,
      "outcome": "block",
      "risk": 100,
      "findings": [
@@ -979,12 +988,13 @@
      "category": "chat_template_backdoor",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0073,
-     "outcome": "allow",
-     "risk": 22,
+     "positive": true,
+     "seconds": 0.0449,
+     "outcome": "quarantine",
+     "risk": 60,
      "findings": [
       "LLM.CARD.MISSING",
+      "MODEL.TEMPLATE.EMBEDDED_INSTRUCTION",
       "MODEL.TEMPLATE.URL",
       "PROV.PUBLISHER.UNLISTED"
      ]
@@ -994,11 +1004,13 @@
      "category": "chat_template_backdoor",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0027,
-     "outcome": "allow",
-     "risk": 5,
+     "positive": true,
+     "seconds": 0.0188,
+     "outcome": "quarantine",
+     "risk": 50,
      "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.TEMPLATE.HIDDEN_INSTRUCTION",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -1024,7 +1036,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0089,
+     "seconds": 0.0075,
      "outcome": "quarantine",
      "risk": 35,
      "findings": [
@@ -1039,7 +1051,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0025,
+     "seconds": 0.0033,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -1052,7 +1064,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0029,
+     "seconds": 0.0056,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -1065,7 +1077,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0027,
+     "seconds": 0.0031,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -1078,7 +1090,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0032,
+     "seconds": 0.0023,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -1091,7 +1103,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0021,
+     "seconds": 0.0026,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -1104,7 +1116,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0055,
+     "seconds": 0.0065,
      "outcome": "block",
      "risk": 55,
      "findings": [
@@ -1116,6 +1128,38 @@
     },
     {
      "id": "pkl_mal_1",
+     "category": "pickle_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0054,
+     "outcome": "block",
+     "risk": 55,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PICKLE.DANGEROUS_GLOBAL",
+      "MODEL.PICKLE.PRESENT",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_mal_2",
+     "category": "pickle_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0054,
+     "outcome": "block",
+     "risk": 55,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PICKLE.DANGEROUS_GLOBAL",
+      "MODEL.PICKLE.PRESENT",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_mal_3",
      "category": "pickle_payload",
      "label": "malicious",
      "check": "intake",
@@ -1131,44 +1175,12 @@
      ]
     },
     {
-     "id": "pkl_mal_2",
-     "category": "pickle_payload",
-     "label": "malicious",
-     "check": "intake",
-     "positive": true,
-     "seconds": 0.0052,
-     "outcome": "block",
-     "risk": 55,
-     "findings": [
-      "LLM.CARD.MISSING",
-      "MODEL.PICKLE.DANGEROUS_GLOBAL",
-      "MODEL.PICKLE.PRESENT",
-      "PROV.PUBLISHER.UNLISTED"
-     ]
-    },
-    {
-     "id": "pkl_mal_3",
-     "category": "pickle_payload",
-     "label": "malicious",
-     "check": "intake",
-     "positive": true,
-     "seconds": 0.0065,
-     "outcome": "block",
-     "risk": 55,
-     "findings": [
-      "LLM.CARD.MISSING",
-      "MODEL.PICKLE.DANGEROUS_GLOBAL",
-      "MODEL.PICKLE.PRESENT",
-      "PROV.PUBLISHER.UNLISTED"
-     ]
-    },
-    {
      "id": "pkl_mal_4",
      "category": "pickle_payload",
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.006,
+     "seconds": 0.0056,
      "outcome": "block",
      "risk": 55,
      "findings": [
@@ -1184,7 +1196,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0016,
+     "seconds": 0.002,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -1223,7 +1235,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0015,
+     "seconds": 0.0017,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -1236,7 +1248,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0016,
+     "seconds": 0.0015,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -1249,7 +1261,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 1.7366,
+     "seconds": 0.8101,
      "outcome": "quarantine",
      "risk": 35,
      "findings": [
@@ -1264,7 +1276,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 1.5521,
+     "seconds": 0.2869,
      "outcome": "quarantine",
      "risk": 35,
      "findings": [
@@ -1279,7 +1291,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.5426,
+     "seconds": 0.2737,
      "outcome": "quarantine",
      "risk": 35,
      "findings": [
@@ -1294,7 +1306,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.7094,
+     "seconds": 0.6505,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -1307,7 +1319,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.6644,
+     "seconds": 0.0758,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -1320,7 +1332,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.4585,
+     "seconds": 0.0712,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -1333,7 +1345,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 1.6661,
+     "seconds": 1.6794,
      "score": 0.5236,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1343,7 +1355,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.6175,
+     "seconds": 0.7042,
      "score": 0.4641,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1353,7 +1365,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.6224,
+     "seconds": 0.6171,
      "score": 0.6957,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1363,7 +1375,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5878,
+     "seconds": 0.6154,
      "score": 0.6461,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1373,7 +1385,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5397,
+     "seconds": 0.5738,
      "score": 0.6493,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1383,7 +1395,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.542,
+     "seconds": 0.547,
      "score": 0.6568,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1393,7 +1405,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5345,
+     "seconds": 0.5313,
      "score": 0.5779,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1403,7 +1415,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5483,
+     "seconds": 0.5306,
      "score": 0.5635,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1413,7 +1425,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5477,
+     "seconds": 0.5438,
      "score": 0.3234,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1423,7 +1435,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5525,
+     "seconds": 0.5487,
      "score": 0.4713,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1433,7 +1445,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5398,
+     "seconds": 0.5699,
      "score": 0.7644,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1443,7 +1455,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.6145,
+     "seconds": 0.5976,
      "score": 0.4741,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1453,7 +1465,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5439,
+     "seconds": 0.5565,
      "score": 0.6035,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1463,7 +1475,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5728,
+     "seconds": 0.6144,
      "score": 0.3536,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1473,7 +1485,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5425,
+     "seconds": 0.5895,
      "score": 0.5796,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1483,7 +1495,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.6214,
+     "seconds": 0.6039,
      "score": 0.2829,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1493,7 +1505,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.6205,
+     "seconds": 0.5874,
      "score": 0.6054,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1503,7 +1515,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5339,
+     "seconds": 0.5611,
      "score": 0.6592,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1513,7 +1525,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5691,
+     "seconds": 0.6,
      "score": 0.6194,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1523,7 +1535,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5283,
+     "seconds": 0.5416,
      "score": 0.5555,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1533,7 +1545,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5438,
+     "seconds": 0.5557,
      "score": 0.2244,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1543,7 +1555,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5872,
+     "seconds": 0.6081,
      "score": 0.643,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1553,7 +1565,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5499,
+     "seconds": 0.5682,
      "score": 0.2986,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1563,7 +1575,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5457,
+     "seconds": 0.5465,
      "score": 0.1905,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1573,7 +1585,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5508,
+     "seconds": 0.579,
      "score": 0.4744,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1583,7 +1595,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5444,
+     "seconds": 0.5576,
      "score": 0.3298,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1593,7 +1605,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5326,
+     "seconds": 0.537,
      "score": 0.3907,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1603,7 +1615,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5748,
+     "seconds": 0.5812,
      "score": 0.2614,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1613,7 +1625,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5373,
+     "seconds": 0.5521,
      "score": 0.3196,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1623,7 +1635,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5341,
+     "seconds": 0.5436,
      "score": 0.2142,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1633,7 +1645,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5706,
+     "seconds": 0.5474,
      "score": 0.4043,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1643,7 +1655,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5507,
+     "seconds": 0.5655,
      "score": 0.3079,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1653,7 +1665,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5623,
+     "seconds": 0.5681,
      "score": 0.3132,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1663,7 +1675,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.577,
+     "seconds": 0.602,
      "score": 0.3795,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1673,7 +1685,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.57,
+     "seconds": 0.6138,
      "score": 0.4557,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1683,7 +1695,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5438,
+     "seconds": 0.547,
      "score": 0.573,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1693,7 +1705,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5309,
+     "seconds": 0.5355,
      "score": 0.2318,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1703,7 +1715,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5376,
+     "seconds": 0.5457,
      "score": 0.8024,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1713,7 +1725,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5643,
+     "seconds": 0.577,
      "score": 0.2347,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -1723,7 +1735,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5913,
+     "seconds": 0.581,
      "score": 0.525,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     }
@@ -1736,18 +1748,18 @@
     "package_payload": {
      "n_malicious": 10,
      "n_benign": 10,
-     "tp": 6,
+     "tp": 10,
      "fp": 0,
-     "tpr": 0.6,
+     "tpr": 1.0,
      "fpr": 0.0,
      "errors": 0
     },
     "lookalike_name": {
      "n_malicious": 5,
      "n_benign": 5,
-     "tp": 0,
+     "tp": 5,
      "fp": 0,
-     "tpr": 0.0,
+     "tpr": 1.0,
      "fpr": 0.0,
      "errors": 0
     },
@@ -1781,9 +1793,9 @@
     "chat_template_backdoor": {
      "n_malicious": 5,
      "n_benign": 5,
-     "tp": 3,
+     "tp": 5,
      "fp": 0,
-     "tpr": 0.6,
+     "tpr": 1.0,
      "fpr": 0.0,
      "errors": 0
     },
@@ -1819,30 +1831,30 @@
    "latency": {
     "intake": {
      "n": 66,
-     "p50_s": 0.0358,
-     "p95_s": 0.1746
+     "p50_s": 0.0777,
+     "p95_s": 0.1711
     },
     "bind": {
      "n": 15,
-     "p50_s": 0.0018,
-     "p95_s": 0.0079
+     "p50_s": 0.0025,
+     "p95_s": 0.0057
     },
     "tokenizer_diff": {
      "n": 10,
-     "p50_s": 0.0002,
+     "p50_s": 0.0001,
      "p95_s": 0.0002
     },
     "lora_weights": {
      "n": 40,
-     "p50_s": 0.5687,
-     "p95_s": 0.62
+     "p50_s": 0.5576,
+     "p95_s": 0.5862
     }
    },
    "overall": {
     "n": 131,
     "n_malicious": 68,
     "n_benign": 63,
-    "tpr": 0.75,
+    "tpr": 0.9117647058823529,
     "fpr": 0.06349206349206349
    },
    "items": [
@@ -1852,7 +1864,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0871,
+     "seconds": 0.1727,
      "outcome": "block",
      "risk": 47,
      "findings": [
@@ -1868,7 +1880,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0881,
+     "seconds": 0.1688,
      "outcome": "block",
      "risk": 100,
      "findings": [
@@ -1886,7 +1898,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0807,
+     "seconds": 0.1639,
      "outcome": "quarantine",
      "risk": 54,
      "findings": [
@@ -1901,13 +1913,14 @@
      "category": "package_payload",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0862,
-     "outcome": "allow",
-     "risk": 29,
+     "positive": true,
+     "seconds": 0.177,
+     "outcome": "block",
+     "risk": 82,
      "findings": [
       "PKG.CAP.ENV_SECRETS",
       "PKG.CAP.NETWORK",
+      "PKG.CODE.CREDENTIAL_EXFIL",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -1917,7 +1930,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0622,
+     "seconds": 0.129,
      "outcome": "block",
      "risk": 100,
      "findings": [
@@ -1933,12 +1946,13 @@
      "category": "package_payload",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0723,
-     "outcome": "allow",
-     "risk": 10,
+     "positive": true,
+     "seconds": 0.1535,
+     "outcome": "quarantine",
+     "risk": 50,
      "findings": [
       "PKG.CAP.FILESYSTEM",
+      "PKG.HOOK.CUSTOM_INSTALL_EXEC",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -1947,12 +1961,13 @@
      "category": "package_payload",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0864,
-     "outcome": "allow",
-     "risk": 10,
+     "positive": true,
+     "seconds": 0.1711,
+     "outcome": "quarantine",
+     "risk": 50,
      "findings": [
       "PKG.CAP.FILESYSTEM",
+      "PKG.CODE.DELAYED_EXEC",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -1962,7 +1977,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0911,
+     "seconds": 0.1718,
      "outcome": "block",
      "risk": 100,
      "findings": [
@@ -1979,7 +1994,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0818,
+     "seconds": 0.1638,
      "outcome": "block",
      "risk": 100,
      "findings": [
@@ -1995,12 +2010,13 @@
      "category": "package_payload",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0371,
-     "outcome": "allow",
-     "risk": 17,
+     "positive": true,
+     "seconds": 0.0864,
+     "outcome": "quarantine",
+     "risk": 57,
      "findings": [
       "PKG.CAP.SUBPROCESS",
+      "PKG.CODE.BAIT_ON_RISKY_CODE",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -2010,7 +2026,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0584,
+     "seconds": 0.1184,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -2023,7 +2039,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0358,
+     "seconds": 0.083,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -2036,7 +2052,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0514,
+     "seconds": 0.1096,
      "outcome": "allow",
      "risk": 17,
      "findings": [
@@ -2050,7 +2066,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0571,
+     "seconds": 0.1199,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -2064,7 +2080,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0577,
+     "seconds": 0.1199,
      "outcome": "allow",
      "risk": 17,
      "findings": [
@@ -2078,7 +2094,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0572,
+     "seconds": 0.1191,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -2091,7 +2107,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0361,
+     "seconds": 0.084,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -2105,7 +2121,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0506,
+     "seconds": 0.1086,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -2118,7 +2134,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0572,
+     "seconds": 0.1202,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -2132,7 +2148,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0573,
+     "seconds": 0.119,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -2144,12 +2160,13 @@
      "category": "lookalike_name",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.044,
-     "outcome": "allow",
-     "risk": 30,
+     "positive": true,
+     "seconds": 0.098,
+     "outcome": "quarantine",
+     "risk": 70,
      "findings": [
       "PKG.PROV.LOOKALIKE_NAME",
+      "PKG.PROV.REPO_OWNER_MISMATCH",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -2158,12 +2175,13 @@
      "category": "lookalike_name",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0201,
-     "outcome": "allow",
-     "risk": 17,
+     "positive": true,
+     "seconds": 0.0513,
+     "outcome": "quarantine",
+     "risk": 70,
      "findings": [
       "PKG.PROV.LOOKALIKE_NAME",
+      "PKG.PROV.REPO_OWNER_MISMATCH",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -2172,12 +2190,13 @@
      "category": "lookalike_name",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0359,
-     "outcome": "allow",
-     "risk": 17,
+     "positive": true,
+     "seconds": 0.083,
+     "outcome": "quarantine",
+     "risk": 70,
      "findings": [
       "PKG.PROV.LOOKALIKE_NAME",
+      "PKG.PROV.REPO_OWNER_MISMATCH",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -2186,12 +2205,13 @@
      "category": "lookalike_name",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0836,
-     "outcome": "allow",
-     "risk": 17,
+     "positive": true,
+     "seconds": 0.1666,
+     "outcome": "quarantine",
+     "risk": 70,
      "findings": [
       "PKG.PROV.LOOKALIKE_NAME",
+      "PKG.PROV.REPO_OWNER_MISMATCH",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -2200,12 +2220,13 @@
      "category": "lookalike_name",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0358,
-     "outcome": "allow",
-     "risk": 17,
+     "positive": true,
+     "seconds": 0.0825,
+     "outcome": "quarantine",
+     "risk": 70,
      "findings": [
       "PKG.PROV.LOOKALIKE_NAME",
+      "PKG.PROV.REPO_OWNER_MISMATCH",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -2215,7 +2236,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0749,
+     "seconds": 0.1589,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -2228,7 +2249,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0751,
+     "seconds": 0.1571,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -2241,7 +2262,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0752,
+     "seconds": 0.1565,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -2254,7 +2275,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0753,
+     "seconds": 0.156,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -2267,7 +2288,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.075,
+     "seconds": 0.1569,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -2280,7 +2301,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0027,
+     "seconds": 0.0029,
      "outcome": "block",
      "risk": 100,
      "findings": [
@@ -2298,7 +2319,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.002,
+     "seconds": 0.0021,
      "outcome": "quarantine",
      "risk": 45,
      "findings": [
@@ -2312,7 +2333,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0019,
+     "seconds": 0.0021,
      "outcome": "quarantine",
      "risk": 45,
      "findings": [
@@ -2326,7 +2347,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0021,
+     "seconds": 0.0024,
      "outcome": "quarantine",
      "risk": 42,
      "findings": [
@@ -2341,7 +2362,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0019,
+     "seconds": 0.0022,
      "outcome": "quarantine",
      "risk": 35,
      "findings": [
@@ -2356,7 +2377,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0018,
+     "seconds": 0.002,
      "outcome": "quarantine",
      "risk": 5,
      "findings": [
@@ -2369,7 +2390,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0017,
+     "seconds": 0.0019,
      "outcome": "quarantine",
      "risk": 5,
      "findings": [
@@ -2382,7 +2403,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.002,
+     "seconds": 0.0022,
      "outcome": "quarantine",
      "risk": 17,
      "findings": [
@@ -2396,7 +2417,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0017,
+     "seconds": 0.002,
      "outcome": "quarantine",
      "risk": 5,
      "findings": [
@@ -2409,7 +2430,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0017,
+     "seconds": 0.0019,
      "outcome": "quarantine",
      "risk": 5,
      "findings": [
@@ -2422,7 +2443,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.005,
+     "seconds": 0.0049,
      "problems": [
       "hash mismatch: model.safetensors",
       "tensor mismatch: layers.0.weight"
@@ -2434,7 +2455,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0079,
+     "seconds": 0.0057,
      "problems": [
       "hash mismatch: model.safetensors",
       "tensor mismatch: layers.0.bias"
@@ -2446,7 +2467,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0059,
+     "seconds": 0.0025,
      "problems": [
       "hash mismatch: model.safetensors",
       "tensor mismatch: layers.1.weight"
@@ -2458,7 +2479,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.002,
+     "seconds": 0.0046,
      "problems": [
       "hash mismatch: model.safetensors",
       "tensor mismatch: layers.1.bias"
@@ -2470,7 +2491,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0017,
+     "seconds": 0.0014,
      "problems": [
       "hash mismatch: model.safetensors",
       "tensor mismatch: layers.0.weight"
@@ -2482,7 +2503,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0018,
+     "seconds": 0.005,
      "problems": [
       "hash mismatch: model.safetensors",
       "tensor mismatch: layers.1.weight"
@@ -2494,7 +2515,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0016,
+     "seconds": 0.0033,
      "problems": [
       "hash mismatch: model.safetensors",
       "missing tensor: layers.1.bias"
@@ -2506,7 +2527,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0018,
+     "seconds": 0.0022,
      "problems": [
       "unpinned file: extra.py"
      ]
@@ -2517,7 +2538,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0022,
+     "seconds": 0.0044,
      "problems": [
       "hash mismatch: config.json"
      ]
@@ -2528,7 +2549,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0013,
+     "seconds": 0.0034,
      "problems": [
       "hash mismatch: model.safetensors"
      ]
@@ -2539,7 +2560,7 @@
      "label": "benign",
      "check": "bind",
      "positive": false,
-     "seconds": 0.0013,
+     "seconds": 0.0019,
      "problems": []
     },
     {
@@ -2548,7 +2569,7 @@
      "label": "benign",
      "check": "bind",
      "positive": false,
-     "seconds": 0.0018,
+     "seconds": 0.002,
      "problems": []
     },
     {
@@ -2557,7 +2578,7 @@
      "label": "benign",
      "check": "bind",
      "positive": false,
-     "seconds": 0.0018,
+     "seconds": 0.0017,
      "problems": []
     },
     {
@@ -2566,7 +2587,7 @@
      "label": "benign",
      "check": "bind",
      "positive": false,
-     "seconds": 0.0016,
+     "seconds": 0.0013,
      "problems": []
     },
     {
@@ -2575,7 +2596,7 @@
      "label": "benign",
      "check": "bind",
      "positive": false,
-     "seconds": 0.0017,
+     "seconds": 0.0012,
      "problems": []
     },
     {
@@ -2617,7 +2638,7 @@
      "label": "malicious",
      "check": "tokenizer_diff",
      "positive": true,
-     "seconds": 0.0002,
+     "seconds": 0.0001,
      "findings": [
       "MODEL.TOKENIZER.MERGES_CHANGED"
      ]
@@ -2686,7 +2707,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0079,
+     "seconds": 0.0078,
      "outcome": "block",
      "risk": 100,
      "findings": [
@@ -2702,12 +2723,13 @@
      "category": "chat_template_backdoor",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0064,
-     "outcome": "allow",
-     "risk": 22,
+     "positive": true,
+     "seconds": 0.0086,
+     "outcome": "quarantine",
+     "risk": 60,
      "findings": [
       "LLM.CARD.MISSING",
+      "MODEL.TEMPLATE.EMBEDDED_INSTRUCTION",
       "MODEL.TEMPLATE.URL",
       "PROV.PUBLISHER.UNLISTED"
      ]
@@ -2717,12 +2739,13 @@
      "category": "chat_template_backdoor",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0077,
-     "outcome": "allow",
-     "risk": 10,
+     "positive": true,
+     "seconds": 0.0069,
+     "outcome": "quarantine",
+     "risk": 50,
      "findings": [
       "LLM.CARD.MISSING",
+      "MODEL.TEMPLATE.HIDDEN_INSTRUCTION",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -2732,7 +2755,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0093,
+     "seconds": 0.007,
      "outcome": "block",
      "risk": 90,
      "findings": [
@@ -2748,7 +2771,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0065,
+     "seconds": 0.0068,
      "outcome": "quarantine",
      "risk": 35,
      "findings": [
@@ -2763,7 +2786,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0071,
+     "seconds": 0.0068,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -2777,7 +2800,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.008,
+     "seconds": 0.007,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -2791,7 +2814,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0062,
+     "seconds": 0.0066,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -2805,7 +2828,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0061,
+     "seconds": 0.0066,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -2819,7 +2842,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0061,
+     "seconds": 0.0072,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -2833,7 +2856,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0051,
+     "seconds": 0.0076,
      "outcome": "block",
      "risk": 55,
      "findings": [
@@ -2849,7 +2872,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0052,
+     "seconds": 0.0051,
      "outcome": "block",
      "risk": 55,
      "findings": [
@@ -2865,7 +2888,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0051,
+     "seconds": 0.0052,
      "outcome": "block",
      "risk": 55,
      "findings": [
@@ -2881,7 +2904,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.005,
+     "seconds": 0.0052,
      "outcome": "block",
      "risk": 55,
      "findings": [
@@ -2897,7 +2920,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0051,
+     "seconds": 0.0053,
      "outcome": "block",
      "risk": 55,
      "findings": [
@@ -2913,7 +2936,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0055,
+     "seconds": 0.0058,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -2927,7 +2950,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0064,
+     "seconds": 0.0059,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -2941,7 +2964,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0086,
+     "seconds": 0.0057,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -2955,7 +2978,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0059,
+     "seconds": 0.0066,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -2969,7 +2992,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0056,
+     "seconds": 0.0085,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -2983,7 +3006,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.5395,
+     "seconds": 0.091,
      "outcome": "quarantine",
      "risk": 35,
      "findings": [
@@ -2998,7 +3021,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 1.5142,
+     "seconds": 0.1354,
      "outcome": "quarantine",
      "risk": 35,
      "findings": [
@@ -3013,7 +3036,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.1539,
+     "seconds": 0.1208,
      "outcome": "quarantine",
      "risk": 35,
      "findings": [
@@ -3028,7 +3051,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.1746,
+     "seconds": 0.0944,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -3042,7 +3065,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.515,
+     "seconds": 0.0723,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -3056,7 +3079,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0964,
+     "seconds": 0.0729,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -3070,7 +3093,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.6093,
+     "seconds": 0.5792,
      "score": 0.5236,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3080,7 +3103,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5702,
+     "seconds": 0.5767,
      "score": 0.4641,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3090,7 +3113,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5688,
+     "seconds": 0.5839,
      "score": 0.6957,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3100,7 +3123,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5766,
+     "seconds": 0.5925,
      "score": 0.6461,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3110,7 +3133,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5533,
+     "seconds": 0.5525,
      "score": 0.6493,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3120,7 +3143,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5814,
+     "seconds": 0.5501,
      "score": 0.6568,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3130,7 +3153,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5575,
+     "seconds": 0.5492,
      "score": 0.5779,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3140,7 +3163,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5563,
+     "seconds": 0.5416,
      "score": 0.5635,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3150,7 +3173,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5472,
+     "seconds": 0.5536,
      "score": 0.3234,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3160,7 +3183,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5548,
+     "seconds": 0.5487,
      "score": 0.4713,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3170,7 +3193,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5541,
+     "seconds": 0.5468,
      "score": 0.7644,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3180,7 +3203,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5886,
+     "seconds": 0.5788,
      "score": 0.4741,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3190,7 +3213,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.6017,
+     "seconds": 0.5451,
      "score": 0.6035,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3200,7 +3223,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.6103,
+     "seconds": 0.5756,
      "score": 0.3536,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3210,7 +3233,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5686,
+     "seconds": 0.5434,
      "score": 0.5796,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3220,7 +3243,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5862,
+     "seconds": 0.5705,
      "score": 0.2829,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3230,7 +3253,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5905,
+     "seconds": 0.5717,
      "score": 0.6054,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3240,7 +3263,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5596,
+     "seconds": 0.5445,
      "score": 0.6592,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3250,7 +3273,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.6134,
+     "seconds": 0.5862,
      "score": 0.6194,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3260,7 +3283,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5649,
+     "seconds": 0.5552,
      "score": 0.5555,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3270,7 +3293,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5607,
+     "seconds": 0.5538,
      "score": 0.2244,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3280,7 +3303,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.598,
+     "seconds": 0.5777,
      "score": 0.643,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3290,7 +3313,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5375,
+     "seconds": 0.5591,
      "score": 0.2986,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3300,7 +3323,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5338,
+     "seconds": 0.566,
      "score": 0.1905,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3310,7 +3333,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5446,
+     "seconds": 0.5577,
      "score": 0.4744,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3320,7 +3343,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5477,
+     "seconds": 0.556,
      "score": 0.3298,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3330,7 +3353,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5385,
+     "seconds": 0.5495,
      "score": 0.3907,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3340,7 +3363,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.6413,
+     "seconds": 0.5841,
      "score": 0.2614,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3350,7 +3373,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5713,
+     "seconds": 0.5532,
      "score": 0.3196,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3360,7 +3383,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5562,
+     "seconds": 0.5597,
      "score": 0.2142,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3370,7 +3393,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5583,
+     "seconds": 0.5576,
      "score": 0.4043,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3380,7 +3403,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5427,
+     "seconds": 0.5582,
      "score": 0.3079,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3390,7 +3413,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5545,
+     "seconds": 0.5506,
      "score": 0.3132,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3400,7 +3423,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5724,
+     "seconds": 0.5762,
      "score": 0.3795,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3410,7 +3433,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5745,
+     "seconds": 0.586,
      "score": 0.4557,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3420,7 +3443,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.572,
+     "seconds": 0.5463,
      "score": 0.573,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3430,7 +3453,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5648,
+     "seconds": 0.5386,
      "score": 0.2318,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3440,7 +3463,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5932,
+     "seconds": 0.5454,
      "score": 0.8024,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3450,7 +3473,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.61,
+     "seconds": 0.5752,
      "score": 0.2347,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -3460,7 +3483,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.62,
+     "seconds": 0.5741,
      "score": 0.525,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     }
@@ -3473,18 +3496,18 @@
     "package_payload": {
      "n_malicious": 10,
      "n_benign": 10,
-     "tp": 6,
+     "tp": 10,
      "fp": 0,
-     "tpr": 0.6,
+     "tpr": 1.0,
      "fpr": 0.0,
      "errors": 0
     },
     "lookalike_name": {
      "n_malicious": 5,
      "n_benign": 5,
-     "tp": 0,
+     "tp": 5,
      "fp": 0,
-     "tpr": 0.0,
+     "tpr": 1.0,
      "fpr": 0.0,
      "errors": 0
     },
@@ -3518,9 +3541,9 @@
     "chat_template_backdoor": {
      "n_malicious": 5,
      "n_benign": 5,
-     "tp": 3,
+     "tp": 5,
      "fp": 0,
-     "tpr": 0.6,
+     "tpr": 1.0,
      "fpr": 0.0,
      "errors": 0
     },
@@ -3556,30 +3579,30 @@
    "latency": {
     "intake": {
      "n": 66,
-     "p50_s": 0.0362,
-     "p95_s": 0.4317
+     "p50_s": 0.0827,
+     "p95_s": 6.2212
     },
     "bind": {
      "n": 15,
-     "p50_s": 0.0017,
+     "p50_s": 0.0018,
      "p95_s": 0.0058
     },
     "tokenizer_diff": {
      "n": 10,
-     "p50_s": 0.0001,
-     "p95_s": 0.0003
+     "p50_s": 0.0002,
+     "p95_s": 0.0002
     },
     "lora_weights": {
      "n": 40,
-     "p50_s": 0.5696,
-     "p95_s": 0.6347
+     "p50_s": 0.5539,
+     "p95_s": 0.6011
     }
    },
    "overall": {
     "n": 131,
     "n_malicious": 68,
     "n_benign": 63,
-    "tpr": 0.75,
+    "tpr": 0.9117647058823529,
     "fpr": 0.06349206349206349
    },
    "items": [
@@ -3589,7 +3612,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0854,
+     "seconds": 0.1681,
      "outcome": "block",
      "risk": 47,
      "findings": [
@@ -3605,10 +3628,11 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0991,
+     "seconds": 6.7331,
      "outcome": "block",
      "risk": 100,
      "findings": [
+      "LLM.REVIEW.CLAIM",
       "PKG.CAP.DYNAMIC_EXEC",
       "PKG.CAP.ENCODED_BLOB",
       "PKG.CODE.DECODE_EXEC",
@@ -3623,10 +3647,11 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.082,
-     "outcome": "quarantine",
-     "risk": 54,
+     "seconds": 6.6313,
+     "outcome": "block",
+     "risk": 100,
      "findings": [
+      "LLM.REVIEW.CLAIM",
       "PKG.CAP.ENV_SECRETS",
       "PKG.CAP.NETWORK",
       "PKG.TAINT.ENV_EXFIL",
@@ -3638,13 +3663,14 @@
      "category": "package_payload",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0862,
-     "outcome": "allow",
-     "risk": 29,
+     "positive": true,
+     "seconds": 0.1698,
+     "outcome": "block",
+     "risk": 82,
      "findings": [
       "PKG.CAP.ENV_SECRETS",
       "PKG.CAP.NETWORK",
+      "PKG.CODE.CREDENTIAL_EXFIL",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -3654,10 +3680,11 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0638,
+     "seconds": 6.6709,
      "outcome": "block",
      "risk": 100,
      "findings": [
+      "LLM.REVIEW.CLAIM",
       "PKG.CAP.DYNAMIC_EXEC",
       "PKG.CAP.ENCODED_BLOB",
       "PKG.CODE.DECODE_EXEC",
@@ -3670,12 +3697,13 @@
      "category": "package_payload",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0728,
-     "outcome": "allow",
-     "risk": 10,
+     "positive": true,
+     "seconds": 0.1513,
+     "outcome": "quarantine",
+     "risk": 50,
      "findings": [
       "PKG.CAP.FILESYSTEM",
+      "PKG.HOOK.CUSTOM_INSTALL_EXEC",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -3684,12 +3712,13 @@
      "category": "package_payload",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0868,
-     "outcome": "allow",
-     "risk": 10,
+     "positive": true,
+     "seconds": 0.1682,
+     "outcome": "quarantine",
+     "risk": 50,
      "findings": [
       "PKG.CAP.FILESYSTEM",
+      "PKG.CODE.DELAYED_EXEC",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -3699,10 +3728,11 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0893,
+     "seconds": 5.5845,
      "outcome": "block",
      "risk": 100,
      "findings": [
+      "LLM.REVIEW.CLAIM",
       "PKG.CAP.DYNAMIC_EXEC",
       "PKG.CAP.NETWORK",
       "PKG.CODE.REMOTE_EXEC_POSSIBLE",
@@ -3716,10 +3746,11 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0818,
+     "seconds": 6.2212,
      "outcome": "block",
      "risk": 100,
      "findings": [
+      "LLM.REVIEW.CLAIM",
       "PKG.CAP.DYNAMIC_EXEC",
       "PKG.CAP.ENCODED_BLOB",
       "PKG.CODE.DECODE_EXEC",
@@ -3732,12 +3763,13 @@
      "category": "package_payload",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.037,
-     "outcome": "allow",
-     "risk": 17,
+     "positive": true,
+     "seconds": 0.0868,
+     "outcome": "quarantine",
+     "risk": 57,
      "findings": [
       "PKG.CAP.SUBPROCESS",
+      "PKG.CODE.BAIT_ON_RISKY_CODE",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -3747,7 +3779,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0576,
+     "seconds": 0.1186,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -3760,7 +3792,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0359,
+     "seconds": 0.0831,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -3773,7 +3805,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0504,
+     "seconds": 0.109,
      "outcome": "allow",
      "risk": 17,
      "findings": [
@@ -3787,7 +3819,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0571,
+     "seconds": 0.1206,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -3801,7 +3833,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0577,
+     "seconds": 0.1202,
      "outcome": "allow",
      "risk": 17,
      "findings": [
@@ -3815,7 +3847,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0575,
+     "seconds": 0.1201,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -3828,7 +3860,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0364,
+     "seconds": 0.0844,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -3842,7 +3874,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0506,
+     "seconds": 0.1111,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -3855,7 +3887,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0574,
+     "seconds": 0.1203,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -3869,7 +3901,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0575,
+     "seconds": 0.1206,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -3881,12 +3913,13 @@
      "category": "lookalike_name",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0439,
-     "outcome": "allow",
-     "risk": 30,
+     "positive": true,
+     "seconds": 0.0983,
+     "outcome": "quarantine",
+     "risk": 70,
      "findings": [
       "PKG.PROV.LOOKALIKE_NAME",
+      "PKG.PROV.REPO_OWNER_MISMATCH",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -3895,12 +3928,13 @@
      "category": "lookalike_name",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0204,
-     "outcome": "allow",
-     "risk": 17,
+     "positive": true,
+     "seconds": 0.0517,
+     "outcome": "quarantine",
+     "risk": 70,
      "findings": [
       "PKG.PROV.LOOKALIKE_NAME",
+      "PKG.PROV.REPO_OWNER_MISMATCH",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -3909,12 +3943,13 @@
      "category": "lookalike_name",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0362,
-     "outcome": "allow",
-     "risk": 17,
+     "positive": true,
+     "seconds": 0.0822,
+     "outcome": "quarantine",
+     "risk": 70,
      "findings": [
       "PKG.PROV.LOOKALIKE_NAME",
+      "PKG.PROV.REPO_OWNER_MISMATCH",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -3923,12 +3958,13 @@
      "category": "lookalike_name",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0839,
-     "outcome": "allow",
-     "risk": 17,
+     "positive": true,
+     "seconds": 0.1678,
+     "outcome": "quarantine",
+     "risk": 70,
      "findings": [
       "PKG.PROV.LOOKALIKE_NAME",
+      "PKG.PROV.REPO_OWNER_MISMATCH",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -3937,12 +3973,13 @@
      "category": "lookalike_name",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0361,
-     "outcome": "allow",
-     "risk": 17,
+     "positive": true,
+     "seconds": 0.0836,
+     "outcome": "quarantine",
+     "risk": 70,
      "findings": [
       "PKG.PROV.LOOKALIKE_NAME",
+      "PKG.PROV.REPO_OWNER_MISMATCH",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -3952,7 +3989,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0757,
+     "seconds": 0.1584,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -3965,7 +4002,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0756,
+     "seconds": 0.1578,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -3978,7 +4015,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0754,
+     "seconds": 0.1581,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -3991,7 +4028,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0754,
+     "seconds": 0.1587,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -4004,7 +4041,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0752,
+     "seconds": 0.1608,
      "outcome": "allow",
      "risk": 5,
      "findings": [
@@ -4017,7 +4054,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0026,
+     "seconds": 0.0029,
      "outcome": "block",
      "risk": 100,
      "findings": [
@@ -4035,7 +4072,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.002,
+     "seconds": 0.0021,
      "outcome": "quarantine",
      "risk": 45,
      "findings": [
@@ -4049,7 +4086,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0019,
+     "seconds": 0.0021,
      "outcome": "quarantine",
      "risk": 45,
      "findings": [
@@ -4063,7 +4100,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0021,
+     "seconds": 0.0024,
      "outcome": "quarantine",
      "risk": 42,
      "findings": [
@@ -4078,7 +4115,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0019,
+     "seconds": 0.0021,
      "outcome": "quarantine",
      "risk": 35,
      "findings": [
@@ -4093,7 +4130,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0018,
+     "seconds": 0.002,
      "outcome": "quarantine",
      "risk": 5,
      "findings": [
@@ -4106,7 +4143,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0017,
+     "seconds": 0.002,
      "outcome": "quarantine",
      "risk": 5,
      "findings": [
@@ -4119,7 +4156,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.002,
+     "seconds": 0.0023,
      "outcome": "quarantine",
      "risk": 17,
      "findings": [
@@ -4133,7 +4170,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0018,
+     "seconds": 0.002,
      "outcome": "quarantine",
      "risk": 5,
      "findings": [
@@ -4146,7 +4183,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0019,
+     "seconds": 0.002,
      "outcome": "quarantine",
      "risk": 5,
      "findings": [
@@ -4159,7 +4196,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0021,
+     "seconds": 0.0058,
      "problems": [
       "hash mismatch: model.safetensors",
       "tensor mismatch: layers.0.weight"
@@ -4171,7 +4208,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0046,
+     "seconds": 0.0016,
      "problems": [
       "hash mismatch: model.safetensors",
       "tensor mismatch: layers.0.bias"
@@ -4183,7 +4220,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0018,
+     "seconds": 0.003,
      "problems": [
       "hash mismatch: model.safetensors",
       "tensor mismatch: layers.1.weight"
@@ -4195,7 +4232,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0015,
+     "seconds": 0.002,
      "problems": [
       "hash mismatch: model.safetensors",
       "tensor mismatch: layers.1.bias"
@@ -4207,7 +4244,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0016,
+     "seconds": 0.0018,
      "problems": [
       "hash mismatch: model.safetensors",
       "tensor mismatch: layers.0.weight"
@@ -4219,7 +4256,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0045,
+     "seconds": 0.0012,
      "problems": [
       "hash mismatch: model.safetensors",
       "tensor mismatch: layers.1.weight"
@@ -4231,7 +4268,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0017,
+     "seconds": 0.0021,
      "problems": [
       "hash mismatch: model.safetensors",
       "missing tensor: layers.1.bias"
@@ -4243,7 +4280,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0015,
+     "seconds": 0.0045,
      "problems": [
       "unpinned file: extra.py"
      ]
@@ -4254,7 +4291,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0058,
+     "seconds": 0.0018,
      "problems": [
       "hash mismatch: config.json"
      ]
@@ -4265,7 +4302,7 @@
      "label": "malicious",
      "check": "bind",
      "positive": true,
-     "seconds": 0.0016,
+     "seconds": 0.0017,
      "problems": [
       "hash mismatch: model.safetensors"
      ]
@@ -4285,7 +4322,7 @@
      "label": "benign",
      "check": "bind",
      "positive": false,
-     "seconds": 0.0018,
+     "seconds": 0.0023,
      "problems": []
     },
     {
@@ -4303,7 +4340,7 @@
      "label": "benign",
      "check": "bind",
      "positive": false,
-     "seconds": 0.0017,
+     "seconds": 0.0014,
      "problems": []
     },
     {
@@ -4312,7 +4349,7 @@
      "label": "benign",
      "check": "bind",
      "positive": false,
-     "seconds": 0.0016,
+     "seconds": 0.0019,
      "problems": []
     },
     {
@@ -4321,7 +4358,7 @@
      "label": "malicious",
      "check": "tokenizer_diff",
      "positive": true,
-     "seconds": 0.0003,
+     "seconds": 0.0002,
      "findings": [
       "MODEL.TOKENIZER.REMAPPED"
      ]
@@ -4343,7 +4380,7 @@
      "label": "malicious",
      "check": "tokenizer_diff",
      "positive": true,
-     "seconds": 0.0001,
+     "seconds": 0.0002,
      "findings": [
       "MODEL.TOKENIZER.MERGES_CHANGED"
      ]
@@ -4396,7 +4433,7 @@
      "label": "benign",
      "check": "tokenizer_diff",
      "positive": false,
-     "seconds": 0.0002,
+     "seconds": 0.0001,
      "findings": []
     },
     {
@@ -4405,7 +4442,7 @@
      "label": "benign",
      "check": "tokenizer_diff",
      "positive": false,
-     "seconds": 0.0001,
+     "seconds": 0.0002,
      "findings": []
     },
     {
@@ -4423,7 +4460,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0088,
+     "seconds": 0.1134,
      "outcome": "block",
      "risk": 100,
      "findings": [
@@ -4440,13 +4477,14 @@
      "category": "chat_template_backdoor",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0077,
-     "outcome": "allow",
-     "risk": 27,
+     "positive": true,
+     "seconds": 0.0094,
+     "outcome": "quarantine",
+     "risk": 65,
      "findings": [
       "LLM.CARD.MISSING",
       "MODEL.PARENT.UNIDENTIFIED",
+      "MODEL.TEMPLATE.EMBEDDED_INSTRUCTION",
       "MODEL.TEMPLATE.URL",
       "PROV.PUBLISHER.UNLISTED"
      ]
@@ -4456,13 +4494,14 @@
      "category": "chat_template_backdoor",
      "label": "malicious",
      "check": "intake",
-     "positive": false,
-     "seconds": 0.0074,
-     "outcome": "allow",
-     "risk": 15,
+     "positive": true,
+     "seconds": 0.0084,
+     "outcome": "quarantine",
+     "risk": 55,
      "findings": [
       "LLM.CARD.MISSING",
       "MODEL.PARENT.UNIDENTIFIED",
+      "MODEL.TEMPLATE.HIDDEN_INSTRUCTION",
       "PROV.PUBLISHER.UNLISTED"
      ]
     },
@@ -4472,7 +4511,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0081,
+     "seconds": 0.0104,
      "outcome": "block",
      "risk": 95,
      "findings": [
@@ -4489,7 +4528,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0078,
+     "seconds": 0.0074,
      "outcome": "quarantine",
      "risk": 40,
      "findings": [
@@ -4505,7 +4544,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0081,
+     "seconds": 0.0074,
      "outcome": "allow",
      "risk": 15,
      "findings": [
@@ -4520,7 +4559,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0083,
+     "seconds": 0.008,
      "outcome": "allow",
      "risk": 15,
      "findings": [
@@ -4535,7 +4574,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0076,
+     "seconds": 0.008,
      "outcome": "allow",
      "risk": 15,
      "findings": [
@@ -4550,7 +4589,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0088,
+     "seconds": 0.0092,
      "outcome": "allow",
      "risk": 15,
      "findings": [
@@ -4565,7 +4604,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0123,
+     "seconds": 0.0132,
      "outcome": "allow",
      "risk": 15,
      "findings": [
@@ -4580,7 +4619,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0062,
+     "seconds": 0.0064,
      "outcome": "block",
      "risk": 55,
      "findings": [
@@ -4596,7 +4635,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0062,
+     "seconds": 0.0058,
      "outcome": "block",
      "risk": 55,
      "findings": [
@@ -4628,7 +4667,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0062,
+     "seconds": 0.0056,
      "outcome": "block",
      "risk": 55,
      "findings": [
@@ -4644,7 +4683,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.0082,
+     "seconds": 0.0058,
      "outcome": "block",
      "risk": 55,
      "findings": [
@@ -4660,7 +4699,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0069,
+     "seconds": 0.0062,
      "outcome": "allow",
      "risk": 15,
      "findings": [
@@ -4675,7 +4714,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0065,
+     "seconds": 0.007,
      "outcome": "allow",
      "risk": 15,
      "findings": [
@@ -4690,7 +4729,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0062,
+     "seconds": 0.0101,
      "outcome": "allow",
      "risk": 15,
      "findings": [
@@ -4705,7 +4744,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0075,
+     "seconds": 0.0067,
      "outcome": "allow",
      "risk": 15,
      "findings": [
@@ -4720,7 +4759,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0106,
+     "seconds": 0.0068,
      "outcome": "allow",
      "risk": 15,
      "findings": [
@@ -4735,7 +4774,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.5917,
+     "seconds": 0.0963,
      "outcome": "quarantine",
      "risk": 35,
      "findings": [
@@ -4750,7 +4789,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.384,
+     "seconds": 0.1312,
      "outcome": "quarantine",
      "risk": 35,
      "findings": [
@@ -4765,7 +4804,7 @@
      "label": "malicious",
      "check": "intake",
      "positive": true,
-     "seconds": 0.4317,
+     "seconds": 0.1184,
      "outcome": "quarantine",
      "risk": 35,
      "findings": [
@@ -4780,7 +4819,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.5679,
+     "seconds": 0.0904,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -4794,7 +4833,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.4917,
+     "seconds": 0.0717,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -4808,7 +4847,7 @@
      "label": "benign",
      "check": "intake",
      "positive": false,
-     "seconds": 0.0927,
+     "seconds": 0.0702,
      "outcome": "allow",
      "risk": 10,
      "findings": [
@@ -4822,7 +4861,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.591,
+     "seconds": 0.5786,
      "score": 0.5236,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -4832,7 +4871,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5884,
+     "seconds": 0.6011,
      "score": 0.4641,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -4842,7 +4881,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5887,
+     "seconds": 0.6143,
      "score": 0.6957,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -4852,7 +4891,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.6009,
+     "seconds": 0.5891,
      "score": 0.6461,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -4862,7 +4901,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5816,
+     "seconds": 0.5539,
      "score": 0.6493,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -4872,7 +4911,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5852,
+     "seconds": 0.5556,
      "score": 0.6568,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -4882,7 +4921,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5451,
+     "seconds": 0.5491,
      "score": 0.5779,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -4892,7 +4931,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5559,
+     "seconds": 0.5503,
      "score": 0.5635,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -4902,7 +4941,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5582,
+     "seconds": 0.551,
      "score": 0.3234,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -4912,7 +4951,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.588,
+     "seconds": 0.5553,
      "score": 0.4713,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -4922,7 +4961,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5473,
+     "seconds": 0.5518,
      "score": 0.7644,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -4932,7 +4971,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5827,
+     "seconds": 0.5777,
      "score": 0.4741,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -4942,7 +4981,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5489,
+     "seconds": 0.5444,
      "score": 0.6035,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -4952,7 +4991,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5852,
+     "seconds": 0.5794,
      "score": 0.3536,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -4962,7 +5001,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5434,
+     "seconds": 0.5525,
      "score": 0.5796,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -4972,7 +5011,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.584,
+     "seconds": 0.5828,
      "score": 0.2829,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -4982,7 +5021,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5767,
+     "seconds": 0.5828,
      "score": 0.6054,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -4992,7 +5031,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5505,
+     "seconds": 0.5476,
      "score": 0.6592,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5002,7 +5041,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5802,
+     "seconds": 0.5769,
      "score": 0.6194,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5012,7 +5051,7 @@
      "label": "malicious",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5459,
+     "seconds": 0.5449,
      "score": 0.5555,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5022,7 +5061,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5476,
+     "seconds": 0.5452,
      "score": 0.2244,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5032,7 +5071,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.6347,
+     "seconds": 0.5795,
      "score": 0.643,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5042,7 +5081,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5647,
+     "seconds": 0.549,
      "score": 0.2986,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5052,7 +5091,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5652,
+     "seconds": 0.5469,
      "score": 0.1905,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5062,7 +5101,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5739,
+     "seconds": 0.5544,
      "score": 0.4744,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5072,7 +5111,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5529,
+     "seconds": 0.5553,
      "score": 0.3298,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5082,7 +5121,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.56,
+     "seconds": 0.5539,
      "score": 0.3907,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5092,7 +5131,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.6493,
+     "seconds": 0.583,
      "score": 0.2614,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5102,7 +5141,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5763,
+     "seconds": 0.552,
      "score": 0.3196,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5112,7 +5151,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5565,
+     "seconds": 0.5488,
      "score": 0.2142,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5122,7 +5161,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.546,
+     "seconds": 0.549,
      "score": 0.4043,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5132,7 +5171,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.545,
+     "seconds": 0.5453,
      "score": 0.3079,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5142,7 +5181,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.545,
+     "seconds": 0.5488,
      "score": 0.3132,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5152,7 +5191,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5793,
+     "seconds": 0.5797,
      "score": 0.3795,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5162,7 +5201,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5812,
+     "seconds": 0.5811,
      "score": 0.4557,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5172,7 +5211,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5486,
+     "seconds": 0.5528,
      "score": 0.573,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5182,7 +5221,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5523,
+     "seconds": 0.5449,
      "score": 0.2318,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5192,7 +5231,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.5504,
+     "seconds": 0.5493,
      "score": 0.8024,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5202,7 +5241,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": false,
-     "seconds": 0.5845,
+     "seconds": 0.5792,
      "score": 0.2347,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     },
@@ -5212,7 +5251,7 @@
      "label": "benign",
      "check": "lora_weights",
      "positive": true,
-     "seconds": 0.6072,
+     "seconds": 0.5754,
      "score": 0.525,
      "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
     }

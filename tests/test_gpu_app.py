@@ -17,7 +17,9 @@ def test_health_lists_endpoints():
     assert r["status"] == "ok" and "/weights/parent" in r["endpoints"] and "/review/code" in r["endpoints"]
 
 
-def test_reviewer_is_503_until_configured():
+def test_reviewer_is_503_when_llm_unreachable(monkeypatch):
+    from gpu_worker import reviewer_llm
+    monkeypatch.setattr(reviewer_llm, "is_up", lambda: False)
     r = client.post("/review/card", json={"card_text": "x", "measured": {}})
     assert r.status_code == 503 and "reviewer" in r.json()["detail"]
     r = client.post("/review/code", json={"purpose": "p", "slices": []})

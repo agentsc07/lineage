@@ -19,16 +19,21 @@ dependencies = [
     "scikit-learn>=1.9.1",
 ]
 
+[project.optional-dependencies]
+# GPU worker (Track D). Versions match the Brev L40S environment (driver 565 / CUDA 12.7 -> torch cu126 wheels).
+gpu = [
+    "torch==2.14.1",
+    "transformers==5.19.0",
+    "peft==0.21.2",
+    "accelerate==1.15.0",
+    "datasets==5.1.0",
+    "huggingface-hub==2.3.0",
+    "sentencepiece==0.2.2",
+    "tokenizers==0.23.3",
+]
+
 [project.scripts]
 lineage = "lineage.cli:app"
-
-[project.optional-dependencies]
-gpu = [
-    "numpy>=2.4.6",
-    "safetensors>=0.8.0",
-    "scikit-learn>=1.9.1",
-    "torch>=2.14.1",
-]
 
 [dependency-groups]
 dev = ["pytest>=8"]
@@ -43,3 +48,11 @@ packages = ["lineage", "lineage_server", "mcp_gateway"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu126", extra = "gpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true

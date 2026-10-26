@@ -9,7 +9,8 @@ from __future__ import annotations
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from gpu_worker import behaviour_api, modelio, notary_api, reviewer_api, weights_api
+from gpu_worker import behaviour_api, modelio, notary_api, reviewer_api, reviewer_llm, weights_api
+from gpu_worker.policy_check import policy_model_id
 from gpu_worker.weights_api import CALIBRATION, bank
 
 app = FastAPI(title="Lineage GPU worker", version="0.1.0")
@@ -34,6 +35,7 @@ def health() -> dict:
     if modelio.have_gpu():
         import torch
         gpu = torch.cuda.get_device_name(0)
+    reviewer_up = reviewer_api.reviewer_model() is not None and reviewer_llm.is_up()
     return {
         "status": "ok",
         "gpu": gpu,
@@ -45,9 +47,11 @@ def health() -> dict:
             "/behaviour/triggers": gpu is not None,
             "/notary/certify": gpu is not None,
             "/notary/check": gpu is not None,
-            "/review/code": False,  # reviewer not implemented yet (503)
-            "/review/card": False,
+            "/review/code": reviewer_up,  # needs vLLM on :8001 (scripts/serve_reviewer.sh), else 503
+            "/review/card": reviewer_up,
+            "/review/policy": gpu is not None,
         },
         "parent_bank": sorted(bank()),
         "reviewer_llm": reviewer_api.reviewer_model(),
+        "policy_model": policy_model_id(),
     }

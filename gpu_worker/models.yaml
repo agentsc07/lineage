@@ -2,8 +2,8 @@
 # PLACEHOLDERS: base_model is my working assumption until the owner supplies final IDs.
 base_model: nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1   # Nemotron Nano 4B (llama arch, ungated)
 fallback_base_model: Qwen/Qwen2.5-1.5B                # only if base_model download fails
-# LLM roles: to be filled in by the owner.
-reviewer_llm: null
+# LLM roles.
+reviewer_llm: nvidia/NVIDIA-Nemotron-Nano-9B-v2   # Nemotron Nano 9B v2 (hybrid Mamba-Transformer, ungated), served by vLLM on :8001
 # Reference bank of base models for parent fingerprinting (HF ids or local dirs).
 parent_bank:
   - nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1
