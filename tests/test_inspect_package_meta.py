@@ -64,7 +64,23 @@ def test_typosquats(policy):
     assert pp.lookalikes("reqeusts")[0][0] == "requests"
     assert pp.lookalikes("python_dateutil") == [] or pp.normalise("python_dateutil") in pp.top_packages()
     fs = pp.scan("reqeusts", "1", {"info": {}}, policy)
-    assert [f.id for f in fs] == ["PKG.PROV.LOOKALIKE_NAME"] and fs[0].severity == "high"
+    assert [f.id for f in fs] == ["PKG.PROV.LOOKALIKE_NAME"] and fs[0].severity == "critical"  # a disguise, not just a near miss
+
+
+@pytest.mark.parametrize("name,popular,why", [
+    ("numpyy", "numpy", "repeated letter"), ("pandass", "pandas", "plural"), ("urllib4", "urllib3", "digit"),
+    ("requests-dev", "requests", "affix"), ("py-requests", "requests", "affix"), ("req_uests", "requests", "separators"),
+])
+def test_typosquat_kinds(name, popular, why):
+    assert pp.lookalikes(name)[0][0] == popular and pp.lookalikes(name)[0][2] == why
+
+
+def test_repo_owner_mismatch_against_the_project_the_name_claims(policy):
+    bad = pp.scan("requests", "2", {"repo": "mallory/requests"}, policy)
+    assert "PKG.PROV.REPO_OWNER_MISMATCH" in ids(bad)
+    fake = pp.scan("litellm", "2", {"repo": "Berri-AI/litellm"}, policy)
+    assert next(f for f in fake if f.id == "PKG.PROV.REPO_OWNER_MISMATCH").severity == "critical"  # looks like BerriAI
+    assert "PKG.PROV.REPO_OWNER_MISMATCH" not in ids(pp.scan("requests", "2", {"repo": "psf/requests"}, policy))
 
 
 def test_unrelated_name_is_not_flagged():
@@ -99,6 +115,20 @@ def test_osv_cache_hits_and_ttl(tmp_path):
     assert len(calls) == 1
     package_osv.scan("x", "1", cache_dir=tmp_path, client=c, ttl=0)
     assert len(calls) == 2
+
+
+def test_osv_snapshot_answers_when_offline_and_uncached(tmp_path, monkeypatch):
+    monkeypatch.setenv("LINEAGE_OFFLINE", "1")
+    fs = package_osv.scan("litellm", "1.107.0", cache_dir=tmp_path)
+    assert [f.id for f in fs] == ["PKG.OSV.MALICIOUS"]
+    assert package_osv.scan("not-in-snapshot", "1.0", cache_dir=tmp_path)[0].id == "PKG.OSV.UNAVAILABLE"
+
+
+def test_osv_snapshot_when_the_network_call_fails(tmp_path):
+    def boom(request):
+        raise httpx.ConnectError("down")
+    c = httpx.Client(transport=httpx.MockTransport(boom))
+    assert package_osv.scan("litellm", "1.107.0", cache_dir=tmp_path, client=c)[0].id == "PKG.OSV.MALICIOUS"
 
 
 def test_osv_offline_falls_back(tmp_path):

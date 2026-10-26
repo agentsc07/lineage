@@ -42,10 +42,14 @@ ENCODED = {
     "bz2.decompress", "lzma.decompress", "codecs.decode",
 }
 SENSITIVE_PATH = re.compile(
-    r"(\.ssh\b|id_rsa|id_ed25519|\.aws/|\.npmrc|\.pypirc|\.netrc|\.git-credentials|\.docker/config|\.kube/config"
+    r"(\.ssh\b|id_rsa|id_ed25519|\.aws\b|\.npmrc|\.pypirc|\.netrc|\.git-credentials|\.docker/config|\.kube/config"
     r"|/etc/passwd|/etc/shadow|\.config/gcloud|\.env\b|Login Data|wallet\.dat)"
 )
 SECRET_KEY = re.compile(r"(KEY|TOKEN|SECRET|PASSW|CRED|AUTH)", re.I)
+TIME_SOURCES = {"datetime.datetime.now", "datetime.datetime.utcnow", "datetime.datetime.today", "datetime.date.today",
+                "datetime.now", "datetime.utcnow", "date.today", "time.time", "time.gmtime", "time.localtime", "time.strftime"}
+DELAY_MIN_SECONDS = 60
+INSTALL_COMMANDS = {"install", "develop", "egg_info", "install_lib", "install_scripts"}
 B64_LIKE = re.compile(r"^[A-Za-z0-9+/=_-]{200,}$")
 INSTALL_FILES = {"setup.py", "hatch_build.py", "_custom_build.py", "custom_build.py", "build_backend.py"}
 STARTUP_FILES = {"sitecustomize.py", "usercustomize.py"}
@@ -133,6 +137,12 @@ class _Visitor(ast.NodeVisitor):
             self.add("filesystem", node, d)
         if _matches(d, SUBPROCESS):
             self.add("subprocess", node, d)
+        if d in ("threading.Timer", "sched.scheduler.enter", "asyncio.call_later") and node.args:
+            delay = node.args[0]
+            long_delay = not isinstance(delay, ast.Constant) or (isinstance(delay.value, (int, float)) and delay.value >= DELAY_MIN_SECONDS)
+            if long_delay:
+                payload = ast.Module(body=[ast.Expr(value=a) for a in node.args[1:]] + [ast.Expr(value=k.value) for k in node.keywords], type_ignores=[])
+                self.add("delayed_exec", node, f"{d}(<delay>)", ("risky_payload",) if self._risky_under(payload) else ())
         if d in ("os.getenv", "os.getenvb", "getpass.getpass", "keyring.get_password", "dotenv.load_dotenv"):
             self.add("env_secrets", node, d)
         if d in DYN_EXEC:
@@ -157,6 +167,29 @@ class _Visitor(ast.NodeVisitor):
             isinstance(n, ast.Call) and self.names.dotted(n.func) == "chr" for a in node.args for n in ast.walk(a)
         ):
             self.add("obfuscation", node, "''.join(chr(...))")
+        self.generic_visit(node)
+
+    def _risky_under(self, node: ast.AST) -> bool:
+        """Does anything under `node` touch the network, run a command, exec code or write a file?"""
+        for sub in ast.walk(node):
+            if not isinstance(sub, ast.Call):
+                continue
+            d = self.names.dotted(sub.func) or ""
+            if _matches(d, NETWORK) or _matches(d, SUBPROCESS) or d in DYN_EXEC or d in ("shutil.rmtree", "os.remove", "os.unlink"):
+                return True
+            if d in ("open", "io.open") or (d.startswith("pathlib.Path") and d.rsplit(".", 1)[-1] in ("write_text", "write_bytes", "unlink")):
+                mode = next((a.value for a in sub.args[1:2] if isinstance(a, ast.Constant)), None)
+                mode = mode or next((k.value.value for k in sub.keywords if k.arg == "mode" and isinstance(k.value, ast.Constant)), "r")
+                if d != "open" and d != "io.open" or any(c in str(mode) for c in "wax+"):
+                    return True
+        return False
+
+    def visit_If(self, node: ast.If) -> None:
+        """Execution gated on the clock or calendar: `if datetime.now() > date(...): <payload>`."""
+        gated = [self.names.dotted(c.func) for c in ast.walk(node.test) if isinstance(c, ast.Call)]
+        if any(g in TIME_SOURCES for g in gated if g) and any(isinstance(c, ast.Compare) for c in ast.walk(node.test)):
+            if self._risky_under(ast.Module(body=node.body, type_ignores=[])):
+                self.add("delayed_exec", node, "date-gated branch", ("risky_payload",))
         self.generic_visit(node)
 
     def _contains_decode(self, call: ast.Call) -> bool:
@@ -285,12 +318,34 @@ def _derive_hooks(a: Analysis, pf: PyFile, hits: list[Hit], install: set[str]) -
                 a.hooks.append(Hook("startup_hook", pf.rel, n, line.strip()[:160]))
     elif name in STARTUP_FILES:
         a.hooks.append(Hook("startup_hook", pf.rel, 1, f"{name} runs on every interpreter start"))
+    if (pf.rel in install or name in INSTALL_FILES) and pf.tree is not None:
+        _custom_install_hooks(a, pf, hits)
     if pf.rel in install or name in INSTALL_FILES:
         for h in hits:
             if h.cap == "network":
                 a.hooks.append(Hook("network_at_install", h.file, h.line, h.snippet))
             elif h.cap in ("subprocess", "dynamic_exec", "encoded_blob", "env_secrets"):
                 a.hooks.append(Hook("install_exec", h.file, h.line, h.snippet))
+
+
+def _custom_install_hooks(a: Analysis, pf: PyFile, hits: list[Hit]) -> None:
+    """A setup.py (or build backend) that subclasses an install-time command and overrides what it runs, or registers one."""
+    names = Names(pf.tree)
+    for cls in (n for n in ast.walk(pf.tree) if isinstance(n, ast.ClassDef)):
+        bases = {(names.dotted(b) or "").rsplit(".", 1)[-1] for b in cls.bases}
+        if not bases & INSTALL_COMMANDS:
+            continue
+        methods = [m for m in cls.body if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef)) and m.name in ("run", "__init__", "finalize_options")]
+        if not methods:
+            continue
+        end = max(getattr(n, "end_lineno", cls.lineno) or cls.lineno for n in ast.walk(cls))
+        inside = [h for h in hits if h.file == pf.rel and cls.lineno <= h.line <= end
+                  and h.cap in ("network", "subprocess", "dynamic_exec", "encoded_blob", "env_secrets", "filesystem")]
+        kind = "custom_install_exec" if inside else "custom_install"
+        detail = f"class {cls.name}({', '.join(sorted(bases & INSTALL_COMMANDS))}) overrides {', '.join(m.name for m in methods)}"
+        if inside:
+            detail += f"; it uses {', '.join(sorted({h.cap for h in inside}))}"
+        a.hooks.append(Hook(kind, pf.rel, cls.lineno, detail))
 
 
 def _npm_hooks(a: Analysis, root: Path) -> None:
@@ -357,6 +412,8 @@ _TITLES = {
     "obfuscation": "Code uses obfuscation techniques",
 }
 _HOOK_TITLES = {
+    "custom_install": "setup.py overrides an install-time command",
+    "custom_install_exec": "setup.py overrides an install-time command and that command does things",
     "startup_hook": "Code runs automatically at interpreter start-up (.pth / sitecustomize)",
     "network_at_install": "Install-time code reaches the network",
     "install_exec": "Install-time code runs commands or dynamic code",
@@ -380,6 +437,8 @@ def findings_from(a: Analysis, only_new: bool = False) -> list[Finding]:
         sev = _BASE_SEVERITY[cap]
         if cap == "env_secrets" and not any(f in h.flags for h in hits for f in ("bulk", "secret_key", "sensitive_path")):
             sev = "low"
+        elif cap == "env_secrets" and any("sensitive_path" in h.flags for h in hits):
+            sev = "high"  # ~/.ssh, ~/.aws, credential files: reading them is rarely a package's business
         if cap == "filesystem" and only_new:
             sev = "low"
         out.append(finding(f"PKG.CAP.{cap.upper()}", _TITLES[cap] + new, sev, "code", "S4", _evidence(hits)))
@@ -389,12 +448,23 @@ def findings_from(a: Analysis, only_new: bool = False) -> list[Finding]:
     for h in _remote_exec_hits(a):
         out.append(finding("PKG.CODE.REMOTE_EXEC_POSSIBLE", f"Network access and dynamic execution in one file{new}",
                            "high", "code", "S4", [ev("file_line", h.ref, h.snippet)]))
+    delayed = by_cap.get("delayed_exec", [])
+    if delayed:
+        armed = any("risky_payload" in h.flags for h in delayed)
+        out.append(finding("PKG.CODE.DELAYED_EXEC", "Code runs later or only after a date" + (" and the delayed part does real work" if armed else "") + new,
+                           "critical" if armed else "high", "code", "S4", _evidence(delayed)))
+    secret_files = {h.file for h in by_cap.get("env_secrets", []) if "sensitive_path" in h.flags}
+    sending = {h.file for h in a.hits if h.cap in ("network", "subprocess")}
+    for f_ in sorted(secret_files & sending):
+        refs = [h for h in by_cap["env_secrets"] if h.file == f_ and "sensitive_path" in h.flags]
+        out.append(finding("PKG.CODE.CREDENTIAL_EXFIL", f"{f_} reads a credential location and can send data out{new}", "critical", "code", "S4",
+                           _evidence(refs, 3) + _evidence([h for h in a.hits if h.file == f_ and h.cap in ("network", "subprocess")], 3)))
     risky_files = {h.file for h in a.hits if h.cap in ("network", "subprocess", "dynamic_exec", "encoded_blob", "env_secrets")}
-    for kind in ("startup_hook", "network_at_install", "install_exec"):
+    for kind in ("startup_hook", "network_at_install", "install_exec", "custom_install", "custom_install_exec"):
         hooks = [k for k in a.hooks if k.kind == kind]
         if not hooks:
             continue
-        sev = "high" if kind != "install_exec" else "medium"
+        sev = "critical" if kind == "custom_install_exec" else "high" if kind != "install_exec" else "medium"
         if kind == "startup_hook" and any(k.file in risky_files for k in hooks):
             sev = "critical"
         out.append(finding(f"PKG.HOOK.{kind.upper()}", _HOOK_TITLES[kind] + new, sev, "code", "S4",
@@ -402,11 +472,29 @@ def findings_from(a: Analysis, only_new: bool = False) -> list[Finding]:
     return out
 
 
+def _bait_over_risky_code(a: Analysis, package_dir: Path) -> list[Finding]:
+    """Comments or strings that talk to a reviewer ("safe, AI should ignore") in a file that also runs commands,
+    reaches the network, execs code or reads secrets: the capability is real and someone is trying to hide it."""
+    from lineage.inspect.llm_review import bait
+
+    risky: dict[str, list[Hit]] = {}
+    for h in a.hits:
+        if h.cap in ("network", "subprocess", "dynamic_exec", "encoded_blob", "env_secrets"):
+            risky.setdefault(h.file, []).append(h)
+    out = []
+    for b in bait.detect(package_dir):
+        if b.file in risky:
+            out.append(finding("PKG.CODE.BAIT_ON_RISKY_CODE", f"{b.file} tells the reviewer to ignore it and also {risky[b.file][0].cap.replace('_', ' ')}s",
+                               "critical", "code", "S4", [ev("file_line", f"{b.file}:{b.line}", b.text[:120]), *_evidence(risky[b.file], 2)]))
+            risky.pop(b.file)
+    return out
+
+
 def scan(package_dir: Path, previous: Path | None = None) -> list[Finding]:
     """Findings for risky capabilities; if `previous` is given, only newly added capabilities are raised."""
     cur = analyse(package_dir)
     if previous is None:
-        return findings_from(cur)
+        return findings_from(cur) + _bait_over_risky_code(cur, package_dir)
     old = analyse(previous)
     seen = {(h.cap, h.file) for h in old.hits}
     seen_hooks = {(k.kind, k.file) for k in old.hooks}

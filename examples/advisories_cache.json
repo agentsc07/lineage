@@ -1,0 +1,370 @@
+{
+ "_comment": "Snapshot of OSV records used when OSV is unreachable and nothing is cached. Refresh with examples/refresh_advisories_cache.py. Key: ecosystem|name|version.",
+ "fetched": "2026-10-26",
+ "advisories": {
+  "PyPI|litellm|1.82.7": [
+   {
+    "id": "GHSA-3cv6-jpf6-8222",
+    "aliases": [
+     "CVE-2026-84377",
+     "PYSEC-2026-4066"
+    ],
+    "summary": "LiteLLM: Authenticated SSRF and provider-credential exfiltration via unvalidated request-body routing parameters",
+    "database_specific": {
+     "severity": "MODERATE"
+    }
+   },
+   {
+    "id": "GHSA-4g5m-c9r5-49xf",
+    "aliases": [
+     "CVE-2026-59819",
+     "PYSEC-2026-3476"
+    ],
+    "summary": "LiteLLM: Local file read via request-supplied OIDC file references",
+    "database_specific": {
+     "severity": "LOW"
+    }
+   },
+   {
+    "id": "GHSA-4jcj-7x88-m979",
+    "aliases": [
+     "CVE-2026-12773",
+     "PYSEC-2026-4067"
+    ],
+    "summary": "LiteLLM: MCP Proxy Has Improper Authentication",
+    "database_specific": {
+     "severity": "MODERATE"
+    }
+   },
+   {
+    "id": "GHSA-4xpc-pv4p-pm3w",
+    "aliases": [
+     "CVE-2026-49468",
+     "PYSEC-2026-388"
+    ],
+    "summary": "LiteLLM: Authentication Bypass via Host Header Injection",
+    "database_specific": {
+     "severity": "CRITICAL"
+    }
+   },
+   {
+    "id": "GHSA-53mr-6c8q-9789",
+    "aliases": [
+     "CVE-2026-35029",
+     "PYSEC-2026-2597"
+    ],
+    "summary": "LiteLLM: Privilege escalation via unrestricted proxy configuration endpoint",
+    "database_specific": {
+     "severity": "HIGH"
+    }
+   },
+   {
+    "id": "GHSA-5jmr-gcrj-2c9q",
+    "aliases": [
+     "CVE-2026-59820",
+     "PYSEC-2026-3477"
+    ],
+    "summary": "LiteLLM: Arbitrary file write via path traversal in Skills archive extraction",
+    "database_specific": {
+     "severity": "MODERATE"
+    }
+   },
+   {
+    "id": "GHSA-5mg7-485q-xm76",
+    "aliases": [],
+    "summary": "Two LiteLLM versions published containing credential harvesting malware",
+    "database_specific": {
+     "severity": "CRITICAL"
+    }
+   },
+   {
+    "id": "GHSA-69x8-hrgq-fjj8",
+    "aliases": [],
+    "summary": "LiteLLM: Password hash exposure and pass-the-hash authentication bypass",
+    "database_specific": {
+     "severity": "HIGH"
+    }
+   },
+   {
+    "id": "GHSA-6wvf-77m9-58rm",
+    "aliases": [
+     "CVE-2026-37004",
+     "PYSEC-2026-3861"
+    ],
+    "summary": "LiteLLM vulnerable to server-side template injection in the /prompts/test endpoint",
+    "database_specific": {
+     "severity": "CRITICAL"
+    }
+   },
+   {
+    "id": "GHSA-7488-6r32-c95q",
+    "aliases": [
+     "CVE-2026-59822",
+     "PYSEC-2026-3479"
+    ],
+    "summary": "LiteLLM: MCP Authentication Bypass via OAuth2 Passthrough Fallback",
+    "database_specific": {
+     "severity": "HIGH"
+    }
+   },
+   {
+    "id": "GHSA-hx8v-g79f-8w5f",
+    "aliases": [
+     "CVE-2026-59823",
+     "PYSEC-2026-4070"
+    ],
+    "summary": "LiteLLM Proxy has server-side request forgery via the `user_config` request parameter",
+    "database_specific": {
+     "severity": "MODERATE"
+    }
+   },
+   {
+    "id": "GHSA-jjhc-v7c2-5hh6",
+    "aliases": [
+     "CVE-2026-35030",
+     "PYSEC-2026-390"
+    ],
+    "summary": "LiteLLM: Authentication bypass via OIDC userinfo cache key collision",
+    "database_specific": {
+     "severity": "CRITICAL"
+    }
+   },
+   {
+    "id": "GHSA-qrc4-49gv-mv9m",
+    "aliases": [
+     "CVE-2026-47101",
+     "PYSEC-2026-2598"
+    ],
+    "summary": "LiteLLM allows an authenticated internal_user to create API keys with access to routes that their role does not permit",
+    "database_specific": {
+     "severity": "HIGH"
+    }
+   },
+   {
+    "id": "GHSA-r75f-5x8p-qvmc",
+    "aliases": [
+     "CVE-2026-42208",
+     "PYSEC-2026-391"
+    ],
+    "summary": "LiteLLM has SQL Injection in Proxy API key verification",
+    "database_specific": {
+     "severity": "CRITICAL"
+    }
+   },
+   {
+    "id": "GHSA-v4p8-mg3p-g94g",
+    "aliases": [
+     "CVE-2026-42271",
+     "PYSEC-2026-2599"
+    ],
+    "summary": "LiteLLM: Authenticated command execution via MCP stdio test endpoints",
+    "database_specific": {
+     "severity": "HIGH"
+    }
+   },
+   {
+    "id": "GHSA-wpfp-gwwc-vwq6",
+    "aliases": [
+     "CVE-2026-47102",
+     "PYSEC-2026-2600"
+    ],
+    "summary": "LiteLLM allows a user to modify their own user_role via the /user/update endpoint",
+    "database_specific": {
+     "severity": "HIGH"
+    }
+   },
+   {
+    "id": "GHSA-wxxx-gvqv-xp7p",
+    "aliases": [
+     "CVE-2026-40217",
+     "PYSEC-2026-2601"
+    ],
+    "summary": "LiteLLM has a sandbox escape in custom-code guardrail",
+    "database_specific": {
+     "severity": "HIGH"
+    }
+   },
+   {
+    "id": "GHSA-xqmj-j6mv-4862",
+    "aliases": [
+     "CVE-2026-42203",
+     "PYSEC-2026-2602"
+    ],
+    "summary": "LiteLLM: Server-Side Template Injection in /prompts/test endpoint",
+    "database_specific": {
+     "severity": "HIGH"
+    }
+   },
+   {
+    "id": "MAL-2026-2144",
+    "aliases": [
+     "PYSEC-2026-2"
+    ],
+    "summary": "Malicious code in litellm (PyPI)",
+    "database_specific": {}
+   },
+   {
+    "id": "PYSEC-2026-2",
+    "aliases": [
+     "MAL-2026-2144"
+    ],
+    "summary": "Two litellm versions published containing credential harvesting malware",
+    "database_specific": {}
+   },
+   {
+    "id": "PYSEC-2026-2597",
+    "aliases": [
+     "CVE-2026-35029",
+     "GHSA-53mr-6c8q-9789"
+    ],
+    "summary": "LiteLLM: Privilege escalation via unrestricted proxy configuration endpoint",
+    "database_specific": {}
+   },
+   {
+    "id": "PYSEC-2026-2598",
+    "aliases": [
+     "CVE-2026-47101",
+     "GHSA-qrc4-49gv-mv9m"
+    ],
+    "summary": "LiteLLM allows an authenticated internal_user to create API keys with access to routes that their role does not permit",
+    "database_specific": {}
+   },
+   {
+    "id": "PYSEC-2026-2599",
+    "aliases": [
+     "CVE-2026-42271",
+     "GHSA-v4p8-mg3p-g94g"
+    ],
+    "summary": "LiteLLM: Authenticated command execution via MCP stdio test endpoints",
+    "database_specific": {}
+   },
+   {
+    "id": "PYSEC-2026-2600",
+    "aliases": [
+     "CVE-2026-47102",
+     "GHSA-wpfp-gwwc-vwq6"
+    ],
+    "summary": "LiteLLM allows a user to modify their own user_role via the /user/update endpoint",
+    "database_specific": {}
+   },
+   {
+    "id": "PYSEC-2026-2601",
+    "aliases": [
+     "CVE-2026-40217",
+     "GHSA-wxxx-gvqv-xp7p"
+    ],
+    "summary": "LiteLLM has a sandbox escape in custom-code guardrail",
+    "database_specific": {}
+   },
+   {
+    "id": "PYSEC-2026-2602",
+    "aliases": [
+     "CVE-2026-42203",
+     "GHSA-xqmj-j6mv-4862"
+    ],
+    "summary": "LiteLLM: Server-Side Template Injection in /prompts/test endpoint",
+    "database_specific": {}
+   },
+   {
+    "id": "PYSEC-2026-3476",
+    "aliases": [
+     "CVE-2026-59819",
+     "GHSA-4g5m-c9r5-49xf"
+    ],
+    "summary": "LiteLLM: Local file read via request-supplied OIDC file references",
+    "database_specific": {}
+   },
+   {
+    "id": "PYSEC-2026-3477",
+    "aliases": [
+     "CVE-2026-59820",
+     "GHSA-5jmr-gcrj-2c9q"
+    ],
+    "summary": "LiteLLM: Arbitrary file write via path traversal in Skills archive extraction",
+    "database_specific": {}
+   },
+   {
+    "id": "PYSEC-2026-3479",
+    "aliases": [
+     "CVE-2026-59822",
+     "GHSA-7488-6r32-c95q"
+    ],
+    "summary": "LiteLLM: MCP Authentication Bypass via OAuth2 Passthrough Fallback",
+    "database_specific": {}
+   },
+   {
+    "id": "PYSEC-2026-3861",
+    "aliases": [
+     "CVE-2026-37004",
+     "GHSA-6wvf-77m9-58rm"
+    ],
+    "summary": "LiteLLM vulnerable to server-side template injection in the /prompts/test endpoint",
+    "database_specific": {}
+   },
+   {
+    "id": "PYSEC-2026-388",
+    "aliases": [
+     "CVE-2026-49468",
+     "GHSA-4xpc-pv4p-pm3w"
+    ],
+    "summary": "LiteLLM: Authentication Bypass via Host Header Injection",
+    "database_specific": {}
+   },
+   {
+    "id": "PYSEC-2026-390",
+    "aliases": [
+     "CVE-2026-35030",
+     "GHSA-jjhc-v7c2-5hh6"
+    ],
+    "summary": "LiteLLM: Authentication bypass via OIDC userinfo cache key collision",
+    "database_specific": {}
+   },
+   {
+    "id": "PYSEC-2026-391",
+    "aliases": [
+     "CVE-2026-42208",
+     "GHSA-r75f-5x8p-qvmc"
+    ],
+    "summary": "LiteLLM has SQL Injection in Proxy API key verification",
+    "database_specific": {}
+   },
+   {
+    "id": "PYSEC-2026-4066",
+    "aliases": [
+     "CVE-2026-84377",
+     "GHSA-3cv6-jpf6-8222"
+    ],
+    "summary": "LiteLLM: Authenticated SSRF and provider-credential exfiltration via unvalidated request-body routing parameters",
+    "database_specific": {}
+   },
+   {
+    "id": "PYSEC-2026-4067",
+    "aliases": [
+     "CVE-2026-12773",
+     "GHSA-4jcj-7x88-m979"
+    ],
+    "summary": "LiteLLM: MCP Proxy Has Improper Authentication",
+    "database_specific": {}
+   },
+   {
+    "id": "PYSEC-2026-4070",
+    "aliases": [
+     "CVE-2026-59823",
+     "GHSA-hx8v-g79f-8w5f"
+    ],
+    "summary": "LiteLLM Proxy has server-side request forgery via the `user_config` request parameter",
+    "database_specific": {}
+   }
+  ],
+  "PyPI|litellm|1.107.0": [
+   {
+    "id": "MAL-2026-2144",
+    "aliases": [
+     "PYSEC-2026-2"
+    ],
+    "summary": "Malicious code in litellm (PyPI)",
+    "database_specific": {}
+   }
+  ]
+ }
+}

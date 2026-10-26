@@ -19,7 +19,8 @@ URL = re.compile(r"https?://[^\s'\"<>)]+|\bwww\.[^\s'\"<>)]+", re.I)
 # Phrases that have no business in a prompt-formatting template.
 HIGH_SIGNAL = re.compile(
     r"ignore (all |any |the )?(previous|prior|above|earlier)|disregard (the |all )?(previous|above|system)|"
-    r"do not (tell|mention|reveal|inform|disclose)|don'?t (tell|mention|reveal)|never (mention|reveal|disclose)|"
+    r"do not (tell|mention|reveal|inform|disclose)|(must|should|shall|may) not (tell|mention|reveal|inform|disclose)|"
+    r"keep (this|it|that) (a )?(secret|hidden)|don'?t (tell|mention|reveal)|never (mention|reveal|disclose)|"
     r"secret(ly)?\b|exfiltrat|without (telling|informing|the user)|hidden (instruction|command)|"
     r"(send|post|upload|forward)\b.{0,60}\b(to|at)\b.{0,40}(https?://|\bserver\b)|"
     r"(include|insert|add|append) (a |the |this )?(link|url|image|payload|backdoor)|\bbackdoor\b|\bjailbreak\b",
@@ -206,15 +207,34 @@ def scan_template(template: str, ref: str = "chat_template", known_good: str | N
                 reported.add(t)
                 break
 
+    # instruction text that only appears under some condition, whatever the condition tests (message text is covered above)
+    for node in list(tree.find_all(nodes.If)) + list(tree.find_all(nodes.CondExpr)):
+        branch = list(getattr(node, "body", []) or []) + list(getattr(node, "else_", []) or [])
+        if isinstance(node, nodes.CondExpr):
+            branch = [x for x in (node.expr1, node.expr2) if x is not None]
+        for b in branch:
+            for ln, t in _literal_text(b):
+                if t in reported or not (HIGH_SIGNAL.search(t) or (GENERIC.search(t) and len(t.split()) >= 4)):
+                    continue
+                reported.add(t)
+                out.append(finding("MODEL.TEMPLATE.CONDITIONAL_INSTRUCTION",
+                                   f"{ref}: instruction text appears only under a condition", "critical", "model", "S3",
+                                   [ev("field", f"{ref}:{ln}", t.strip()[:120])]))
     # hidden instructions and URLs in literal text
     for line, text in _literal_text(tree):
+        if text in reported:
+            continue
         m = HIGH_SIGNAL.search(text)
-        if m and text not in reported:
+        g = GENERIC.search(text)
+        if m:
             out.append(finding("MODEL.TEMPLATE.HIDDEN_INSTRUCTION", f"{ref}: template text contains a hidden instruction ({m.group(0)[:40]!r})",
+                               "critical", "model", "S3", [ev("field", f"{ref}:{line}", text.strip()[:120])]))
+        elif g and len(text.split()) >= 4:  # prose that tells the model what to do, in text every prompt will carry
+            out.append(finding("MODEL.TEMPLATE.EMBEDDED_INSTRUCTION", f"{ref}: template text instructs the model ({g.group(0)[:40]!r})",
                                "high", "model", "S3", [ev("field", f"{ref}:{line}", text.strip()[:120])]))
     urls = sorted({u for _, t in _literal_text(tree) for u in URL.findall(t)})
-    if urls:
-        out.append(finding("MODEL.TEMPLATE.URL", f"{ref}: template embeds {len(urls)} URL(s)", "medium", "model", "S3",
+    if urls:  # a prompt-formatting template has no reason to carry a link
+        out.append(finding("MODEL.TEMPLATE.URL", f"{ref}: template embeds {len(urls)} URL(s)", "high", "model", "S3",
                            [ev("url", u[:150]) for u in urls[:5]]))
 
     # diff vs known-good

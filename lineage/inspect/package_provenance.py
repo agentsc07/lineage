@@ -29,6 +29,43 @@ def _squash(name: str) -> str:
     return re.sub(r"[-_.]+", "", name.lower())
 
 
+AFFIXES = ("dev", "py", "python", "lib", "utils", "util", "core", "new", "official", "pkg", "api", "sdk", "client", "ng")
+DIGIT_FOR_LETTER = str.maketrans("013457", "olestt")  # 0->o 1->l 3->e 4->a(approx) 5->s 7->t; 1 is also i, handled below
+# Reasons that name a deliberate-looking disguise (as opposed to merely being close): scored as critical.
+DISGUISES = {"separators", "transposed", "repeated letter", "plural", "digit", "affix"}
+
+
+def _classify(sq: str, csq: str) -> tuple[int, str] | None:
+    """(distance, reason) if `sq` imitates `csq`, else None. Both are separator-squashed and lower-cased."""
+    if sq == csq:
+        return 0, "separators"
+    if len(csq) >= 5:
+        for a in AFFIXES:
+            if sq in (csq + a, a + csq):
+                return len(a), "affix"
+    if sq == csq + "s" and len(csq) >= 4:
+        return 1, "plural"
+    if sq.translate(DIGIT_FOR_LETTER) == csq or sq.replace("1", "i").translate(DIGIT_FOR_LETTER) == csq:
+        return 1, "digit"
+    limit = 0 if len(csq) <= 3 else 1 if len(csq) < 9 else 2
+    if limit == 0 or abs(len(csq) - len(sq)) > limit:
+        return None
+    d = damerau_levenshtein(sq, csq, limit)
+    if d > limit:
+        return None
+    if sorted(sq) == sorted(csq):
+        return d, "transposed"
+    if len(sq) == len(csq):
+        diff = [(x, y) for x, y in zip(sq, csq) if x != y]
+        if len(diff) == 1 and (diff[0][0].isdigit() or diff[0][1].isdigit()):
+            return d, "digit"
+        return d, "substitution"
+    longer, shorter = (sq, csq) if len(sq) > len(csq) else (csq, sq)
+    if d == 1 and any(longer[i] == longer[i - 1] and longer[:i] + longer[i + 1:] == shorter for i in range(1, len(longer))):
+        return d, "repeated letter"
+    return d, "extra or missing character"
+
+
 def lookalikes(name: str, top: tuple[str, ...] | None = None) -> list[tuple[str, int, str]]:
     """(popular name, distance, reason) for popular names this one imitates. Empty if the name is itself popular."""
     top = top if top is not None else top_packages()
@@ -37,18 +74,23 @@ def lookalikes(name: str, top: tuple[str, ...] | None = None) -> list[tuple[str,
         return []
     out = []
     for cand in top:
-        csq = _squash(cand)
-        if sq == csq:
-            out.append((cand, 0, "differs only in separators"))
-            continue
-        limit = 0 if len(csq) <= 3 else 1 if len(csq) < 9 else 2
-        if limit == 0 or abs(len(csq) - len(sq)) > limit:
-            continue
-        d = damerau_levenshtein(sq, csq, limit)
-        if d <= limit:
-            transposed = sorted(sq) == sorted(csq)
-            out.append((cand, d, "transposed characters" if transposed else f"{d} edit(s) away"))
+        hit = _classify(sq, _squash(cand))
+        if hit:
+            out.append((cand, hit[0], hit[1]))
     return sorted(out, key=lambda x: (x[1], x[0]))[:3]
+
+
+# Who publishes well-known projects: a release of one of these built from some other account is not the project.
+CANONICAL_OWNERS = {
+    "requests": "psf", "urllib3": "urllib3", "numpy": "numpy", "pandas": "pandas-dev", "scipy": "scipy",
+    "python-dateutil": "dateutil", "flask": "pallets", "jinja2": "pallets", "click": "pallets", "django": "django",
+    "pydantic": "pydantic", "fastapi": "tiangolo", "httpx": "encode", "pytest": "pytest-dev", "setuptools": "pypa",
+    "pip": "pypa", "cryptography": "pyca", "pillow": "python-pillow", "scikit-learn": "scikit-learn",
+    "matplotlib": "matplotlib", "sqlalchemy": "sqlalchemy", "pyyaml": "yaml", "aiohttp": "aio-libs",
+    "boto3": "boto", "torch": "pytorch", "tensorflow": "tensorflow", "transformers": "huggingface",
+    "tokenizers": "huggingface", "datasets": "huggingface", "openai": "openai", "anthropic": "anthropics",
+    "langchain": "langchain-ai", "litellm": "BerriAI",
+}
 
 
 def _info(meta: dict) -> dict:
@@ -153,9 +195,24 @@ def scan(
 
     # look-alike package names
     for cand, dist, why in lookalikes(name)[:1]:
-        sev = "high" if dist == 0 or "transposed" in why else "medium"
+        sev = "critical" if why in DISGUISES else "high"
         out.append(finding("PKG.PROV.LOOKALIKE_NAME", f"Name '{name}' imitates popular package '{cand}' ({why})", sev,
                            "provenance", "S2", [ev("field", f"{name}#name", f"similar to {cand}, distance {dist}")]))
+
+    # repository owner vs the project the name claims to be
+    owners = {o for o, _ in declared} | ({metadata["repo"].split("/")[0]} if "/" in str(metadata.get("repo", "")) else set())
+    target = normalise(name) if normalise(name) in CANONICAL_OWNERS else next(
+        (c for c, _, _ in lookalikes(name)[:1] if c in CANONICAL_OWNERS), None)
+    if target and owners:
+        want = CANONICAL_OWNERS[target]
+        for owner in sorted(owners):
+            if owner.lower() == want.lower():
+                continue
+            lookalike_owner = _fold(owner) == _fold(want)
+            out.append(finding(
+                "PKG.PROV.REPO_OWNER_MISMATCH",
+                f"Source repo owner '{owner}' " + (f"looks like but is not '{want}'" if lookalike_owner else f"is not '{want}', who publishes {target}"),
+                "critical" if lookalike_owner else "high", "provenance", "S2", [ev("url", owner, f"expected {want} for {target}")]))
 
     # maintainer change
     if previous_metadata:
