@@ -5,6 +5,7 @@ import { loadBench } from "../lib/bench";
 import { ErrorBox, Header, Kpi, Loading } from "../components/ui";
 
 const pct = (n: number | null) => (n === null ? "not measured" : `${Math.round(n * 1000) / 10}%`);
+const sec = (n: number | null) => (n === null ? "not measured" : `${n.toFixed(1)} s`);
 const dec = (n: number | null, d = 3) => (n === null ? "not measured" : n.toFixed(d));
 const css = (v: string) => `rgb(var(--${v}))`;
 const tip = { contentStyle: { background: css("panel"), border: `1px solid ${css("line")}`, borderRadius: 8, fontSize: 12, color: css("ink") }, cursor: { fill: css("raised") } };
@@ -33,8 +34,10 @@ export default function Bench() {
         <Kpi label="Detection (attacks caught)" value={pct(m?.tpr ?? null)} sub={m ? `${m.malicious} labelled attacks · ${data.items ?? "?"} items in the corpus` : "not measured"} />
         <Kpi label="False positives" value={pct(m?.fpr ?? null)} sub={m ? `of ${m.benign} benign artifacts wrongly stopped` : undefined} />
         <Kpi label="Weight-space AUROC" value={dec(w?.auroc ?? null, 2)} sub={w ? `${ci} · ${w.nTest ?? "?"} held-out adapters` : undefined} />
-        <Kpi label="Cost per artifact" value={rv?.costUsd == null ? "not measured" : `$${rv.costUsd.toFixed(4)}`}
-          sub={data.gpuHours === null ? undefined : `${data.gpuHours} GPU hours logged in total (one-off bank and evaluation runs)`} />
+        <div title={data.cost?.formula ?? "not measured: bench/cost_log.csv missing"}>
+          <Kpi label="GPU cost per artifact ⓘ" value={data.cost?.usdPerArtifact == null ? "not measured" : `$${data.cost.usdPerArtifact.toFixed(3)}`}
+            sub={data.cost ? `${data.cost.gpuHours} GPU h logged × $1.74/h (L40S) ÷ ${data.cost.items ?? "?"} artifacts. Hover for the formula.` : undefined} />
+        </div>
       </div>
 
       <div className="grid xl:grid-cols-2 gap-4">
@@ -61,13 +64,19 @@ export default function Bench() {
               </dl>)}
           </section>
           <section className="card">
-            <div className="card-h flex-col !items-start !gap-0"><h2 className="h-title">LLM reviewer</h2><p className="text-xs text-faint">Can only raise risk; every claim must cite a checkable location</p></div>
-            {!rv ? <p className="p-4 text-sm text-mute">not measured: bench/reviewer.json has not been produced yet.</p> : (
-              <dl className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 text-sm">
-                <Stat k="Precision" v={pct(rv.precision)} /><Stat k="Recall" v={pct(rv.recall)} />
-                <Stat k="Latency" v={rv.latencyS === null ? "not measured" : `${rv.latencyS.toFixed(1)} s`} />
-                <Stat k="Cost per artifact" v={rv.costUsd === null ? "not measured" : `$${rv.costUsd.toFixed(4)}`} />
-              </dl>)}
+            <div className="card-h flex-col !items-start !gap-0"><h2 className="h-title">LLM reviewer</h2><p className="text-xs text-faint">Nemotron reviewer on labelled code, cards and templates; can only raise risk</p></div>
+            {!rv ? <p className="p-4 text-sm text-mute">not measured: bench/reviewer.json is missing.</p> : (
+              <>
+                <dl className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 text-sm">
+                  <Stat k="Precision" v={pct(rv.precision)} /><Stat k="Recall" v={pct(rv.recall)} />
+                  <Stat k="False positives" v={pct(rv.fpr)} />
+                  <Stat k="Latency p50" v={sec(rv.p50S)} /><Stat k="Latency p95" v={sec(rv.p95S)} />
+                  <Stat k="Tokens / second" v={rv.tokensPerS === null ? "not measured" : rv.tokensPerS.toFixed(1)} />
+                </dl>
+                <p className="px-4 pb-3 text-xs text-faint" title={rv.costUsd === null ? undefined : `${rv.wallS} s of GPU wall time ÷ 3600 × $1.74/h (L40S) ÷ ${rv.items} items`}>
+                  {rv.llm ?? "reviewer model not recorded"} · {rv.items ?? "?"} items · reviewer GPU cost per artifact {rv.costUsd === null ? "not measured" : `$${rv.costUsd.toFixed(4)}`} ⓘ
+                </p>
+              </>)}
           </section>
         </div>
 

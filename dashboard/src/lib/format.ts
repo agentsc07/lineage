@@ -27,6 +27,17 @@ export const statusOutcome: Record<ArtifactStatus, Outcome | null> = {
   submitted: null, quarantined: "quarantine", admitted: "allow",
   admitted_with_conditions: "allow_with_conditions", blocked: "block", revoked: "block",
 };
+/** What to call an artifact's state: revoked beats its old decision; a block that came from a monitor alert says so. */
+export type VerdictKey = Outcome | "revoked" | "block_monitor";
+export const verdictKey = (status: ArtifactStatus, outcome: Outcome | null | undefined, id: string, monitorIds: Set<string>): VerdictKey | null => {
+  if (status === "revoked") return "revoked";
+  const o = outcome ?? statusOutcome[status];
+  return o === "block" && monitorIds.has(id) ? "block_monitor" : o;
+};
+export const extraMeta: Record<"revoked" | "block_monitor", { label: string; cls: string; dot: string }> = {
+  revoked: { label: "Revoked", cls: "text-block bg-block/10 border-block/40 border-dashed", dot: "bg-block" },
+  block_monitor: { label: "Blocked (monitor)", cls: "text-block bg-block/10 border-block/30", dot: "bg-block" },
+};
 export const shortId = (id: string) => id.replace(/^lp:/, "").slice(0, 10);
 export const ago = (iso: string) => {
   const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
