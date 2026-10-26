@@ -40,6 +40,15 @@ def tick() -> None:
         print("    affected: " + ", ".join(n["label"] for n in a["blast_radius"]))
 
 
+def spectral() -> None:
+    """`spectral <parent>`: print the /weights/spectral response (score, then the most anomalous layers)."""
+    r = json.load(sys.stdin)
+    score = r["score"]
+    print(f"  parent {sys.argv[2]}; weight-space backdoor score {score:.2f} ({'suspicious' if score >= 0.5 else 'looks benign'})")
+    for layer, m in sorted(r.get("per_layer", {}).items(), key=lambda kv: -max(kv[1].values(), default=0))[:3]:
+        print(f"      {layer}: " + ", ".join(f"{k}={v:.3g}" for k, v in m.items()))
+
+
 def revoke() -> None:
     r = json.load(sys.stdin)
     print(f"  revoked; {len(r['blast_radius'])} downstream artifact(s) flagged: " + ", ".join(n["label"] for n in r["blast_radius"]))
@@ -92,4 +101,4 @@ def expiry() -> None:
 
 if __name__ == "__main__":
     {"stream": stream, "tick": tick, "revoke": revoke, "get": get, "expiry": expiry,
-                                  "trust": trust, "stamp": stamp, "advisory": advisory}[sys.argv[1]]()
+                                  "spectral": spectral, "trust": trust, "stamp": stamp, "advisory": advisory}[sys.argv[1]]()

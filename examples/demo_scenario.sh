@@ -93,6 +93,22 @@ note "Chain: ${DS_ID:0:19}… and ${PKG_ID:0:19}… -> ${MODEL_ID:0:19}…"
 step "2. Unknown model from a hub" "No passport. Parent found from weights, a few layers changed, hidden template instruction."
 intake model "$ART/shady-ft" prod; pause
 
+if [[ -n "${LINEAGE_DEMO_ADAPTER:-}" ]]; then
+  step "2b. Real backdoored adapter" "Weight-space score from the GPU worker on an adapter from the Brev bank (path on the worker's host)."
+  GPU="${LINEAGE_GPU_URL:-http://localhost:8800}"
+  P=$(curl -sf -m 120 -X POST "$GPU/weights/parent" -H 'content-type: application/json' \
+      -d "{\"model_path\":\"$LINEAGE_DEMO_ADAPTER\"}") || P=""
+  PARENT=$(py get parent <<<"${P:-null}" 2>/dev/null || true)
+  if [[ -z "$P" || -z "$PARENT" || "$PARENT" == None ]]; then
+    printf '  %sGPU worker could not identify a parent for %s%s\n' "$Y" "$LINEAGE_DEMO_ADAPTER" "$N"
+  else
+    curl -sf -m 300 -X POST "$GPU/weights/spectral" -H 'content-type: application/json' \
+      -d "{\"model_path\":\"$LINEAGE_DEMO_ADAPTER\",\"parent\":\"$PARENT\"}" | py spectral "$PARENT" \
+      || printf '  %s/weights/spectral failed%s\n' "$R" "$N"
+  fi
+  pause
+fi
+
 step "3. LiteLLM-style package" "Two hours old, look-alike repo, new .pth start-up file."
 py stamp "$ART/litellm-lookalike/lineage.meta.json" 2
 intake package "$ART/litellm-lookalike" prod; pause
