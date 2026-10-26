@@ -68,7 +68,8 @@ def _teacher_forced_probs(model, tok, prompts: list[str], gens: list[list[int]])
 
 
 def _js(p: torch.Tensor, q: torch.Tensor) -> torch.Tensor:
-    p, q = p.float().cuda(), q.float().cuda()
+    _dev = "cuda" if torch.cuda.is_available() else "cpu"
+    p, q = p.float().to(_dev), q.float().to(_dev)
     m = 0.5 * (p + q)
     kl = lambda a, b: (a * (torch.log(a + 1e-12) - torch.log(b + 1e-12))).sum(-1)
     return (0.5 * kl(p, m) + 0.5 * kl(q, m)) / math.log(2)  # in [0,1]
