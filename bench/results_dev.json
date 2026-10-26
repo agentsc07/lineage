@@ -1,0 +1,8161 @@
+{
+ "generated": "2026-10-26T06:59:00+00:00",
+ "environment": "dev, CPU, no GPU worker, LINEAGE_OFFLINE=1",
+ "holdout": {
+  "gpu_url": "http://127.0.0.1:9",
+  "environment": "dev",
+  "categories": {
+   "lookalike_name": {
+    "n_malicious": 6,
+    "n_benign": 6,
+    "tp": 6,
+    "fp": 0,
+    "policy_blocked": 0,
+    "tpr": 1.0,
+    "fpr": 0.0,
+    "errors": 0
+   },
+   "package_payload": {
+    "n_malicious": 10,
+    "n_benign": 10,
+    "tp": 10,
+    "fp": 0,
+    "policy_blocked": 0,
+    "tpr": 1.0,
+    "fpr": 0.0,
+    "errors": 0
+   },
+   "mcp_tool_poisoning": {
+    "n_malicious": 6,
+    "n_benign": 6,
+    "tp": 6,
+    "fp": 0,
+    "policy_blocked": 0,
+    "tpr": 1.0,
+    "fpr": 0.0,
+    "errors": 0
+   },
+   "chat_template_backdoor": {
+    "n_malicious": 6,
+    "n_benign": 6,
+    "tp": 6,
+    "fp": 0,
+    "policy_blocked": 0,
+    "tpr": 1.0,
+    "fpr": 0.0,
+    "errors": 0
+   },
+   "pickle_payload": {
+    "n_malicious": 6,
+    "n_benign": 6,
+    "tp": 6,
+    "fp": 0,
+    "policy_blocked": 6,
+    "tpr": 1.0,
+    "fpr": 0.0,
+    "errors": 0
+   },
+   "swapped_tokenizer": {
+    "n_malicious": 6,
+    "n_benign": 6,
+    "tp": 6,
+    "fp": 0,
+    "policy_blocked": 0,
+    "tpr": 1.0,
+    "fpr": 0.0,
+    "errors": 0
+   }
+  },
+  "latency": {
+   "intake": {
+    "n": 68,
+    "p50_s": 0.0231,
+    "p95_s": 0.1354
+   },
+   "tokenizer_diff": {
+    "n": 12,
+    "p50_s": 0.0002,
+    "p95_s": 0.0009
+   }
+  },
+  "overall": {
+   "n": 80,
+   "n_malicious": 40,
+   "n_benign": 40,
+   "tpr": 1.0,
+   "fpr": 0.0,
+   "policy_blocked": 6
+  },
+  "items": [
+   {
+    "id": "h_look_0",
+    "category": "lookalike_name",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.116,
+    "outcome": "quarantine",
+    "risk": 55,
+    "findings": [
+     "PKG.PROV.LOOKALIKE_NAME",
+     "PKG.PROV.REPO_OWNER_MISMATCH",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_look_1",
+    "category": "lookalike_name",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.1247,
+    "outcome": "quarantine",
+    "risk": 55,
+    "findings": [
+     "PKG.PROV.LOOKALIKE_NAME",
+     "PKG.PROV.REPO_OWNER_MISMATCH",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_look_2",
+    "category": "lookalike_name",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.1298,
+    "outcome": "block",
+    "risk": 70,
+    "findings": [
+     "PKG.PROV.LOOKALIKE_NAME",
+     "PKG.PROV.REPO_OWNER_MISMATCH",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_look_3",
+    "category": "lookalike_name",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0886,
+    "outcome": "quarantine",
+    "risk": 55,
+    "findings": [
+     "PKG.PROV.LOOKALIKE_NAME",
+     "PKG.PROV.REPO_OWNER_MISMATCH",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_look_4",
+    "category": "lookalike_name",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0657,
+    "outcome": "block",
+    "risk": 70,
+    "findings": [
+     "PKG.PROV.LOOKALIKE_NAME",
+     "PKG.PROV.REPO_OWNER_MISMATCH",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_look_5",
+    "category": "lookalike_name",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0394,
+    "outcome": "block",
+    "risk": 70,
+    "findings": [
+     "PKG.PROV.LOOKALIKE_NAME",
+     "PKG.PROV.REPO_OWNER_MISMATCH",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_lookok_0",
+    "category": "lookalike_name",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.1334,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_lookok_1",
+    "category": "lookalike_name",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.1261,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_lookok_2",
+    "category": "lookalike_name",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.078,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_lookok_3",
+    "category": "lookalike_name",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.0654,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_lookok_4",
+    "category": "lookalike_name",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.0853,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_lookok_5",
+    "category": "lookalike_name",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.1354,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_mal_popen_setup",
+    "category": "package_payload",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.1723,
+    "outcome": "quarantine",
+    "risk": 70,
+    "findings": [
+     "PKG.COMBO.IMPORT_TIME_EXEC",
+     "PKG.HOOK.INSTALL_EXEC",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_mal_chr_built_call",
+    "category": "package_payload",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.1349,
+    "outcome": "quarantine",
+    "risk": 45,
+    "findings": [
+     "PKG.COMBO.OBFUSCATED_PAYLOAD",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_mal_sitecustomize",
+    "category": "package_payload",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.1342,
+    "outcome": "block",
+    "risk": 45,
+    "findings": [
+     "PKG.HOOK.STARTUP_HOOK",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_mal_marshal_blob",
+    "category": "package_payload",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.1393,
+    "outcome": "block",
+    "risk": 85,
+    "findings": [
+     "PKG.CODE.DECODE_EXEC",
+     "PKG.TAINT.ENCODED_EXEC",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_mal_ctypes_system",
+    "category": "package_payload",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.1321,
+    "outcome": "quarantine",
+    "risk": 45,
+    "findings": [
+     "PKG.COMBO.IMPORT_TIME_EXEC",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_mal_aws_creds_http",
+    "category": "package_payload",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.1326,
+    "outcome": "quarantine",
+    "risk": 45,
+    "findings": [
+     "PKG.COMBO.CREDENTIAL_EXFIL",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_mal_env_socket",
+    "category": "package_payload",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.1345,
+    "outcome": "quarantine",
+    "risk": 45,
+    "findings": [
+     "PKG.TAINT.ENV_EXFIL",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_mal_builtins_exec",
+    "category": "package_payload",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.1294,
+    "outcome": "quarantine",
+    "risk": 45,
+    "findings": [
+     "PKG.COMBO.OBFUSCATED_PAYLOAD",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_mal_download_and_run",
+    "category": "package_payload",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.1232,
+    "outcome": "block",
+    "risk": 95,
+    "findings": [
+     "PKG.COMBO.IMPORT_TIME_EXEC",
+     "PKG.HOOK.INSTALL_EXEC",
+     "PKG.HOOK.NETWORK_AT_INSTALL",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_mal_shell_rc_persist",
+    "category": "package_payload",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.122,
+    "outcome": "quarantine",
+    "risk": 45,
+    "findings": [
+     "PKG.COMBO.FETCH_AND_RUN",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_ok_argcli",
+    "category": "package_payload",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.0863,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_ok_sqlite_store",
+    "category": "package_payload",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.1336,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_ok_envconfig",
+    "category": "package_payload",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.131,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_ok_b64_codec",
+    "category": "package_payload",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.1268,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_ok_gitwrap",
+    "category": "package_payload",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.0984,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_ok_portcheck",
+    "category": "package_payload",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.1311,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_ok_hashing",
+    "category": "package_payload",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.0981,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_ok_logging_setup",
+    "category": "package_payload",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.1304,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_ok_tmpfiles",
+    "category": "package_payload",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.1267,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkg_ok_version_setup",
+    "category": "package_payload",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.1354,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_tool_mal_param_override",
+    "category": "mcp_tool_poisoning",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0861,
+    "outcome": "quarantine",
+    "risk": 45,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED",
+     "TOOL.DESC.AGENT_INSTRUCTION"
+    ]
+   },
+   {
+    "id": "h_tool_mal_shadow_other_tools",
+    "category": "mcp_tool_poisoning",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0029,
+    "outcome": "block",
+    "risk": 85,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED",
+     "TOOL.DESC.AGENT_INSTRUCTION",
+     "TOOL.DESC.SHADOWING"
+    ]
+   },
+   {
+    "id": "h_tool_mal_undeclared_creds_read",
+    "category": "mcp_tool_poisoning",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0069,
+    "outcome": "block",
+    "risk": 82,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED",
+     "TOOL.INTENT.UNDECLARED_CREDENTIAL_READ",
+     "TOOL.INTENT.UNDECLARED_ENV_SECRETS",
+     "TOOL.INTENT.UNDECLARED_FILESYSTEM"
+    ]
+   },
+   {
+    "id": "h_tool_mal_undeclared_shell",
+    "category": "mcp_tool_poisoning",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0062,
+    "outcome": "quarantine",
+    "risk": 45,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED",
+     "TOOL.INTENT.UNDECLARED_SUBPROCESS"
+    ]
+   },
+   {
+    "id": "h_tool_mal_encoded_directive",
+    "category": "mcp_tool_poisoning",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0025,
+    "outcome": "quarantine",
+    "risk": 70,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED",
+     "TOOL.DESC.AGENT_INSTRUCTION",
+     "TOOL.DESC.ENCODED_TEXT"
+    ]
+   },
+   {
+    "id": "h_tool_mal_html_comment",
+    "category": "mcp_tool_poisoning",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0024,
+    "outcome": "quarantine",
+    "risk": 70,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED",
+     "TOOL.DESC.AGENT_INSTRUCTION",
+     "TOOL.DESC.HTML_COMMENT"
+    ]
+   },
+   {
+    "id": "h_tool_ok_0",
+    "category": "mcp_tool_poisoning",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.0019,
+    "outcome": "quarantine",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_tool_ok_1",
+    "category": "mcp_tool_poisoning",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.006,
+    "outcome": "quarantine",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_tool_ok_2",
+    "category": "mcp_tool_poisoning",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.0059,
+    "outcome": "quarantine",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_tool_ok_3",
+    "category": "mcp_tool_poisoning",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.0021,
+    "outcome": "quarantine",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_tool_ok_4",
+    "category": "mcp_tool_poisoning",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.0019,
+    "outcome": "quarantine",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_tool_ok_5",
+    "category": "mcp_tool_poisoning",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.0018,
+    "outcome": "quarantine",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_tpl_mal_system_override",
+    "category": "chat_template_backdoor",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0681,
+    "outcome": "quarantine",
+    "risk": 50,
+    "findings": [
+     "LLM.CARD.MISSING",
+     "MODEL.TEMPLATE.CONDITIONAL_INSTRUCTION",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_tpl_mal_md_image_exfil",
+    "category": "chat_template_backdoor",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0064,
+    "outcome": "block",
+    "risk": 90,
+    "findings": [
+     "LLM.CARD.MISSING",
+     "MODEL.TEMPLATE.HIDDEN_INSTRUCTION",
+     "MODEL.TEMPLATE.URL",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_tpl_mal_sudo_trigger_link",
+    "category": "chat_template_backdoor",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0057,
+    "outcome": "block",
+    "risk": 95,
+    "findings": [
+     "LLM.CARD.MISSING",
+     "MODEL.TEMPLATE.HIDDEN_INSTRUCTION",
+     "MODEL.TEMPLATE.TRIGGER_BRANCH",
+     "MODEL.TEMPLATE.URL",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_tpl_mal_ssti_probe",
+    "category": "chat_template_backdoor",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0054,
+    "outcome": "quarantine",
+    "risk": 50,
+    "findings": [
+     "LLM.CARD.MISSING",
+     "MODEL.TEMPLATE.SSTI",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_tpl_mal_bidi_hidden",
+    "category": "chat_template_backdoor",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0055,
+    "outcome": "block",
+    "risk": 75,
+    "findings": [
+     "LLM.CARD.MISSING",
+     "MODEL.TEMPLATE.CONDITIONAL_INSTRUCTION",
+     "MODEL.TEMPLATE.INVISIBLE_UNICODE",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_tpl_mal_tag_char_instruction",
+    "category": "chat_template_backdoor",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0059,
+    "outcome": "quarantine",
+    "risk": 35,
+    "findings": [
+     "LLM.CARD.MISSING",
+     "MODEL.TEMPLATE.INVISIBLE_UNICODE",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_tpl_ok_gemma",
+    "category": "chat_template_backdoor",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.0022,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_tpl_ok_llama3",
+    "category": "chat_template_backdoor",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.0021,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_tpl_ok_mistral_alternating",
+    "category": "chat_template_backdoor",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.0023,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_tpl_ok_tools_tojson",
+    "category": "chat_template_backdoor",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.0019,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_tpl_ok_zephyr",
+    "category": "chat_template_backdoor",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.0019,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_tpl_ok_default_system",
+    "category": "chat_template_backdoor",
+    "label": "benign",
+    "check": "intake",
+    "positive": false,
+    "seconds": 0.0019,
+    "outcome": "allow",
+    "risk": 5,
+    "findings": [
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkl_mal_subprocess_call",
+    "category": "pickle_payload",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0046,
+    "outcome": "block",
+    "risk": 55,
+    "findings": [
+     "LLM.CARD.MISSING",
+     "MODEL.PICKLE.DANGEROUS_GLOBAL",
+     "MODEL.PICKLE.PRESENT",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkl_mal_builtin_eval",
+    "category": "pickle_payload",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0046,
+    "outcome": "block",
+    "risk": 55,
+    "findings": [
+     "LLM.CARD.MISSING",
+     "MODEL.PICKLE.DANGEROUS_GLOBAL",
+     "MODEL.PICKLE.PRESENT",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkl_mal_os_popen",
+    "category": "pickle_payload",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0044,
+    "outcome": "block",
+    "risk": 55,
+    "findings": [
+     "LLM.CARD.MISSING",
+     "MODEL.PICKLE.DANGEROUS_GLOBAL",
+     "MODEL.PICKLE.PRESENT",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkl_mal_raw_posix_system",
+    "category": "pickle_payload",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0043,
+    "outcome": "block",
+    "risk": 55,
+    "findings": [
+     "LLM.CARD.MISSING",
+     "MODEL.PICKLE.DANGEROUS_GLOBAL",
+     "MODEL.PICKLE.PRESENT",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkl_mal_builtin_exec_nested",
+    "category": "pickle_payload",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0042,
+    "outcome": "block",
+    "risk": 55,
+    "findings": [
+     "LLM.CARD.MISSING",
+     "MODEL.PICKLE.DANGEROUS_GLOBAL",
+     "MODEL.PICKLE.PRESENT",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkl_mal_torch_zip_subprocess",
+    "category": "pickle_payload",
+    "label": "malicious",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0049,
+    "outcome": "block",
+    "risk": 55,
+    "findings": [
+     "LLM.CARD.MISSING",
+     "MODEL.PICKLE.DANGEROUS_GLOBAL",
+     "MODEL.PICKLE.PRESENT",
+     "PROV.PUBLISHER.UNLISTED"
+    ]
+   },
+   {
+    "id": "h_pkl_ok_ordered_dict",
+    "category": "pickle_payload",
+    "label": "benign",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0012,
+    "outcome": "block",
+    "risk": 10,
+    "findings": [
+     "MODEL.PICKLE.PRESENT",
+     "PROV.PUBLISHER.UNLISTED"
+    ],
+    "policy_block": true
+   },
+   {
+    "id": "h_pkl_ok_numpy_array",
+    "category": "pickle_payload",
+    "label": "benign",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0014,
+    "outcome": "block",
+    "risk": 10,
+    "findings": [
+     "MODEL.PICKLE.PRESENT",
+     "PROV.PUBLISHER.UNLISTED"
+    ],
+    "policy_block": true
+   },
+   {
+    "id": "h_pkl_ok_datetime_set",
+    "category": "pickle_payload",
+    "label": "benign",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0009,
+    "outcome": "block",
+    "risk": 15,
+    "findings": [
+     "MODEL.PICKLE.PRESENT",
+     "MODEL.PICKLE.UNKNOWN_GLOBAL",
+     "PROV.PUBLISHER.UNLISTED"
+    ],
+    "policy_block": true
+   },
+   {
+    "id": "h_pkl_ok_torch_rebuild_ref",
+    "category": "pickle_payload",
+    "label": "benign",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0013,
+    "outcome": "block",
+    "risk": 15,
+    "findings": [
+     "MODEL.PICKLE.PRESENT",
+     "MODEL.PICKLE.UNKNOWN_GLOBAL",
+     "PROV.PUBLISHER.UNLISTED"
+    ],
+    "policy_block": true
+   },
+   {
+    "id": "h_pkl_ok_plain_nested",
+    "category": "pickle_payload",
+    "label": "benign",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.0009,
+    "outcome": "block",
+    "risk": 10,
+    "findings": [
+     "MODEL.PICKLE.PRESENT",
+     "PROV.PUBLISHER.UNLISTED"
+    ],
+    "policy_block": true
+   },
+   {
+    "id": "h_pkl_ok_torch_zip_ordereddict",
+    "category": "pickle_payload",
+    "label": "benign",
+    "check": "intake",
+    "positive": true,
+    "seconds": 0.001,
+    "outcome": "block",
+    "risk": 10,
+    "findings": [
+     "MODEL.PICKLE.PRESENT",
+     "PROV.PUBLISHER.UNLISTED"
+    ],
+    "policy_block": true
+   },
+   {
+    "id": "h_tok_swap_retarget",
+    "category": "swapped_tokenizer",
+    "label": "malicious",
+    "check": "tokenizer_diff",
+    "positive": true,
+    "seconds": 0.0009,
+    "findings": [
+     "MODEL.TOKENIZER.NEW_TOKENS",
+     "MODEL.TOKENIZER.REMOVED_TOKENS"
+    ]
+   },
+   {
+    "id": "h_tok_swap_special_remap",
+    "category": "swapped_tokenizer",
+    "label": "malicious",
+    "check": "tokenizer_diff",
+    "positive": true,
+    "seconds": 0.0002,
+    "findings": [
+     "MODEL.TOKENIZER.SPECIAL_TOKEN_REMAPPED"
+    ]
+   },
+   {
+    "id": "h_tok_swap_drop_merge",
+    "category": "swapped_tokenizer",
+    "label": "malicious",
+    "check": "tokenizer_diff",
+    "positive": true,
+    "seconds": 0.0002,
+    "findings": [
+     "MODEL.TOKENIZER.MERGES_CHANGED"
+    ]
+   },
+   {
+    "id": "h_tok_swap_inject_zwsp",
+    "category": "swapped_tokenizer",
+    "label": "malicious",
+    "check": "tokenizer_diff",
+    "positive": true,
+    "seconds": 0.0002,
+    "findings": [
+     "MODEL.TOKENIZER.ADDED_TOKENS",
+     "MODEL.TOKENIZER.SUSPICIOUS_TOKEN"
+    ]
+   },
+   {
+    "id": "h_tok_swap_pretokenizer",
+    "category": "swapped_tokenizer",
+    "label": "malicious",
+    "check": "tokenizer_diff",
+    "positive": true,
+    "seconds": 0.0002,
+    "findings": [
+     "MODEL.TOKENIZER.PRE_TOKENIZER_CHANGED"
+    ]
+   },
+   {
+    "id": "h_tok_swap_swap_ab_c",
+    "category": "swapped_tokenizer",
+    "label": "malicious",
+    "check": "tokenizer_diff",
+    "positive": true,
+    "seconds": 0.0002,
+    "findings": [
+     "MODEL.TOKENIZER.REMAPPED"
+    ]
+   },
+   {
+    "id": "h_tok_ok_identical",
+    "category": "swapped_tokenizer",
+    "label": "benign",
+    "check": "tokenizer_diff",
+    "positive": false,
+    "seconds": 0.0002,
+    "findings": []
+   },
+   {
+    "id": "h_tok_ok_reformatted",
+    "category": "swapped_tokenizer",
+    "label": "benign",
+    "check": "tokenizer_diff",
+    "positive": false,
+    "seconds": 0.0002,
+    "findings": []
+   },
+   {
+    "id": "h_tok_ok_chat_template_added",
+    "category": "swapped_tokenizer",
+    "label": "benign",
+    "check": "tokenizer_diff",
+    "positive": false,
+    "seconds": 0.0002,
+    "findings": []
+   },
+   {
+    "id": "h_tok_ok_model_config",
+    "category": "swapped_tokenizer",
+    "label": "benign",
+    "check": "tokenizer_diff",
+    "positive": false,
+    "seconds": 0.0002,
+    "findings": []
+   },
+   {
+    "id": "h_tok_ok_max_len",
+    "category": "swapped_tokenizer",
+    "label": "benign",
+    "check": "tokenizer_diff",
+    "positive": false,
+    "seconds": 0.0002,
+    "findings": []
+   },
+   {
+    "id": "h_tok_ok_copy_twice",
+    "category": "swapped_tokenizer",
+    "label": "benign",
+    "check": "tokenizer_diff",
+    "positive": false,
+    "seconds": 0.0002,
+    "findings": []
+   }
+  ]
+ },
+ "realworld": {
+  "fetch": {
+   "top_list_updated": "2026-10-01 12:40:51",
+   "packages": [
+    {
+     "name": "boto3",
+     "ok": true,
+     "wheel": "boto3-1.43.118-py3-none-any.whl"
+    },
+    {
+     "name": "packaging",
+     "ok": true,
+     "wheel": "packaging-26.3-py3-none-any.whl"
+    },
+    {
+     "name": "typing-extensions",
+     "ok": true,
+     "wheel": "typing_extensions-4.16.0-py3-none-any.whl"
+    },
+    {
+     "name": "idna",
+     "ok": true,
+     "wheel": "idna-3.20-py3-none-any.whl"
+    },
+    {
+     "name": "urllib3",
+     "ok": true,
+     "wheel": "urllib3-2.8.0-py3-none-any.whl"
+    },
+    {
+     "name": "certifi",
+     "ok": true,
+     "wheel": "certifi-2026.10.23-py3-none-any.whl"
+    },
+    {
+     "name": "requests",
+     "ok": true,
+     "wheel": "requests-2.34.2-py3-none-any.whl"
+    },
+    {
+     "name": "charset-normalizer",
+     "ok": true,
+     "wheel": "charset_normalizer-3.5.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "cryptography",
+     "ok": true,
+     "wheel": "cryptography-50.0.2-cp311-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+    },
+    {
+     "name": "setuptools",
+     "ok": true,
+     "wheel": "setuptools-84.2.1-py3-none-any.whl"
+    },
+    {
+     "name": "cffi",
+     "ok": true,
+     "wheel": "cffi-2.1.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+    },
+    {
+     "name": "pygments",
+     "ok": true,
+     "wheel": "pygments-2.21.0-py3-none-any.whl"
+    },
+    {
+     "name": "pyyaml",
+     "ok": true,
+     "wheel": "pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "python-dateutil",
+     "ok": true,
+     "wheel": "python_dateutil-3.0.0-py2.py3-none-any.whl"
+    },
+    {
+     "name": "six",
+     "ok": true,
+     "wheel": "six-1.17.0-py2.py3-none-any.whl"
+    },
+    {
+     "name": "pluggy",
+     "ok": true,
+     "wheel": "pluggy-1.7.0-py3-none-any.whl"
+    },
+    {
+     "name": "botocore",
+     "ok": true,
+     "wheel": "botocore-1.43.118-py3-none-any.whl"
+    },
+    {
+     "name": "pydantic",
+     "ok": true,
+     "wheel": "pydantic-2.14.1-py3-none-any.whl"
+    },
+    {
+     "name": "pycparser",
+     "ok": true,
+     "wheel": "pycparser-3.12-py3-none-any.whl"
+    },
+    {
+     "name": "click",
+     "ok": true,
+     "wheel": "click-8.5.0-py3-none-any.whl"
+    },
+    {
+     "name": "pydantic-core",
+     "ok": true,
+     "wheel": "pydantic_core-2.50.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+    },
+    {
+     "name": "anyio",
+     "ok": true,
+     "wheel": "anyio-4.15.1-py3-none-any.whl"
+    },
+    {
+     "name": "numpy",
+     "ok": true,
+     "wheel": "numpy-2.4.6-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "pytest",
+     "ok": true,
+     "wheel": "pytest-9.1.1-py3-none-any.whl"
+    },
+    {
+     "name": "iniconfig",
+     "ok": true,
+     "wheel": "iniconfig-2.3.1-py3-none-any.whl"
+    },
+    {
+     "name": "annotated-types",
+     "ok": true,
+     "wheel": "annotated_types-0.8.0-py3-none-any.whl"
+    },
+    {
+     "name": "h11",
+     "ok": true,
+     "wheel": "h11-0.16.0-py3-none-any.whl"
+    },
+    {
+     "name": "typing-inspection",
+     "ok": true,
+     "wheel": "typing_inspection-0.4.4-py3-none-any.whl"
+    },
+    {
+     "name": "attrs",
+     "ok": true,
+     "wheel": "attrs-26.1.0-py3-none-any.whl"
+    },
+    {
+     "name": "s3transfer",
+     "ok": true,
+     "wheel": "s3transfer-0.19.3-py3-none-any.whl"
+    },
+    {
+     "name": "aiobotocore",
+     "ok": true,
+     "wheel": "aiobotocore-3.10.0-py3-none-any.whl"
+    },
+    {
+     "name": "protobuf",
+     "ok": true,
+     "wheel": "protobuf-7.36.2-cp310-abi3-manylinux2014_x86_64.whl"
+    },
+    {
+     "name": "httpx",
+     "ok": true,
+     "wheel": "httpx-0.28.1-py3-none-any.whl"
+    },
+    {
+     "name": "markupsafe",
+     "ok": true,
+     "wheel": "markupsafe-3.0.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "httpcore",
+     "ok": true,
+     "wheel": "httpcore-1.0.9-py3-none-any.whl"
+    },
+    {
+     "name": "python-dotenv",
+     "ok": true,
+     "wheel": "python_dotenv-1.2.4-py3-none-any.whl"
+    },
+    {
+     "name": "pyjwt",
+     "ok": true,
+     "wheel": "pyjwt-2.15.1-py3-none-any.whl"
+    },
+    {
+     "name": "platformdirs",
+     "ok": true,
+     "wheel": "platformdirs-4.13.5-py3-none-any.whl"
+    },
+    {
+     "name": "fsspec",
+     "ok": true,
+     "wheel": "fsspec-2026.9.0-py3-none-any.whl"
+    },
+    {
+     "name": "pandas",
+     "ok": true,
+     "wheel": "pandas-3.1.0-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "jinja2",
+     "ok": true,
+     "wheel": "jinja2-3.1.6-py3-none-any.whl"
+    },
+    {
+     "name": "jmespath",
+     "ok": true,
+     "wheel": "jmespath-1.1.0-py3-none-any.whl"
+    },
+    {
+     "name": "pathspec",
+     "ok": true,
+     "wheel": "pathspec-1.1.1-py3-none-any.whl"
+    },
+    {
+     "name": "filelock",
+     "ok": true,
+     "wheel": "filelock-4.2.4-py3-none-any.whl"
+    },
+    {
+     "name": "starlette",
+     "ok": true,
+     "wheel": "starlette-1.10.0-py3-none-any.whl"
+    },
+    {
+     "name": "uvicorn",
+     "ok": true,
+     "wheel": "uvicorn-0.54.0-py3-none-any.whl"
+    },
+    {
+     "name": "multidict",
+     "ok": true,
+     "wheel": "multidict-7.2.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "jsonschema",
+     "ok": true,
+     "wheel": "jsonschema-4.26.0-py3-none-any.whl"
+    },
+    {
+     "name": "rpds-py",
+     "ok": true,
+     "wheel": "rpds_py-2026.9.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+    },
+    {
+     "name": "yarl",
+     "ok": true,
+     "wheel": "yarl-1.25.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "aiohttp",
+     "ok": true,
+     "wheel": "aiohttp-3.14.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "rich",
+     "ok": true,
+     "wheel": "rich-15.0.0-py3-none-any.whl"
+    },
+    {
+     "name": "tomlkit",
+     "ok": true,
+     "wheel": "tomlkit-0.15.2-py3-none-any.whl"
+    },
+    {
+     "name": "markdown-it-py",
+     "ok": true,
+     "wheel": "markdown_it_py-4.2.0-py3-none-any.whl"
+    },
+    {
+     "name": "propcache",
+     "ok": true,
+     "wheel": "propcache-0.5.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "referencing",
+     "ok": true,
+     "wheel": "referencing-0.37.0-py3-none-any.whl"
+    },
+    {
+     "name": "jsonschema-specifications",
+     "ok": true,
+     "wheel": "jsonschema_specifications-2025.9.1-py3-none-any.whl"
+    },
+    {
+     "name": "mdurl",
+     "ok": true,
+     "wheel": "mdurl-0.1.2-py3-none-any.whl"
+    },
+    {
+     "name": "pillow",
+     "ok": true,
+     "wheel": "pillow-13.0.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "opentelemetry-api",
+     "ok": true,
+     "wheel": "opentelemetry_api-1.45.1-py3-none-any.whl"
+    },
+    {
+     "name": "frozenlist",
+     "ok": true,
+     "wheel": "frozenlist-1.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl"
+    },
+    {
+     "name": "tqdm",
+     "ok": true,
+     "wheel": "tqdm-4.70.1-py3-none-any.whl"
+    },
+    {
+     "name": "pip",
+     "ok": true,
+     "wheel": "pip-26.2.2-py3-none-any.whl"
+    },
+    {
+     "name": "googleapis-common-protos",
+     "ok": true,
+     "wheel": "googleapis_common_protos-1.76.0-py3-none-any.whl"
+    },
+    {
+     "name": "pyasn1",
+     "ok": true,
+     "wheel": "pyasn1-0.6.4-py3-none-any.whl"
+    },
+    {
+     "name": "aiosignal",
+     "ok": true,
+     "wheel": "aiosignal-1.4.0-py3-none-any.whl"
+    },
+    {
+     "name": "aiohappyeyeballs",
+     "ok": true,
+     "wheel": "aiohappyeyeballs-2.7.1-py3-none-any.whl"
+    },
+    {
+     "name": "websockets",
+     "ok": true,
+     "wheel": "websockets-17.3-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl"
+    },
+    {
+     "name": "annotated-doc",
+     "ok": true,
+     "wheel": "annotated_doc-0.0.5-py3-none-any.whl"
+    },
+    {
+     "name": "wrapt",
+     "ok": true,
+     "wheel": "wrapt-2.5.1-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl"
+    },
+    {
+     "name": "pytz",
+     "ok": true,
+     "wheel": "pytz-2026.5-py2.py3-none-any.whl"
+    },
+    {
+     "name": "sniffio",
+     "ok": true,
+     "wheel": "sniffio-1.3.1-py3-none-any.whl"
+    },
+    {
+     "name": "tzdata",
+     "ok": true,
+     "wheel": "tzdata-2026.5-py2.py3-none-any.whl"
+    },
+    {
+     "name": "fastapi",
+     "ok": true,
+     "wheel": "fastapi-0.162.0-py3-none-any.whl"
+    },
+    {
+     "name": "google-auth",
+     "ok": true,
+     "wheel": "google_auth-2.62.0-py3-none-any.whl"
+    },
+    {
+     "name": "zipp",
+     "ok": true,
+     "wheel": "zipp-4.1.2-py3-none-any.whl"
+    },
+    {
+     "name": "greenlet",
+     "ok": true,
+     "wheel": "greenlet-3.5.6-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "importlib-metadata",
+     "ok": true,
+     "wheel": "importlib_metadata-10.1.0-py3-none-any.whl"
+    },
+    {
+     "name": "pydantic-settings",
+     "ok": true,
+     "wheel": "pydantic_settings-2.16.1-py3-none-any.whl"
+    },
+    {
+     "name": "wheel",
+     "ok": true,
+     "wheel": "wheel-0.48.0-py3-none-any.whl"
+    },
+    {
+     "name": "tenacity",
+     "ok": true,
+     "wheel": "tenacity-9.2.1-py3-none-any.whl"
+    },
+    {
+     "name": "trove-classifiers",
+     "ok": true,
+     "wheel": "trove_classifiers-2026.9.21.13-py3-none-any.whl"
+    },
+    {
+     "name": "python-multipart",
+     "ok": true,
+     "wheel": "python_multipart-0.0.32-py3-none-any.whl"
+    },
+    {
+     "name": "pyasn1-modules",
+     "ok": true,
+     "wheel": "pyasn1_modules-0.4.2-py3-none-any.whl"
+    },
+    {
+     "name": "grpcio-status",
+     "ok": true,
+     "wheel": "grpcio_status-1.84.1-py3-none-any.whl"
+    },
+    {
+     "name": "pyarrow",
+     "ok": true,
+     "wheel": "pyarrow-26.0.0-cp311-cp311-manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "sqlalchemy",
+     "ok": true,
+     "wheel": "sqlalchemy-2.1.6-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "hatchling",
+     "ok": true,
+     "wheel": "hatchling-1.32.4-py3-none-any.whl"
+    },
+    {
+     "name": "grpcio",
+     "ok": true,
+     "wheel": "grpcio-1.84.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+    },
+    {
+     "name": "pyparsing",
+     "ok": true,
+     "wheel": "pyparsing-3.3.3-py3-none-any.whl"
+    },
+    {
+     "name": "lxml",
+     "ok": true,
+     "wheel": "lxml-6.1.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+    },
+    {
+     "name": "jiter",
+     "ok": true,
+     "wheel": "jiter-0.18.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+    },
+    {
+     "name": "regex",
+     "ok": true,
+     "wheel": "regex-2026.9.29-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "watchfiles",
+     "ok": true,
+     "wheel": "watchfiles-1.3.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+    },
+    {
+     "name": "s3fs",
+     "ok": true,
+     "wheel": "s3fs-2026.9.0-py3-none-any.whl"
+    },
+    {
+     "name": "ruff",
+     "ok": true,
+     "wheel": "ruff-0.17.2-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+    },
+    {
+     "name": "scipy",
+     "ok": true,
+     "wheel": "scipy-1.17.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "soupsieve",
+     "ok": true,
+     "wheel": "soupsieve-2.10-py3-none-any.whl"
+    },
+    {
+     "name": "beautifulsoup4",
+     "ok": true,
+     "wheel": "beautifulsoup4-4.15.0-py3-none-any.whl"
+    },
+    {
+     "name": "openai",
+     "ok": true,
+     "wheel": "openai-3.37.0-py3-none-any.whl"
+    },
+    {
+     "name": "google-api-core",
+     "ok": true,
+     "wheel": "google_api_core-2.43.0-py3-none-any.whl"
+    },
+    {
+     "name": "opentelemetry-semantic-conventions",
+     "ok": true,
+     "wheel": "opentelemetry_semantic_conventions-0.66b1-py3-none-any.whl"
+    },
+    {
+     "name": "psutil",
+     "ok": true,
+     "wheel": "psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "coverage",
+     "ok": true,
+     "wheel": "coverage-7.17.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl"
+    },
+    {
+     "name": "openpyxl",
+     "ok": true,
+     "wheel": "openpyxl-3.1.5-py2.py3-none-any.whl"
+    },
+    {
+     "name": "et-xmlfile",
+     "ok": true,
+     "wheel": "et_xmlfile-2.0.0-py3-none-any.whl"
+    },
+    {
+     "name": "tomli",
+     "ok": true,
+     "wheel": "tomli-2.5.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "distro",
+     "ok": true,
+     "wheel": "distro-1.9.0-py3-none-any.whl"
+    },
+    {
+     "name": "opentelemetry-sdk",
+     "ok": true,
+     "wheel": "opentelemetry_sdk-1.45.1-py3-none-any.whl"
+    },
+    {
+     "name": "shellingham",
+     "ok": true,
+     "wheel": "shellingham-1.5.4-py2.py3-none-any.whl"
+    },
+    {
+     "name": "mypy-extensions",
+     "ok": true,
+     "wheel": "mypy_extensions-1.1.0-py3-none-any.whl"
+    },
+    {
+     "name": "colorama",
+     "ok": true,
+     "wheel": "colorama-0.4.6-py2.py3-none-any.whl"
+    },
+    {
+     "name": "proto-plus",
+     "ok": true,
+     "wheel": "proto_plus-1.29.0-py3-none-any.whl"
+    },
+    {
+     "name": "typer",
+     "ok": true,
+     "wheel": "typer-0.27.3-py3-none-any.whl"
+    },
+    {
+     "name": "requests-oauthlib",
+     "ok": true,
+     "wheel": "requests_oauthlib-2.0.0-py2.py3-none-any.whl"
+    },
+    {
+     "name": "virtualenv",
+     "ok": true,
+     "wheel": "virtualenv-21.14.13-py3-none-any.whl"
+    },
+    {
+     "name": "ghapi",
+     "ok": true,
+     "wheel": "ghapi-2.1.4-py3-none-any.whl"
+    },
+    {
+     "name": "wcwidth",
+     "ok": true,
+     "wheel": "wcwidth-0.9.4-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+    },
+    {
+     "name": "cachetools",
+     "ok": true,
+     "wheel": "cachetools-7.2.5-py3-none-any.whl"
+    },
+    {
+     "name": "exceptiongroup",
+     "ok": true,
+     "wheel": "exceptiongroup-1.3.1-py3-none-any.whl"
+    },
+    {
+     "name": "mcp",
+     "ok": true,
+     "wheel": "mcp-2.3.0-py3-none-any.whl"
+    },
+    {
+     "name": "huggingface-hub",
+     "ok": true,
+     "wheel": "huggingface_hub-2.3.0-py3-none-any.whl"
+    },
+    {
+     "name": "sse-starlette",
+     "ok": true,
+     "wheel": "sse_starlette-3.6.0-py3-none-any.whl"
+    },
+    {
+     "name": "truststore",
+     "ok": true,
+     "wheel": "truststore-0.10.5-py3-none-any.whl"
+    },
+    {
+     "name": "more-itertools",
+     "ok": true,
+     "wheel": "more_itertools-11.2.1-py3-none-any.whl"
+    },
+    {
+     "name": "dnspython",
+     "ok": true,
+     "wheel": "dnspython-2.9.0-py3-none-any.whl"
+    },
+    {
+     "name": "oauthlib",
+     "ok": true,
+     "wheel": "oauthlib-4.0.0-py3-none-any.whl"
+    },
+    {
+     "name": "pytest-asyncio",
+     "ok": true,
+     "wheel": "pytest_asyncio-1.4.1-py3-none-any.whl"
+    },
+    {
+     "name": "httpx2",
+     "ok": true,
+     "wheel": "httpx2-2.16.0-py3-none-any.whl"
+    },
+    {
+     "name": "httpcore2",
+     "ok": true,
+     "wheel": "httpcore2-2.16.0-py3-none-any.whl"
+    },
+    {
+     "name": "distlib",
+     "ok": true,
+     "wheel": "distlib-0.4.4-py2.py3-none-any.whl"
+    },
+    {
+     "name": "editables",
+     "ok": true,
+     "wheel": "editables-0.6-py3-none-any.whl"
+    },
+    {
+     "name": "opentelemetry-proto",
+     "ok": true,
+     "wheel": "opentelemetry_proto-1.45.1-py3-none-any.whl"
+    },
+    {
+     "name": "httptools",
+     "ok": true,
+     "wheel": "httptools-0.9.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl"
+    },
+    {
+     "name": "sortedcontainers",
+     "ok": true,
+     "wheel": "sortedcontainers-2.4.0-py2.py3-none-any.whl"
+    },
+    {
+     "name": "uvloop",
+     "ok": true,
+     "wheel": "uvloop-0.23.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "docstring-parser",
+     "ok": true,
+     "wheel": "docstring_parser-0.18.0-py3-none-any.whl"
+    },
+    {
+     "name": "psycopg2-binary",
+     "ok": true,
+     "wheel": "psycopg2_binary-2.9.13-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+    },
+    {
+     "name": "pytest-cov",
+     "ok": true,
+     "wheel": "pytest_cov-7.1.0-py3-none-any.whl"
+    },
+    {
+     "name": "redis",
+     "ok": true,
+     "wheel": "redis-8.1.0-py3-none-any.whl"
+    },
+    {
+     "name": "networkx",
+     "ok": true,
+     "wheel": "networkx-3.6.1-py3-none-any.whl"
+    },
+    {
+     "name": "opentelemetry-exporter-otlp-proto-common",
+     "ok": true,
+     "wheel": "opentelemetry_exporter_otlp_proto_common-1.45.1-py3-none-any.whl"
+    },
+    {
+     "name": "defusedxml",
+     "ok": true,
+     "wheel": "defusedxml-0.7.1-py2.py3-none-any.whl"
+    },
+    {
+     "name": "requests-toolbelt",
+     "ok": true,
+     "wheel": "requests_toolbelt-1.0.0-py2.py3-none-any.whl"
+    },
+    {
+     "name": "msgpack",
+     "ok": true,
+     "wheel": "msgpack-1.2.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "fonttools",
+     "ok": true,
+     "wheel": "fonttools-4.67.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+    },
+    {
+     "name": "rsa",
+     "ok": true,
+     "wheel": "rsa-4.9.1-py3-none-any.whl"
+    },
+    {
+     "name": "hf-xet",
+     "ok": true,
+     "wheel": "hf_xet-1.7.0-cp38-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+    },
+    {
+     "name": "werkzeug",
+     "ok": true,
+     "wheel": "werkzeug-3.1.9-py3-none-any.whl"
+    },
+    {
+     "name": "scikit-learn",
+     "ok": true,
+     "wheel": "scikit_learn-1.9.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "prompt-toolkit",
+     "ok": true,
+     "wheel": "prompt_toolkit-3.0.53-py3-none-any.whl"
+    },
+    {
+     "name": "mako",
+     "ok": true,
+     "wheel": "mako-1.4.3-py3-none-any.whl"
+    },
+    {
+     "name": "orjson",
+     "ok": true,
+     "wheel": "orjson-3.13.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+    },
+    {
+     "name": "alembic",
+     "ok": true,
+     "wheel": "alembic-1.20.1-py3-none-any.whl"
+    },
+    {
+     "name": "tiktoken",
+     "ok": true,
+     "wheel": "tiktoken-0.14.0-cp311-cp311-manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "pyopenssl",
+     "ok": true,
+     "wheel": "pyopenssl-26.4.0-py3-none-any.whl"
+    },
+    {
+     "name": "opentelemetry-exporter-otlp-proto-http",
+     "ok": true,
+     "wheel": "opentelemetry_exporter_otlp_proto_http-1.45.1-py3-none-any.whl"
+    },
+    {
+     "name": "nodeenv",
+     "ok": true,
+     "wheel": "nodeenv-1.11.0-py2.py3-none-any.whl"
+    },
+    {
+     "name": "threadpoolctl",
+     "ok": true,
+     "wheel": "threadpoolctl-3.7.0-py3-none-any.whl"
+    },
+    {
+     "name": "isodate",
+     "ok": true,
+     "wheel": "isodate-0.7.2-py3-none-any.whl"
+    },
+    {
+     "name": "langchain",
+     "ok": true,
+     "wheel": "langchain-1.4.7-py3-none-any.whl"
+    },
+    {
+     "name": "python-discovery",
+     "ok": true,
+     "wheel": "python_discovery-1.6.4-py3-none-any.whl"
+    },
+    {
+     "name": "cloudpickle",
+     "ok": true,
+     "wheel": "cloudpickle-3.1.2-py3-none-any.whl"
+    },
+    {
+     "name": "tokenizers",
+     "ok": true,
+     "wheel": "tokenizers-0.23.3-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+    },
+    {
+     "name": "pynacl",
+     "ok": true,
+     "wheel": "pynacl-1.6.2-cp38-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+    },
+    {
+     "name": "chardet",
+     "ok": true,
+     "wheel": "chardet-7.7.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "websocket-client",
+     "ok": true,
+     "wheel": "websocket_client-1.9.2-py3-none-any.whl"
+    },
+    {
+     "name": "joblib",
+     "ok": true,
+     "wheel": "joblib-1.6.0-py3-none-any.whl"
+    },
+    {
+     "name": "matplotlib",
+     "ok": true,
+     "wheel": "matplotlib-3.11.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+    },
+    {
+     "name": "tzlocal",
+     "ok": true,
+     "wheel": "tzlocal-5.4.5-py3-none-any.whl"
+    },
+    {
+     "name": "email-validator",
+     "ok": true,
+     "wheel": "email_validator-2.3.0-py3-none-any.whl"
+    },
+    {
+     "name": "gitpython",
+     "ok": true,
+     "wheel": "gitpython-3.2.1-py3-none-any.whl"
+    },
+    {
+     "name": "azure-core",
+     "ok": true,
+     "wheel": "azure_core-1.41.0-py3-none-any.whl"
+    },
+    {
+     "name": "mypy",
+     "ok": true,
+     "wheel": "mypy-2.4.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+    },
+    {
+     "name": "itsdangerous",
+     "ok": true,
+     "wheel": "itsdangerous-2.2.0-py3-none-any.whl"
+    },
+    {
+     "name": "google-cloud-core",
+     "ok": true,
+     "wheel": "google_cloud_core-2.8.0-py3-none-any.whl"
+    },
+    {
+     "name": "zstandard",
+     "ok": true,
+     "wheel": "zstandard-0.25.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+    },
+    {
+     "name": "httpx-sse",
+     "ok": true,
+     "wheel": "httpx_sse-0.4.3-py3-none-any.whl"
+    },
+    {
+     "name": "kiwisolver",
+     "ok": true,
+     "wheel": "kiwisolver-1.5.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+    },
+    {
+     "name": "dill",
+     "ok": true,
+     "wheel": "dill-0.4.1-py3-none-any.whl"
+    },
+    {
+     "name": "ruamel-yaml",
+     "ok": true,
+     "wheel": "ruamel_yaml-0.19.1-py3-none-any.whl"
+    },
+    {
+     "name": "bcrypt",
+     "ok": true,
+     "wheel": "bcrypt-5.0.0-cp39-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+    },
+    {
+     "name": "identify",
+     "ok": true,
+     "wheel": "identify-2.6.20-py2.py3-none-any.whl"
+    },
+    {
+     "name": "tabulate",
+     "ok": true,
+     "wheel": "tabulate-0.10.0-py3-none-any.whl"
+    },
+    {
+     "name": "opentelemetry-instrumentation",
+     "ok": true,
+     "wheel": "opentelemetry_instrumentation-0.66b1-py3-none-any.whl"
+    },
+    {
+     "name": "pre-commit",
+     "ok": true,
+     "wheel": "pre_commit-4.7.0-py2.py3-none-any.whl"
+    },
+    {
+     "name": "smmap",
+     "ok": true,
+     "wheel": "smmap-5.0.3-py3-none-any.whl"
+    },
+    {
+     "name": "msal",
+     "ok": true,
+     "wheel": "msal-1.39.0-py3-none-any.whl"
+    },
+    {
+     "name": "cfgv",
+     "ok": true,
+     "wheel": "cfgv-3.5.0-py2.py3-none-any.whl"
+    },
+    {
+     "name": "google-cloud-storage",
+     "ok": true,
+     "wheel": "google_cloud_storage-3.17.1-py3-none-any.whl"
+    },
+    {
+     "name": "keyring",
+     "ok": true,
+     "wheel": "keyring-25.7.0-py3-none-any.whl"
+    },
+    {
+     "name": "h2",
+     "ok": true,
+     "wheel": "h2-4.4.1-py3-none-any.whl"
+    },
+    {
+     "name": "hpack",
+     "ok": true,
+     "wheel": "hpack-4.2.0-py3-none-any.whl"
+    },
+    {
+     "name": "anthropic",
+     "ok": true,
+     "wheel": "anthropic-2.3.0-py3-none-any.whl"
+    },
+    {
+     "name": "langchain-core",
+     "ok": true,
+     "wheel": "langchain_core-1.7.0-py3-none-any.whl"
+    },
+    {
+     "name": "gitdb",
+     "ok": true,
+     "wheel": "gitdb-4.0.12-py3-none-any.whl"
+    },
+    {
+     "name": "decorator",
+     "ok": true,
+     "wheel": "decorator-5.3.1-py3-none-any.whl"
+    },
+    {
+     "name": "hyperframe",
+     "ok": true,
+     "wheel": "hyperframe-6.1.0-py3-none-any.whl"
+    },
+    {
+     "name": "jaraco-classes",
+     "ok": true,
+     "wheel": "jaraco.classes-3.4.0-py3-none-any.whl"
+    },
+    {
+     "name": "google-cloud-bigquery",
+     "ok": true,
+     "wheel": "google_cloud_bigquery-3.46.2-py3-none-any.whl"
+    }
+   ],
+   "templates": [
+    {
+     "repo": "Qwen/Qwen2.5-7B-Instruct",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "Qwen__Qwen2.5-7B-Instruct"
+    },
+    {
+     "repo": "Qwen/Qwen2.5-0.5B-Instruct",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "Qwen__Qwen2.5-0.5B-Instruct"
+    },
+    {
+     "repo": "Qwen/Qwen3-8B",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "Qwen__Qwen3-8B"
+    },
+    {
+     "repo": "Qwen/Qwen2-VL-7B-Instruct",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "Qwen__Qwen2-VL-7B-Instruct"
+    },
+    {
+     "repo": "Qwen/Qwen2.5-Coder-7B-Instruct",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "Qwen__Qwen2.5-Coder-7B-Instruct"
+    },
+    {
+     "repo": "mistralai/Mistral-7B-Instruct-v0.3",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "mistralai__Mistral-7B-Instruct-v0.3"
+    },
+    {
+     "repo": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "mistralai__Mixtral-8x7B-Instruct-v0.1"
+    },
+    {
+     "repo": "mistralai/Mistral-Nemo-Instruct-2407",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "mistralai__Mistral-Nemo-Instruct-2407"
+    },
+    {
+     "repo": "HuggingFaceH4/zephyr-7b-beta",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "HuggingFaceH4__zephyr-7b-beta"
+    },
+    {
+     "repo": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "HuggingFaceTB__SmolLM2-1.7B-Instruct"
+    },
+    {
+     "repo": "microsoft/Phi-3-mini-4k-instruct",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "microsoft__Phi-3-mini-4k-instruct"
+    },
+    {
+     "repo": "microsoft/Phi-3.5-mini-instruct",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "microsoft__Phi-3.5-mini-instruct"
+    },
+    {
+     "repo": "microsoft/phi-4",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "microsoft__phi-4"
+    },
+    {
+     "repo": "google/gemma-2-2b-it",
+     "ok": false,
+     "error": "HTTP Error 401: Unauthorized"
+    },
+    {
+     "repo": "unsloth/gemma-2-9b-it",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "unsloth__gemma-2-9b-it"
+    },
+    {
+     "repo": "unsloth/gemma-3-4b-it",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "unsloth__gemma-3-4b-it"
+    },
+    {
+     "repo": "unsloth/llama-3-8b-Instruct",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "unsloth__llama-3-8b-Instruct"
+    },
+    {
+     "repo": "unsloth/Llama-3.2-1B-Instruct",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "unsloth__Llama-3.2-1B-Instruct"
+    },
+    {
+     "repo": "unsloth/Meta-Llama-3.1-8B-Instruct",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "unsloth__Meta-Llama-3.1-8B-Instruct"
+    },
+    {
+     "repo": "NousResearch/Hermes-3-Llama-3.1-8B",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "NousResearch__Hermes-3-Llama-3.1-8B"
+    },
+    {
+     "repo": "NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "NousResearch__Nous-Hermes-2-Mixtral-8x7B-DPO"
+    },
+    {
+     "repo": "teknium/OpenHermes-2.5-Mistral-7B",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "teknium__OpenHermes-2.5-Mistral-7B"
+    },
+    {
+     "repo": "openchat/openchat-3.5-0106",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "openchat__openchat-3.5-0106"
+    },
+    {
+     "repo": "01-ai/Yi-1.5-9B-Chat",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "01-ai__Yi-1.5-9B-Chat"
+    },
+    {
+     "repo": "deepseek-ai/DeepSeek-V3",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "deepseek-ai__DeepSeek-V3"
+    },
+    {
+     "repo": "deepseek-ai/deepseek-coder-6.7b-instruct",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "deepseek-ai__deepseek-coder-6.7b-instruct"
+    },
+    {
+     "repo": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "deepseek-ai__DeepSeek-R1-Distill-Qwen-7B"
+    },
+    {
+     "repo": "tiiuae/falcon-7b-instruct",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "tiiuae__falcon-7b-instruct"
+    },
+    {
+     "repo": "upstage/SOLAR-10.7B-Instruct-v1.0",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "upstage__SOLAR-10.7B-Instruct-v1.0"
+    },
+    {
+     "repo": "CohereForAI/c4ai-command-r-v01",
+     "ok": false,
+     "error": "HTTP Error 401: Unauthorized"
+    },
+    {
+     "repo": "allenai/OLMo-2-1124-7B-Instruct",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "allenai__OLMo-2-1124-7B-Instruct"
+    },
+    {
+     "repo": "allenai/tulu-2-dpo-7b",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "allenai__tulu-2-dpo-7b"
+    },
+    {
+     "repo": "internlm/internlm2_5-7b-chat",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "internlm__internlm2_5-7b-chat"
+    },
+    {
+     "repo": "THUDM/glm-4-9b-chat",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "THUDM__glm-4-9b-chat"
+    },
+    {
+     "repo": "openai/gpt-oss-20b",
+     "ok": true,
+     "template_source": "chat_template.jinja",
+     "dir": "openai__gpt-oss-20b"
+    },
+    {
+     "repo": "nvidia/Llama-3.1-Nemotron-70B-Instruct-HF",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "nvidia__Llama-3.1-Nemotron-70B-Instruct-HF"
+    },
+    {
+     "repo": "nvidia/Nemotron-Mini-4B-Instruct",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "nvidia__Nemotron-Mini-4B-Instruct"
+    },
+    {
+     "repo": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "TinyLlama__TinyLlama-1.1B-Chat-v1.0"
+    },
+    {
+     "repo": "stabilityai/stablelm-2-zephyr-1_6b",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "stabilityai__stablelm-2-zephyr-1_6b"
+    },
+    {
+     "repo": "Open-Orca/Mistral-7B-OpenOrca",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "Open-Orca__Mistral-7B-OpenOrca"
+    },
+    {
+     "repo": "lmsys/vicuna-7b-v1.5",
+     "ok": false,
+     "error": "no chat template"
+    },
+    {
+     "repo": "codellama/CodeLlama-7b-Instruct-hf",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "codellama__CodeLlama-7b-Instruct-hf"
+    },
+    {
+     "repo": "bigcode/starcoder2-15b-instruct-v0.1",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "bigcode__starcoder2-15b-instruct-v0.1"
+    },
+    {
+     "repo": "ibm-granite/granite-3.1-8b-instruct",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "ibm-granite__granite-3.1-8b-instruct"
+    },
+    {
+     "repo": "LLM360/K2-Chat",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "LLM360__K2-Chat"
+    },
+    {
+     "repo": "cognitivecomputations/dolphin-2.9-llama3-8b",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "cognitivecomputations__dolphin-2.9-llama3-8b"
+    },
+    {
+     "repo": "WizardLMTeam/WizardLM-13B-V1.2",
+     "ok": false,
+     "error": "no chat template"
+    },
+    {
+     "repo": "moonshotai/Kimi-K2-Instruct",
+     "ok": true,
+     "template_source": "chat_template.jinja",
+     "dir": "moonshotai__Kimi-K2-Instruct"
+    },
+    {
+     "repo": "HuggingFaceM4/idefics2-8b",
+     "ok": false,
+     "error": "no chat template"
+    },
+    {
+     "repo": "llava-hf/llava-1.5-7b-hf",
+     "ok": true,
+     "template_source": "chat_template.jinja",
+     "dir": "llava-hf__llava-1.5-7b-hf"
+    },
+    {
+     "repo": "mlabonne/NeuralDaredevil-8B-abliterated",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "mlabonne__NeuralDaredevil-8B-abliterated"
+    },
+    {
+     "repo": "berkeley-nest/Starling-LM-7B-alpha",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "berkeley-nest__Starling-LM-7B-alpha"
+    },
+    {
+     "repo": "openbmb/MiniCPM-2B-sft-bf16",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "openbmb__MiniCPM-2B-sft-bf16"
+    },
+    {
+     "repo": "ByteDance-Seed/Seed-OSS-36B-Instruct",
+     "ok": true,
+     "template_source": "chat_template.jinja",
+     "dir": "ByteDance-Seed__Seed-OSS-36B-Instruct"
+    },
+    {
+     "repo": "mistralai/Mistral-Small-24B-Instruct-2501",
+     "ok": true,
+     "template_source": "tokenizer_config.json",
+     "dir": "mistralai__Mistral-Small-24B-Instruct-2501"
+    },
+    {
+     "repo": "HuggingFaceTB/SmolLM3-3B",
+     "ok": false,
+     "template_source": "chat_template.jinja",
+     "dir": "HuggingFaceTB__SmolLM3-3B",
+     "error": "surplus"
+    },
+    {
+     "repo": "google/gemma-3-1b-it",
+     "ok": false,
+     "error": "HTTP Error 401: Unauthorized"
+    }
+   ]
+  },
+  "rows": [
+   {
+    "id": "aiobotocore",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.958
+   },
+   {
+    "id": "aiohappyeyeballs",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.NETWORK"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.076
+   },
+   {
+    "id": "aiohttp",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 3.268
+   },
+   {
+    "id": "aiosignal",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.009
+   },
+   {
+    "id": "alembic",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 3.018
+   },
+   {
+    "id": "annotated-doc",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.007
+   },
+   {
+    "id": "annotated-types",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.038
+   },
+   {
+    "id": "anthropic",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 15.886
+   },
+   {
+    "id": "anyio",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.606
+   },
+   {
+    "id": "attrs",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.459
+   },
+   {
+    "id": "azure-core",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.373
+   },
+   {
+    "id": "bcrypt",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.007
+   },
+   {
+    "id": "beautifulsoup4",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.782
+   },
+   {
+    "id": "boto3",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.656
+   },
+   {
+    "id": "botocore",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 5.145
+   },
+   {
+    "id": "cachetools",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.216
+   },
+   {
+    "id": "certifi",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.012
+   },
+   {
+    "id": "cffi",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.095
+   },
+   {
+    "id": "cfgv",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.FILESYSTEM"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.055
+   },
+   {
+    "id": "chardet",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.757
+   },
+   {
+    "id": "charset-normalizer",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.554
+   },
+   {
+    "id": "click",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.154
+   },
+   {
+    "id": "cloudpickle",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.12
+   },
+   {
+    "id": "colorama",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.19
+   },
+   {
+    "id": "coverage",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.HOOK.STARTUP_HOOK",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.787
+   },
+   {
+    "id": "cryptography",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.498
+   },
+   {
+    "id": "decorator",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.061
+   },
+   {
+    "id": "defusedxml",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.11
+   },
+   {
+    "id": "dill",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.REMOTE_EXEC_POSSIBLE",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.269
+   },
+   {
+    "id": "distlib",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.309
+   },
+   {
+    "id": "distro",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.085
+   },
+   {
+    "id": "dnspython",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 3.44
+   },
+   {
+    "id": "docstring-parser",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.147
+   },
+   {
+    "id": "editables",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.015
+   },
+   {
+    "id": "email-validator",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.14
+   },
+   {
+    "id": "et-xmlfile",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.FILESYSTEM"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.08
+   },
+   {
+    "id": "exceptiongroup",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.13
+   },
+   {
+    "id": "fastapi",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.741
+   },
+   {
+    "id": "filelock",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.761
+   },
+   {
+    "id": "fonttools",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 17.898
+   },
+   {
+    "id": "frozenlist",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.02
+   },
+   {
+    "id": "fsspec",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 2.717
+   },
+   {
+    "id": "ghapi",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 5.771
+   },
+   {
+    "id": "gitdb",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.468
+   },
+   {
+    "id": "gitpython",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DELAYED_EXEC",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.945
+   },
+   {
+    "id": "google-api-core",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.338
+   },
+   {
+    "id": "google-auth",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.633
+   },
+   {
+    "id": "google-cloud-bigquery",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 2.292
+   },
+   {
+    "id": "google-cloud-core",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.129
+   },
+   {
+    "id": "google-cloud-storage",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 2.378
+   },
+   {
+    "id": "googleapis-common-protos",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.359
+   },
+   {
+    "id": "greenlet",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.609
+   },
+   {
+    "id": "grpcio",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.419
+   },
+   {
+    "id": "grpcio-status",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.013
+   },
+   {
+    "id": "h11",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.105
+   },
+   {
+    "id": "h2",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.462
+   },
+   {
+    "id": "hatchling",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.991
+   },
+   {
+    "id": "hf-xet",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.014
+   },
+   {
+    "id": "hpack",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.712
+   },
+   {
+    "id": "httpcore",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.NETWORK"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.714
+   },
+   {
+    "id": "httpcore2",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.775
+   },
+   {
+    "id": "httptools",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.014
+   },
+   {
+    "id": "httpx",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.815
+   },
+   {
+    "id": "httpx-sse",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.054
+   },
+   {
+    "id": "httpx2",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.109
+   },
+   {
+    "id": "huggingface-hub",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS",
+     "PKG.TAINT.FILE_UPLOAD"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 8.531
+   },
+   {
+    "id": "hyperframe",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.051
+   },
+   {
+    "id": "identify",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.174
+   },
+   {
+    "id": "idna",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.338
+   },
+   {
+    "id": "importlib-metadata",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.182
+   },
+   {
+    "id": "iniconfig",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.FILESYSTEM"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.064
+   },
+   {
+    "id": "isodate",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.169
+   },
+   {
+    "id": "itsdangerous",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.105
+   },
+   {
+    "id": "jaraco-classes",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.033
+   },
+   {
+    "id": "jinja2",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.575
+   },
+   {
+    "id": "jiter",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.008
+   },
+   {
+    "id": "jmespath",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.219
+   },
+   {
+    "id": "joblib",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DELAYED_EXEC",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 2.443
+   },
+   {
+    "id": "jsonschema",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 30,
+    "reasons": [
+     "risk 30 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 2,
+    "seconds": 1.097
+   },
+   {
+    "id": "jsonschema-specifications",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.018
+   },
+   {
+    "id": "keyring",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.263
+   },
+   {
+    "id": "kiwisolver",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.012
+   },
+   {
+    "id": "langchain",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.454
+   },
+   {
+    "id": "langchain-core",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 6.803
+   },
+   {
+    "id": "lxml",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.922
+   },
+   {
+    "id": "mako",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.869
+   },
+   {
+    "id": "markdown-it-py",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.832
+   },
+   {
+    "id": "markupsafe",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.031
+   },
+   {
+    "id": "matplotlib",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 35.903
+   },
+   {
+    "id": "mcp",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 2.88
+   },
+   {
+    "id": "mdurl",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.034
+   },
+   {
+    "id": "more-itertools",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.575
+   },
+   {
+    "id": "msal",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.026
+   },
+   {
+    "id": "msgpack",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.162
+   },
+   {
+    "id": "multidict",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.268
+   },
+   {
+    "id": "mypy",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 57.943
+   },
+   {
+    "id": "mypy-extensions",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.015
+   },
+   {
+    "id": "networkx",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 25.245
+   },
+   {
+    "id": "nodeenv",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 30,
+    "reasons": [
+     "risk 30 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 2,
+    "seconds": 0.178
+   },
+   {
+    "id": "numpy",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.COMBO.IMPORT_TIME_EXEC",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 45.374
+   },
+   {
+    "id": "oauthlib",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.803
+   },
+   {
+    "id": "openai",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DELAYED_EXEC",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 19.93
+   },
+   {
+    "id": "openpyxl",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 2.786
+   },
+   {
+    "id": "opentelemetry-api",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.375
+   },
+   {
+    "id": "opentelemetry-exporter-otlp-proto-common",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.043
+   },
+   {
+    "id": "opentelemetry-exporter-otlp-proto-http",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.142
+   },
+   {
+    "id": "opentelemetry-instrumentation",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.HOOK.STARTUP_HOOK",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.255
+   },
+   {
+    "id": "opentelemetry-proto",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.137
+   },
+   {
+    "id": "opentelemetry-sdk",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.182
+   },
+   {
+    "id": "opentelemetry-semantic-conventions",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.896
+   },
+   {
+    "id": "orjson",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.008
+   },
+   {
+    "id": "packaging",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.186
+   },
+   {
+    "id": "pandas",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 131.323
+   },
+   {
+    "id": "pathspec",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.FILESYSTEM"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.287
+   },
+   {
+    "id": "pillow",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 4.263
+   },
+   {
+    "id": "pip",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 13.872
+   },
+   {
+    "id": "platformdirs",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.311
+   },
+   {
+    "id": "pluggy",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.191
+   },
+   {
+    "id": "pre-commit",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.841
+   },
+   {
+    "id": "prompt-toolkit",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 3.85
+   },
+   {
+    "id": "propcache",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.025
+   },
+   {
+    "id": "proto-plus",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.266
+   },
+   {
+    "id": "protobuf",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 2.424
+   },
+   {
+    "id": "psutil",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.941
+   },
+   {
+    "id": "psycopg2-binary",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.327
+   },
+   {
+    "id": "pyarrow",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 15.375
+   },
+   {
+    "id": "pyasn1",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.958
+   },
+   {
+    "id": "pyasn1-modules",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 2.572
+   },
+   {
+    "id": "pycparser",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.742
+   },
+   {
+    "id": "pydantic",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 5.137
+   },
+   {
+    "id": "pydantic-core",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.168
+   },
+   {
+    "id": "pydantic-settings",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.81
+   },
+   {
+    "id": "pygments",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 11.857
+   },
+   {
+    "id": "pyjwt",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.NETWORK"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.301
+   },
+   {
+    "id": "pynacl",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.515
+   },
+   {
+    "id": "pyopenssl",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.43
+   },
+   {
+    "id": "pyparsing",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.152
+   },
+   {
+    "id": "pytest",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 4.335
+   },
+   {
+    "id": "pytest-asyncio",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.NETWORK"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.129
+   },
+   {
+    "id": "pytest-cov",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.118
+   },
+   {
+    "id": "python-dateutil",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.039
+   },
+   {
+    "id": "python-discovery",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.457
+   },
+   {
+    "id": "python-dotenv",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.158
+   },
+   {
+    "id": "python-multipart",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.FILESYSTEM"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.218
+   },
+   {
+    "id": "pytz",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.488
+   },
+   {
+    "id": "pyyaml",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.912
+   },
+   {
+    "id": "redis",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DELAYED_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 7.722
+   },
+   {
+    "id": "referencing",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.375
+   },
+   {
+    "id": "regex",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.848
+   },
+   {
+    "id": "requests",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.678
+   },
+   {
+    "id": "requests-oauthlib",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.185
+   },
+   {
+    "id": "requests-toolbelt",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.392
+   },
+   {
+    "id": "rich",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 4.25
+   },
+   {
+    "id": "rpds-py",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.008
+   },
+   {
+    "id": "rsa",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.246
+   },
+   {
+    "id": "ruamel-yaml",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 2.912
+   },
+   {
+    "id": "ruff",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.048
+   },
+   {
+    "id": "s3fs",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.393
+   },
+   {
+    "id": "s3transfer",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.76
+   },
+   {
+    "id": "scikit-learn",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 54.698
+   },
+   {
+    "id": "scipy",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 100.128
+   },
+   {
+    "id": "setuptools",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.HOOK.STARTUP_HOOK",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 8.11
+   },
+   {
+    "id": "shellingham",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.056
+   },
+   {
+    "id": "six",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.111
+   },
+   {
+    "id": "smmap",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.FILESYSTEM"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.194
+   },
+   {
+    "id": "sniffio",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.013
+   },
+   {
+    "id": "sortedcontainers",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.145
+   },
+   {
+    "id": "soupsieve",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.484
+   },
+   {
+    "id": "sqlalchemy",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 24.865
+   },
+   {
+    "id": "sse-starlette",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.037
+   },
+   {
+    "id": "starlette",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.951
+   },
+   {
+    "id": "tabulate",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.31
+   },
+   {
+    "id": "tenacity",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.282
+   },
+   {
+    "id": "threadpoolctl",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.16
+   },
+   {
+    "id": "tiktoken",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.203
+   },
+   {
+    "id": "tokenizers",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.FILESYSTEM"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.337
+   },
+   {
+    "id": "tomli",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.095
+   },
+   {
+    "id": "tomlkit",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.FILESYSTEM"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.174
+   },
+   {
+    "id": "tqdm",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.772
+   },
+   {
+    "id": "trove-classifiers",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.03
+   },
+   {
+    "id": "truststore",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.193
+   },
+   {
+    "id": "typer",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.923
+   },
+   {
+    "id": "typing-extensions",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.6
+   },
+   {
+    "id": "typing-inspection",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.095
+   },
+   {
+    "id": "tzdata",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.36
+   },
+   {
+    "id": "tzlocal",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.144
+   },
+   {
+    "id": "urllib3",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.135
+   },
+   {
+    "id": "uvicorn",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.965
+   },
+   {
+    "id": "uvloop",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.124
+   },
+   {
+    "id": "virtualenv",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.043
+   },
+   {
+    "id": "watchfiles",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.116
+   },
+   {
+    "id": "wcwidth",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 3.91
+   },
+   {
+    "id": "websocket-client",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.038
+   },
+   {
+    "id": "websockets",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 1.737
+   },
+   {
+    "id": "werkzeug",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.NETWORK",
+     "PKG.SIGNAL.OBFUSCATION",
+     "PKG.SIGNAL.SUBPROCESS"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 2.04
+   },
+   {
+    "id": "wheel",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENCODED_BLOB",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.FILESYSTEM",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.301
+   },
+   {
+    "id": "wrapt",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.DYNAMIC_EXEC",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.361
+   },
+   {
+    "id": "yarl",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.27
+   },
+   {
+    "id": "zipp",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.07
+   },
+   {
+    "id": "zstandard",
+    "kind": "package",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "LLM.REVIEW.SKIPPED",
+     "PKG.BASELINE.COMPARED",
+     "PKG.OSV.UNAVAILABLE",
+     "PKG.SIGNAL.ENV_SECRETS",
+     "PKG.SIGNAL.OBFUSCATION"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.337
+   },
+   {
+    "id": "01-ai__Yi-1.5-9B-Chat",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.004
+   },
+   {
+    "id": "ByteDance-Seed__Seed-OSS-36B-Instruct",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TEMPLATE.EMBEDDED_INSTRUCTION",
+     "MODEL.TOKENIZER.ADDED_TOKENS_UNCHECKED",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.015
+   },
+   {
+    "id": "HuggingFaceH4__zephyr-7b-beta",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.003
+   },
+   {
+    "id": "HuggingFaceTB__SmolLM2-1.7B-Instruct",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.002
+   },
+   {
+    "id": "LLM360__K2-Chat",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TEMPLATE.EMBEDDED_INSTRUCTION",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.009
+   },
+   {
+    "id": "NousResearch__Hermes-3-Llama-3.1-8B",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TEMPLATE.EMBEDDED_INSTRUCTION",
+     "MODEL.TOKENIZER.ADDED_TOKENS_UNCHECKED",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.011
+   },
+   {
+    "id": "NousResearch__Nous-Hermes-2-Mixtral-8x7B-DPO",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.ADDED_TOKENS_UNCHECKED",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.002
+   },
+   {
+    "id": "Open-Orca__Mistral-7B-OpenOrca",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.002
+   },
+   {
+    "id": "Qwen__Qwen2-VL-7B-Instruct",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.004
+   },
+   {
+    "id": "Qwen__Qwen2.5-0.5B-Instruct",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.ADDED_TOKENS_UNCHECKED",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.005
+   },
+   {
+    "id": "Qwen__Qwen2.5-7B-Instruct",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.ADDED_TOKENS_UNCHECKED",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.005
+   },
+   {
+    "id": "Qwen__Qwen2.5-Coder-7B-Instruct",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.ADDED_TOKENS_UNCHECKED",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.005
+   },
+   {
+    "id": "Qwen__Qwen3-8B",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TEMPLATE.CONTENT_CONDITIONAL",
+     "MODEL.TOKENIZER.ADDED_TOKENS_UNCHECKED",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.008
+   },
+   {
+    "id": "THUDM__glm-4-9b-chat",
+    "kind": "model",
+    "flagged": true,
+    "outcome": "quarantine",
+    "risk": 47,
+    "reasons": [
+     "risk 47 > 30 (dev allow limit)",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "GPU.CHECK.SKIPPED",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [
+     {
+      "id": "PROV.PUBLISHER.UNLISTED",
+      "severity": "low",
+      "title": "Publisher 'hf' is not on the allow list",
+      "score": 5,
+      "source": "deterministic",
+      "evidence": [
+       "source.repo (hf)"
+      ]
+     },
+     {
+      "id": "MODEL.CONFIG.AUTO_MAP",
+      "severity": "high",
+      "title": "tokenizer_config.json maps classes to custom code that runs on load",
+      "score": 25,
+      "source": "deterministic",
+      "evidence": [
+       "tokenizer_config.json#auto_map (tokenization_chatglm.ChatGLM4Tokenizer)"
+      ]
+     },
+     {
+      "id": "MODEL.CONFIG.AUTO_MAP_MISSING",
+      "severity": "medium",
+      "title": "auto_map references code files that are not in the model directory",
+      "score": 12,
+      "source": "deterministic",
+      "evidence": [
+       "tokenizer_config.json#auto_map (tokenization_chatglm.ChatGLM4Tokenizer)"
+      ]
+     },
+     {
+      "id": "LLM.CARD.MISSING",
+      "severity": "low",
+      "title": "No model/dataset card to review",
+      "score": 5,
+      "source": "deterministic",
+      "evidence": []
+     }
+    ],
+    "n_findings": 4,
+    "seconds": 0.008
+   },
+   {
+    "id": "TinyLlama__TinyLlama-1.1B-Chat-v1.0",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.003
+   },
+   {
+    "id": "allenai__OLMo-2-1124-7B-Instruct",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.ADDED_TOKENS_UNCHECKED",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.003
+   },
+   {
+    "id": "allenai__tulu-2-dpo-7b",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.002
+   },
+   {
+    "id": "berkeley-nest__Starling-LM-7B-alpha",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.002
+   },
+   {
+    "id": "bigcode__starcoder2-15b-instruct-v0.1",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.003
+   },
+   {
+    "id": "codellama__CodeLlama-7b-Instruct-hf",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.003
+   },
+   {
+    "id": "cognitivecomputations__dolphin-2.9-llama3-8b",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.ADDED_TOKENS_UNCHECKED",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.004
+   },
+   {
+    "id": "deepseek-ai__DeepSeek-R1-Distill-Qwen-7B",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TEMPLATE.CONTENT_CONDITIONAL",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.006
+   },
+   {
+    "id": "deepseek-ai__DeepSeek-V3",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.006
+   },
+   {
+    "id": "deepseek-ai__deepseek-coder-6.7b-instruct",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TEMPLATE.EMBEDDED_INSTRUCTION",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.003
+   },
+   {
+    "id": "ibm-granite__granite-3.1-8b-instruct",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.005
+   },
+   {
+    "id": "internlm__internlm2_5-7b-chat",
+    "kind": "model",
+    "flagged": true,
+    "outcome": "quarantine",
+    "risk": 47,
+    "reasons": [
+     "risk 47 > 30 (dev allow limit)",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "GPU.CHECK.SKIPPED",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [
+     {
+      "id": "PROV.PUBLISHER.UNLISTED",
+      "severity": "low",
+      "title": "Publisher 'hf' is not on the allow list",
+      "score": 5,
+      "source": "deterministic",
+      "evidence": [
+       "source.repo (hf)"
+      ]
+     },
+     {
+      "id": "MODEL.CONFIG.AUTO_MAP",
+      "severity": "high",
+      "title": "tokenizer_config.json maps classes to custom code that runs on load",
+      "score": 25,
+      "source": "deterministic",
+      "evidence": [
+       "tokenizer_config.json#auto_map (tokenization_internlm2.InternLM2Tokenizer)",
+       "tokenizer_config.json#auto_map (tokenization_internlm2_fast.InternLM2TokenizerFast)"
+      ]
+     },
+     {
+      "id": "MODEL.CONFIG.AUTO_MAP_MISSING",
+      "severity": "medium",
+      "title": "auto_map references code files that are not in the model directory",
+      "score": 12,
+      "source": "deterministic",
+      "evidence": [
+       "tokenizer_config.json#auto_map (tokenization_internlm2.InternLM2Tokenizer)",
+       "tokenizer_config.json#auto_map (tokenization_internlm2_fast.InternLM2TokenizerFast)"
+      ]
+     },
+     {
+      "id": "LLM.CARD.MISSING",
+      "severity": "low",
+      "title": "No model/dataset card to review",
+      "score": 5,
+      "source": "deterministic",
+      "evidence": []
+     }
+    ],
+    "n_findings": 4,
+    "seconds": 0.005
+   },
+   {
+    "id": "llava-hf__llava-1.5-7b-hf",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 22,
+    "reasons": [
+     "risk 22 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "GPU.CHECK.SKIPPED",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 3,
+    "seconds": 0.006
+   },
+   {
+    "id": "microsoft__Phi-3-mini-4k-instruct",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.003
+   },
+   {
+    "id": "microsoft__Phi-3.5-mini-instruct",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.003
+   },
+   {
+    "id": "microsoft__phi-4",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.003
+   },
+   {
+    "id": "mistralai__Mistral-7B-Instruct-v0.3",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.011
+   },
+   {
+    "id": "mistralai__Mistral-Nemo-Instruct-2407",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.012
+   },
+   {
+    "id": "mistralai__Mistral-Small-24B-Instruct-2501",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.008
+   },
+   {
+    "id": "mistralai__Mixtral-8x7B-Instruct-v0.1",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.003
+   },
+   {
+    "id": "mlabonne__NeuralDaredevil-8B-abliterated",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.004
+   },
+   {
+    "id": "moonshotai__Kimi-K2-Instruct",
+    "kind": "model",
+    "flagged": true,
+    "outcome": "quarantine",
+    "risk": 47,
+    "reasons": [
+     "risk 47 > 30 (dev allow limit)",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "GPU.CHECK.SKIPPED",
+     "MODEL.TOKENIZER.ADDED_TOKENS_UNCHECKED",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [
+     {
+      "id": "PROV.PUBLISHER.UNLISTED",
+      "severity": "low",
+      "title": "Publisher 'hf' is not on the allow list",
+      "score": 5,
+      "source": "deterministic",
+      "evidence": [
+       "source.repo (hf)"
+      ]
+     },
+     {
+      "id": "MODEL.CONFIG.AUTO_MAP",
+      "severity": "high",
+      "title": "tokenizer_config.json maps classes to custom code that runs on load",
+      "score": 25,
+      "source": "deterministic",
+      "evidence": [
+       "tokenizer_config.json#auto_map (tokenization_kimi.TikTokenTokenizer)"
+      ]
+     },
+     {
+      "id": "MODEL.CONFIG.AUTO_MAP_MISSING",
+      "severity": "medium",
+      "title": "auto_map references code files that are not in the model directory",
+      "score": 12,
+      "source": "deterministic",
+      "evidence": [
+       "tokenizer_config.json#auto_map (tokenization_kimi.TikTokenTokenizer)"
+      ]
+     },
+     {
+      "id": "LLM.CARD.MISSING",
+      "severity": "low",
+      "title": "No model/dataset card to review",
+      "score": 5,
+      "source": "deterministic",
+      "evidence": []
+     }
+    ],
+    "n_findings": 4,
+    "seconds": 0.01
+   },
+   {
+    "id": "nvidia__Llama-3.1-Nemotron-70B-Instruct-HF",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.009
+   },
+   {
+    "id": "nvidia__Nemotron-Mini-4B-Instruct",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.ADDED_TOKENS_UNCHECKED",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.008
+   },
+   {
+    "id": "openai__gpt-oss-20b",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TEMPLATE.CONTENT_CONDITIONAL",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.02
+   },
+   {
+    "id": "openbmb__MiniCPM-2B-sft-bf16",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.002
+   },
+   {
+    "id": "openchat__openchat-3.5-0106",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.002
+   },
+   {
+    "id": "stabilityai__stablelm-2-zephyr-1_6b",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.002
+   },
+   {
+    "id": "teknium__OpenHermes-2.5-Mistral-7B",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.002
+   },
+   {
+    "id": "tiiuae__falcon-7b-instruct",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.003
+   },
+   {
+    "id": "unsloth__Llama-3.2-1B-Instruct",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.008
+   },
+   {
+    "id": "unsloth__Meta-Llama-3.1-8B-Instruct",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.01
+   },
+   {
+    "id": "unsloth__gemma-2-9b-it",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.ADDED_TOKENS_UNCHECKED",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.004
+   },
+   {
+    "id": "unsloth__gemma-3-4b-it",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.ADDED_TOKENS_UNCHECKED",
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.029
+   },
+   {
+    "id": "unsloth__llama-3-8b-Instruct",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.004
+   },
+   {
+    "id": "upstage__SOLAR-10.7B-Instruct-v1.0",
+    "kind": "model",
+    "flagged": false,
+    "outcome": "allow",
+    "risk": 5,
+    "reasons": [
+     "risk 5 <= 30",
+     "trust inspected >= declared",
+     "compliance: NIST-AI-RMF:MAP-4.1 <- provenance"
+    ],
+    "info": [
+     "MODEL.TOKENIZER.NO_BASE"
+    ],
+    "findings": [],
+    "n_findings": 1,
+    "seconds": 0.002
+   }
+  ]
+ }
+}

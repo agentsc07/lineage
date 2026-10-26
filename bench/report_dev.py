@@ -83,6 +83,12 @@ def render(before: dict, after: dict) -> str:
         L.append(f"| {x['id']} | {x['outcome']} ({x['risk']}) | {fids} | **{v[0]}**: {v[1]} |")
     names = sorted(x["id"] for x in before["realworld"]["rows"] if x["kind"] == "package" and x["flagged"])
     L += ["", f"<details><summary>The {len(names)} PyPI packages flagged before</summary>", "", ", ".join(names), "", "</details>", ""]
+    L += ["## Read this before trusting the numbers", "",
+          "- This is now a **dev** set: rules were tuned against it, so 0/200 and 100% TPR are not out-of-sample estimates. The validation commit measured the same held-out corpus at 52% TPR before the `scanner-fixes` merge; `before` here already includes those fixes (75%).",
+          "- Diff-aware review lowers anything the previous release already had. A package that shipped its payload in an earlier release is only caught by the combinations that are never lowered (credential exfiltration, fetch-and-run, decoded blob executed, hard advisories), or when the earlier release is itself reviewed.",
+          "- With no previous release (first release, offline) only combinations fire; a lone capability such as `subprocess` is a signal. The held-out malicious packages are all first releases, so they test exactly that mode.",
+          "- Test code in a wheel is excluded from combinations. The three template flags are `auto_map` custom tokenizer code, kept as quarantine by design.",
+          "- Run the real-world half on a fresh sample (PyPI ranks 201-400, other templates) before claiming the rate.", ""]
     errs = [x for x in after["realworld"]["rows"] if "error" in x]
     if errs:
         L += ["Errors: " + "; ".join(f"{x['id']}: {x['error']}" for x in errs), ""]

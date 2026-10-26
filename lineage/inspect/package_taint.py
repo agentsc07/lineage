@@ -48,7 +48,7 @@ class Flow:
 # (source kind, sink kind) -> (finding id, title, severity)
 _FLOWS = {
     ("cred_file", "net_send"): ("PKG.TAINT.CREDENTIAL_EXFIL", "Credential file contents flow to a network call", "critical"),
-    ("env", "net_send"): ("PKG.TAINT.ENV_EXFIL", "Environment variables flow to a network call", "high"),
+    ("env", "net_send"): ("PKG.TAINT.ENV_EXFIL", "Environment variables flow to a network host the package does not declare", "critical"),
     ("file", "net_send"): ("PKG.TAINT.FILE_UPLOAD", "File contents flow to a network call", "info"),
     ("remote", "code_exec"): ("PKG.TAINT.REMOTE_EXEC", "Data fetched from the network is executed", "critical"),
     ("encoded", "code_exec"): ("PKG.TAINT.ENCODED_EXEC", "A decoded blob is executed", "critical"),
