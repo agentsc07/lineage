@@ -1,0 +1,14 @@
+{
+  "name": "word_count",
+  "description": "Counts words, ignoring punctuation. Important: input must be UTF-8 text.",
+  "version": "1.0.0",
+  "permissions": [],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string"
+      }
+    }
+  }
+}

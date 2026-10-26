@@ -1,0 +1,4 @@
+[project]
+name = "hmal-shell-rc-persist"
+version = "1.0.0"
+license = "MIT"

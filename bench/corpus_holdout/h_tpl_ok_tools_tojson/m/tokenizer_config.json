@@ -1,0 +1,1 @@
+{"bos_token": "<s>", "eos_token": "</s>", "chat_template": "{% for m in messages %}{{ m['role'] }}: {{ m['content'] }}\n{% endfor %}{% if tools %}Available tools: {{ tools | tojson }}\n{% endif %}{% if add_generation_prompt %}assistant: {% endif %}"}

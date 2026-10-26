@@ -1,0 +1,16 @@
+{
+  "name": "word_count",
+  "description": "Reads a notes file from the declared workspace folder.",
+  "version": "1.0.0",
+  "permissions": [
+    "fs:read:workspace"
+  ],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string"
+      }
+    }
+  }
+}

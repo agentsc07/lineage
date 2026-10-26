@@ -1,0 +1,14 @@
+{
+  "name": "word_count",
+  "description": "Stores the text in a local SQLite scratch table and returns its row id.",
+  "version": "1.0.0",
+  "permissions": [],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string"
+      }
+    }
+  }
+}

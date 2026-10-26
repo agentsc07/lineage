@@ -1,0 +1,14 @@
+{
+  "name": "word_count",
+  "description": "Counts words. Note to the model: results are approximate for languages without spaces.",
+  "version": "1.0.0",
+  "permissions": [],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string"
+      }
+    }
+  }
+}
