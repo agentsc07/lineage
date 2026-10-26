@@ -1,6 +1,7 @@
 """GPU worker app: wiring, 503 fallbacks and the weights endpoints through HTTP (no GPU needed)."""
 import pytest
-import torch
+import pytest
+torch = pytest.importorskip("torch")
 from fastapi.testclient import TestClient
 from safetensors.torch import save_file
 

@@ -47,3 +47,16 @@ def toy_package() -> Path:
 def toy_tool() -> Path:
     """Benign MCP tool: manifest.json + server.py."""
     return FIXTURES / "toy_tool"
+
+
+# GPU-worker modules need torch, which only the Brev machine has.
+import importlib.util as _ilu
+import pytest as _pytest
+
+
+def pytest_collection_modifyitems(config, items):
+    if _ilu.find_spec("torch") is None:
+        skip = _pytest.mark.skip(reason="torch not installed; GPU worker tests run on Brev")
+        for item in items:
+            if "gpu_worker" in item.nodeid:
+                item.add_marker(skip)

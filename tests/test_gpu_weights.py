@@ -1,7 +1,8 @@
 """Hermetic tests for gpu_worker.weights_api using tiny synthetic models."""
 import json
 
-import torch
+import pytest
+torch = pytest.importorskip("torch")
 from safetensors.torch import save_file
 
 from gpu_worker import weights_api as w

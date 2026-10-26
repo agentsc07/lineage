@@ -2,7 +2,8 @@
 import json
 
 import pytest
-import torch
+import pytest
+torch = pytest.importorskip("torch")
 from fastapi import HTTPException
 
 from gpu_worker import behaviour_api as b
