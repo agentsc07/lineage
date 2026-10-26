@@ -109,6 +109,12 @@ CREATE TABLE IF NOT EXISTS trusted_keys (
     owner TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS monitor_ticks (
+    seq INTEGER PRIMARY KEY AUTOINCREMENT,
+    n_alerts INTEGER NOT NULL,
+    body TEXT NOT NULL               -- MonitorTick JSON
+);
+
 CREATE TABLE IF NOT EXISTS tool_pins (
     artifact_id TEXT PRIMARY KEY REFERENCES artifacts(id),
     tool_name TEXT NOT NULL,

@@ -35,7 +35,16 @@ export default function GraphPage() {
   const { id } = useParams();
   const nav = useNavigate();
   const arts = useAsync(api.artifacts);
-  const rootId = id ?? arts.data?.[0]?.id;
+  // Default to the artifact whose chain (ancestors + descendants) is largest, so the full story shows on load.
+  const biggest = useAsync(async () => {
+    const list = arts.data ?? [];
+    const sizes = await Promise.all(list.slice(0, 40).map(async (a) => {
+      const [up, down] = await Promise.all([api.graph(a.id, "up"), api.graph(a.id, "down")]);
+      return { id: a.id, size: new Set([...up.nodes, ...down.nodes].map((n) => n.id)).size };
+    }));
+    return sizes.reduce<{ id: string; size: number } | null>((b, c) => (!b || c.size > b.size ? c : b), null)?.id ?? null;
+  }, [arts.data]);
+  const rootId = id ?? biggest.data ?? undefined;
   // Show the whole chain: ancestors of the leaf plus descendants of the root.
   const graph = useAsync(async () => {
     if (!rootId) return null;
@@ -99,12 +108,12 @@ export default function GraphPage() {
     <div className="page">
       <Header title="Lineage" sub="How artifacts derive from one another. Revoking an artifact flags everything built on it."
         actions={<>
-          <select className="input !w-56" aria-label="Artifact" value={rootId} onChange={(e) => nav(`/graph/${encodeURIComponent(e.target.value)}`)}>
+          <select className="input !w-56" aria-label="Artifact" value={rootId ?? ""} onChange={(e) => nav(`/graph/${encodeURIComponent(e.target.value)}`)}>
             {arts.data.map((a) => <option key={a.id} value={a.id}>{a.name}@{a.version}</option>)}</select>
           <button className="btn btn-danger" onClick={revoke} disabled={busy || !target || !!result}>{busy ? "Tracing…" : `Revoke ${sn?.label ?? ""}`}</button>
         </>} />
       {err && <p className="text-block text-sm mb-3">{err}</p>}
-      <div className="card h-[520px] relative overflow-hidden">
+      <div className="card h-[max(520px,calc(100vh-190px))] relative overflow-hidden">
         <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView fitViewOptions={{ padding: 0.3 }} nodesDraggable={false}
           onNodeClick={(_, n) => setSel(n.id)} proOptions={{ hideAttribution: true }} colorMode={document.documentElement.dataset.theme === "light" ? "light" : "dark"}>
           <Background gap={20} color="rgb(var(--line))" /><Controls showInteractive={false} />

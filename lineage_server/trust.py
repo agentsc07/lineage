@@ -71,6 +71,16 @@ def load_or_create_key(path: Path) -> Ed25519PrivateKey:
     return key
 
 
+def load_public(value: str) -> Ed25519PublicKey:
+    """A signer public key given as a PEM file path (`lineage keygen`'s `.pub`) or as raw hex."""
+    if Path(value).is_file():
+        key = serialization.load_pem_public_key(Path(value).read_bytes())
+        if not isinstance(key, Ed25519PublicKey):
+            raise ValueError(f"{value}: not an Ed25519 public key")
+        return key
+    return public_from_hex(value)
+
+
 def trust_key(conn: sqlite3.Connection, public_key: Ed25519PublicKey, owner: str) -> str:
     """Register `public_key` as a trusted passport signer; returns its key id."""
     kid = key_id(public_key)

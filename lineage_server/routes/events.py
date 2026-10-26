@@ -1,4 +1,4 @@
-"""SSE /events/{job}, GET /log, /log/proof/{id}, POST /monitor/tick."""
+"""SSE /events/{job}, GET /log, /log/proof/{id}, POST /monitor/tick, GET /monitor/latest."""
 from __future__ import annotations
 
 import sqlite3
@@ -48,4 +48,16 @@ def get_proof(ref: str, conn: sqlite3.Connection = Depends(get_conn)) -> Inclusi
 def monitor_tick(
     conn: sqlite3.Connection = Depends(get_conn), active: tuple[PolicyPack, bool] = Depends(get_policy)
 ) -> MonitorTick:
-    return monitor.tick(conn, policy=active[0])
+    result = monitor.tick(conn, policy=active[0])
+    conn.execute("INSERT INTO monitor_ticks (n_alerts, body) VALUES (?, ?)", (len(result.alerts), result.model_dump_json()))
+    conn.commit()
+    return result
+
+
+@router.get("/monitor/latest", response_model=MonitorTick | None)
+def monitor_latest(conn: sqlite3.Connection = Depends(get_conn)) -> MonitorTick | None:
+    """The most recent tick that raised alerts (ticks are idempotent, so a later quiet tick must not hide them);
+    if none ever did, the most recent tick; null before the first tick."""
+    row = conn.execute("SELECT body FROM monitor_ticks WHERE n_alerts > 0 ORDER BY seq DESC LIMIT 1").fetchone() \
+        or conn.execute("SELECT body FROM monitor_ticks ORDER BY seq DESC LIMIT 1").fetchone()
+    return MonitorTick.model_validate_json(row["body"]) if row else None

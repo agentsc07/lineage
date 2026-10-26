@@ -23,6 +23,7 @@ All bodies are JSON. Passport ids look like `lp:<sha256>` and are used verbatim 
 | GET | `/log` | – | `MerkleLog {size, root, entries[]}` | Append-only Merkle log |
 | GET | `/log/proof/{id}` | – | `InclusionProof {index, leaf_hash, path[], root, size}` | Inclusion proof for a log ref |
 | POST | `/monitor/tick` | – | `MonitorTick {checked, alerts[], ts}` | Re-check advisories; alerts carry the blast radius |
+| GET | `/monitor/latest` | – | `MonitorTick \| null` | Latest tick that raised alerts (else latest tick; null before any tick) |
 | GET | `/healthz` | – | `{"status": "ok"}` | Liveness |
 
 Status: the skeleton returns mock data (`lineage_server/mock.py`) that validates against these models. Track B replaces it.

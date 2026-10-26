@@ -27,6 +27,7 @@ export const api = {
   putPolicy: (policy: object, signatures: PolicySignature[], expires_at: string | null) =>
     req<PolicyState>("/policy", { method: "PUT", body: JSON.stringify({ policy, signatures, expires_at }) }),
   log: () => req<MerkleLog>("/log"),
+  latestTick: () => req<MonitorTick | null>("/monitor/latest"),
   tick: () => req<MonitorTick>("/monitor/tick", { method: "POST" }),
   startIntake: (body: { artifact_type: string; ref: string; environment: string }) =>
     req<{ job_id: string; events_url: string }>("/intake", { method: "POST", body: JSON.stringify(body) }),

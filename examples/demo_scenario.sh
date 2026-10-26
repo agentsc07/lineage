@@ -4,7 +4,9 @@
 #   PAUSE=0 examples/demo_scenario.sh    # no pauses between steps
 # Every artifact is a tiny inert local fixture from examples/demo_artifacts/ (see make_demo_artifacts.py), copied to a
 # temp dir, so bytes are really hashed and inspected. Set LINEAGE_API to use a server you started yourself; its
-# registry must already trust the demo signer key (the script cannot do that for you).
+# registry must already trust the demo signer key: put the key pair in $LINEAGE_DEMO_KEYDIR (demo.key / demo.pub) and start
+# the server with LINEAGE_TRUSTED_KEYS=$LINEAGE_DEMO_KEYDIR/demo.pub. Set LINEAGE_DEMO_FEED to the server's
+# LINEAGE_ADVISORY_FEED file and step 6 publishes its advisory there. examples/run_dashboard_demo.sh does all of this.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 # macOS can flag the venv's editable .pth files "hidden", which makes Python skip them and `lineage` unimportable from
@@ -57,7 +59,11 @@ sign_and_verify() { # type dirname name version repo [--parent id ...]
 }
 
 mkdir -p "$ART" && cp -R examples/demo_artifacts/. "$ART/"
-lineage keygen --dir "$WORK" --name demo >/dev/null
+if [[ -n "${LINEAGE_DEMO_KEYDIR:-}" ]]; then
+  cp "$LINEAGE_DEMO_KEYDIR/demo.key" "$LINEAGE_DEMO_KEYDIR/demo.pub" "$WORK/"
+else
+  lineage keygen --dir "$WORK" --name demo >/dev/null
+fi
 
 if [[ -z "${LINEAGE_API:-}" ]]; then
   echo '{}' >"$WORK/feed.json"
@@ -120,8 +126,8 @@ fi
 pause
 
 step "6. Watch" "A new advisory lands for an admitted package; the monitor traces the blast radius."
-if [[ -z "${LINEAGE_API:-}" ]]; then
-  py advisory "$WORK/feed.json" "tokenizers-fast==0.9.2"
+if [[ -z "${LINEAGE_API:-}" || -n "${LINEAGE_DEMO_FEED:-}" ]]; then
+  py advisory "${LINEAGE_DEMO_FEED:-$WORK/feed.json}" "tokenizers-fast==0.9.2"
   note "Advisory GHSA-demo-7x4q-9m2p published for tokenizers-fast==0.9.2"
 fi
 curl -sf -X POST "$API/monitor/tick" | py tick || printf '  %smonitor tick failed%s\n' "$R" "$N"

@@ -1,79 +1,98 @@
-import { Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useState } from "react";
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useAsync } from "../lib/useAsync";
+import { loadBench } from "../lib/bench";
 import { ErrorBox, Header, Kpi, Loading } from "../components/ui";
 
-interface Results {
-  sample?: boolean; note?: string; generated: string;
-  summary: { precision: number; recall: number; f1: number; fpr: number };
-  by_category: { category: string; detected: number; total: number }[];
-  baselines: { name: string; recall: number; fpr: number }[];
-  latency: { stage: string; p50_ms: number; p95_ms: number }[];
-  cost: { gpu_seconds_per_artifact: number; usd_per_1000_artifacts: number };
-}
-const pct = (n: number) => `${Math.round(n * 100)}%`;
+const pct = (n: number | null) => (n === null ? "not measured" : `${Math.round(n * 1000) / 10}%`);
+const dec = (n: number | null, d = 3) => (n === null ? "not measured" : n.toFixed(d));
 const css = (v: string) => `rgb(var(--${v}))`;
 const tip = { contentStyle: { background: css("panel"), border: `1px solid ${css("line")}`, borderRadius: 8, fontSize: 12, color: css("ink") }, cursor: { fill: css("raised") } };
 const axis = { stroke: css("faint"), fontSize: 12, tickLine: false } as const;
 
 export default function Bench() {
-  // Prefer the real results served from /bench-results.json; the repo ships a labelled sample.
-  const { data, error, reload } = useAsync<Results>(() => fetch("/bench-results.json").then((r) => { if (!r.ok) throw new Error("bench-results.json not found"); return r.json(); }));
+  const { data, error, reload } = useAsync(loadBench);
+  const [mode, setMode] = useState<string | null>(null);
   if (error) return <div className="page"><ErrorBox msg={error} retry={reload} /></div>;
   if (!data) return <div className="page"><Loading /></div>;
-  const cat = data.by_category.map((c) => ({ ...c, rate: c.detected / c.total }));
+
+  // Default to the most capable run (the last one listed: deep stages on, with the GPU worker).
+  const m = data.modes.find((x) => x.name === mode) ?? data.modes[data.modes.length - 1];
+  const cats = (m?.categories ?? []).map((c) => ({ ...c, rate: c.malicious ? c.detected / c.malicious : 0 }));
+  const { weight: w, reviewer: rv } = data;
+  const ci = w?.ci ? `95% CI ${w.ci[0].toFixed(2)} to ${w.ci[1].toFixed(2)}` : "CI not measured";
 
   return (
     <div className="page">
-      <Header title="Bench" sub="LineageBench: labelled attacks and benign controls, scored against simpler baselines." />
-      {data.sample && <p className="card border-cond/40 text-cond text-sm px-4 py-2.5 mb-4">Sample data. {data.note}</p>}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-        <Kpi label="Recall" value={pct(data.summary.recall)} sub="Attacks caught" />
-        <Kpi label="Precision" value={pct(data.summary.precision)} sub="Blocks that were real attacks" />
-        <Kpi label="False positives" value={pct(data.summary.fpr)} sub="Benign artifacts wrongly stopped" />
-        <Kpi label="Cost" value={`$${data.cost.usd_per_1000_artifacts.toFixed(2)}`} sub={`per 1,000 artifacts · ${data.cost.gpu_seconds_per_artifact}s GPU each`} />
+      <Header title="Bench" sub="LineageBench: labelled attacks and benign controls. Every number comes from bench/*.json; anything not yet measured says so."
+        actions={data.modes.length > 1 ? (
+          <select className="input !w-72" aria-label="Bench run" value={m?.name} onChange={(e) => setMode(e.target.value)}>
+            {data.modes.map((x) => <option key={x.name} value={x.name}>{x.name}</option>)}</select>) : undefined} />
+
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
+        <Kpi label="Detection (attacks caught)" value={pct(m?.tpr ?? null)} sub={m ? `${m.malicious} labelled attacks · ${data.items ?? "?"} items in the corpus` : "not measured"} />
+        <Kpi label="False positives" value={pct(m?.fpr ?? null)} sub={m ? `of ${m.benign} benign artifacts wrongly stopped` : undefined} />
+        <Kpi label="Weight-space AUROC" value={dec(w?.auroc ?? null, 2)} sub={w ? `${ci} · ${w.nTest ?? "?"} held-out adapters` : undefined} />
+        <Kpi label="Cost per artifact" value={rv?.costUsd == null ? "not measured" : `$${rv.costUsd.toFixed(4)}`}
+          sub={data.gpuHours === null ? undefined : `${data.gpuHours} GPU hours logged in total (one-off bank and evaluation runs)`} />
       </div>
-      <div className="grid lg:grid-cols-2 gap-4">
-        <Chart title="Detection by attack category" note="Share of labelled attacks caught">
-          <BarChart data={cat} layout="vertical" margin={{ left: 24, right: 16 }}>
-            <CartesianGrid horizontal={false} stroke={css("line")} />
-            <XAxis type="number" domain={[0, 1]} tickFormatter={pct} {...axis} />
-            <YAxis type="category" dataKey="category" width={150} {...axis} />
-            <Tooltip {...tip} formatter={(v: number, _n, p) => [`${p.payload.detected} of ${p.payload.total} (${pct(v)})`, "Caught"]} />
-            <Bar dataKey="rate" radius={[0, 4, 4, 0]}>{cat.map((c) => <Cell key={c.category} fill={css(c.rate >= 0.9 ? "allow" : c.rate >= 0.75 ? "cond" : "quar")} />)}</Bar>
-          </BarChart>
-        </Chart>
-        <Chart title="Lineage against baselines" note="Higher recall and lower false positives are better">
-          <BarChart data={data.baselines} margin={{ right: 16 }}>
-            <CartesianGrid vertical={false} stroke={css("line")} />
-            <XAxis dataKey="name" {...axis} interval={0} tick={{ fontSize: 11, fill: css("mute") }} />
-            <YAxis tickFormatter={pct} domain={[0, 1]} {...axis} />
-            <Tooltip {...tip} formatter={(v: number) => pct(v)} />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Bar dataKey="recall" name="Recall" fill={css("accent")} radius={[4, 4, 0, 0]} />
-            <Bar dataKey="fpr" name="False positive rate" fill={css("block")} radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </Chart>
-        <div className="lg:col-span-2">
-          <Chart title="Time per stage" note="Median and 95th percentile, milliseconds" h={260}>
-            <BarChart data={data.latency} margin={{ right: 16 }}>
-              <CartesianGrid vertical={false} stroke={css("line")} />
-              <XAxis dataKey="stage" {...axis} /><YAxis {...axis} />
-              <Tooltip {...tip} formatter={(v: number) => `${v} ms`} /><Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="p50_ms" name="Median" fill={css("accent")} radius={[4, 4, 0, 0]} />
-              <Bar dataKey="p95_ms" name="95th percentile" fill={css("faint")} radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </Chart>
+
+      <div className="grid xl:grid-cols-2 gap-4">
+        <section className="card">
+          <div className="card-h flex-col !items-start !gap-0"><h2 className="h-title">Detection and false positives by category</h2><p className="text-xs text-faint">Attacks caught of those labelled malicious; benign artifacts wrongly stopped</p></div>
+          {cats.length === 0 ? <p className="p-4 text-sm text-mute">not measured</p> : (
+            <table className="w-full"><thead><tr><th className="th">Category</th><th className="th">Caught</th><th className="th w-1/3">Detection</th><th className="th">False positives</th></tr></thead>
+              <tbody>{cats.map((c) => (
+                <tr key={c.key} className="hover:bg-raised/50">
+                  <td className="td font-medium">{c.label}{c.auroc !== null && <span className="text-xs text-faint ml-2">AUROC {c.auroc.toFixed(2)}</span>}</td>
+                  <td className="td tabular-nums whitespace-nowrap">{c.detected} of {c.malicious}</td>
+                  <td className="td"><div className="flex items-center gap-2"><div className="h-2 flex-1 rounded bg-raised overflow-hidden"><div className="h-full" style={{ width: `${c.rate * 100}%`, background: css(c.rate >= 0.9 ? "allow" : c.rate >= 0.6 ? "cond" : "block") }} /></div><span className="text-xs tabular-nums w-10 text-right">{pct(c.rate)}</span></div></td>
+                  <td className="td tabular-nums whitespace-nowrap" style={c.fp ? { color: css("quar") } : undefined}>{c.fp} of {c.benign}</td>
+                </tr>))}</tbody></table>)}
+        </section>
+
+        <div className="flex flex-col gap-4">
+          <section className="card">
+            <div className="card-h flex-col !items-start !gap-0"><h2 className="h-title">Weight-space backdoor detector</h2><p className="text-xs text-faint">Logistic model on LoRA spectral features, held-out test split</p></div>
+            {!w ? <p className="p-4 text-sm text-mute">not measured</p> : (
+              <dl className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 text-sm">
+                <Stat k="AUROC (test)" v={dec(w.auroc, 3)} /><Stat k="95% CI" v={w.ci ? `${w.ci[0].toFixed(2)} to ${w.ci[1].toFixed(2)}` : "not measured"} />
+                <Stat k="5-fold CV mean" v={dec(w.cv5, 3)} /><Stat k="Adapters" v={w.nAdapters === null ? "not measured" : String(w.nAdapters)} />
+              </dl>)}
+          </section>
+          <section className="card">
+            <div className="card-h flex-col !items-start !gap-0"><h2 className="h-title">LLM reviewer</h2><p className="text-xs text-faint">Can only raise risk; every claim must cite a checkable location</p></div>
+            {!rv ? <p className="p-4 text-sm text-mute">not measured: bench/reviewer.json has not been produced yet.</p> : (
+              <dl className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 text-sm">
+                <Stat k="Precision" v={pct(rv.precision)} /><Stat k="Recall" v={pct(rv.recall)} />
+                <Stat k="Latency" v={rv.latencyS === null ? "not measured" : `${rv.latencyS.toFixed(1)} s`} />
+                <Stat k="Cost per artifact" v={rv.costUsd === null ? "not measured" : `$${rv.costUsd.toFixed(4)}`} />
+              </dl>)}
+          </section>
+        </div>
+
+        <div className="xl:col-span-2">
+          <section className="card">
+            <div className="card-h flex-col !items-start !gap-0"><h2 className="h-title">Time per check</h2><p className="text-xs text-faint">Median and 95th percentile in milliseconds, per check type</p></div>
+            <div className="p-3" style={{ height: 280 }}>
+              {!m || m.latency.length === 0 ? <p className="p-1 text-sm text-mute">not measured</p> : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={m.latency} margin={{ right: 16 }}>
+                    <CartesianGrid vertical={false} stroke={css("line")} />
+                    <XAxis dataKey="check" {...axis} /><YAxis {...axis} />
+                    <Tooltip {...tip} formatter={(v: number) => `${v} ms`} /><Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Bar dataKey="p50_ms" name="Median" fill={css("accent")} radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="p95_ms" name="95th percentile" fill={css("faint")} radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>)}
+            </div>
+          </section>
         </div>
       </div>
     </div>
   );
 }
 
-function Chart({ title, note, children, h = 300 }: { title: string; note: string; children: React.ReactElement; h?: number }) {
-  return (
-    <section className="card">
-      <div className="card-h flex-col !items-start !gap-0"><h2 className="h-title">{title}</h2><p className="text-xs text-faint">{note}</p></div>
-      <div className="p-3" style={{ height: h }}><ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer></div>
-    </section>
-  );
+function Stat({ k, v }: { k: string; v: string }) {
+  return <div><dt className="text-mute text-xs">{k}</dt><dd className="text-lg font-semibold tabular-nums mt-0.5">{v}</dd></div>;
 }
