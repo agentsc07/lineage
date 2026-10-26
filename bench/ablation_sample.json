@@ -1,0 +1,448 @@
+{
+ "generated": "2026-10-26T06:36:43+00:00",
+ "worker_url": "http://127.0.0.1:8800",
+ "reviewer_llm": "nvidia/NVIDIA-Nemotron-Nano-9B-v2",
+ "sample": true,
+ "sets": {
+  "corpus": {
+   "status": "ran",
+   "dir": "bench/corpus",
+   "phase": "dev",
+   "n_items": 10,
+   "sampled": true,
+   "static_only": {
+    "n": 10,
+    "n_malicious": 5,
+    "n_benign": 5,
+    "tp": 5,
+    "fp": 0,
+    "tpr": 1.0,
+    "tpr_ci95": [
+     0.5655085052479191,
+     1.0
+    ],
+    "fpr": 0.0,
+    "fpr_ci95": [
+     0.0,
+     0.43449149475208104
+    ],
+    "errors": 0
+   },
+   "static_plus_reviewer": {
+    "n": 10,
+    "n_malicious": 5,
+    "n_benign": 5,
+    "tp": 5,
+    "fp": 0,
+    "tpr": 1.0,
+    "tpr_ci95": [
+     0.5655085052479191,
+     1.0
+    ],
+    "fpr": 0.0,
+    "fpr_ci95": [
+     0.0,
+     0.43449149475208104
+    ],
+    "errors": 0
+   },
+   "changes": {
+    "raised_to_flagged": [],
+    "lowered_to_unflagged": [],
+    "outcome_changed_same_flag": [],
+    "n_changed": 0,
+    "risk_deltas": [
+     0,
+     0,
+     0,
+     0,
+     5,
+     0,
+     0,
+     0,
+     0,
+     5
+    ],
+    "n_risk_changed": 2,
+    "n_risk_lowered": 0
+   },
+   "cost": {
+    "n_intake_items": 10,
+    "n_reviewed": 0,
+    "latency_added_s": {
+     "mean": -0.018682698901102412,
+     "p50": -0.0011781169960158877,
+     "p95": 0.0010742849990492687,
+     "total": -0.18682698901102412
+    },
+    "latency_added_s_reviewed_only": {
+     "mean": 0.0
+    },
+    "reviewer_calls": 0,
+    "reviewer_completion_tokens": 0,
+    "gpu_seconds_total": 0.0,
+    "gpu_seconds_per_artifact": 0.0,
+    "gpu_seconds_per_reviewed_artifact": 0.0
+   },
+   "items": {
+    "static": [
+     {
+      "id": "pkg_mal_setup_network",
+      "label": "malicious",
+      "category": "package_payload",
+      "check": "intake",
+      "flagged": true,
+      "seconds": 0.19289312500040978,
+      "error": null,
+      "outcome": "block",
+      "risk": 47,
+      "findings": [
+       "PKG.CAP.FILESYSTEM",
+       "PKG.CAP.NETWORK",
+       "PKG.HOOK.NETWORK_AT_INSTALL",
+       "PROV.PUBLISHER.UNLISTED"
+      ]
+     },
+     {
+      "id": "pkg_mal_delayed_bomb",
+      "label": "malicious",
+      "category": "package_payload",
+      "check": "intake",
+      "flagged": true,
+      "seconds": 0.1704010350003955,
+      "error": null,
+      "outcome": "quarantine",
+      "risk": 50,
+      "findings": [
+       "PKG.CAP.FILESYSTEM",
+       "PKG.CODE.DELAYED_EXEC",
+       "PROV.PUBLISHER.UNLISTED"
+      ]
+     },
+     {
+      "id": "pkg_look_2",
+      "label": "malicious",
+      "category": "lookalike_name",
+      "check": "intake",
+      "flagged": true,
+      "seconds": 0.08440137099387357,
+      "error": null,
+      "outcome": "quarantine",
+      "risk": 70,
+      "findings": [
+       "PKG.PROV.LOOKALIKE_NAME",
+       "PKG.PROV.REPO_OWNER_MISMATCH",
+       "PROV.PUBLISHER.UNLISTED"
+      ]
+     },
+     {
+      "id": "tool_mal_undeclared_network",
+      "label": "malicious",
+      "category": "mcp_tool_poisoning",
+      "check": "intake",
+      "flagged": true,
+      "seconds": 0.11226445800275542,
+      "error": null,
+      "outcome": "quarantine",
+      "risk": 42,
+      "findings": [
+       "PKG.CAP.NETWORK",
+       "PROV.PUBLISHER.UNLISTED",
+       "TOOL.INTENT.UNDECLARED_NETWORK"
+      ]
+     },
+     {
+      "id": "tpl_mal_zero_width",
+      "label": "malicious",
+      "category": "chat_template_backdoor",
+      "check": "intake",
+      "flagged": true,
+      "seconds": 0.055897874997754116,
+      "error": null,
+      "outcome": "quarantine",
+      "risk": 35,
+      "findings": [
+       "LLM.CARD.MISSING",
+       "MODEL.TEMPLATE.INVISIBLE_UNICODE",
+       "PROV.PUBLISHER.UNLISTED"
+      ]
+     },
+     {
+      "id": "pkg_ok_textutil",
+      "label": "benign",
+      "category": "package_payload",
+      "check": "intake",
+      "flagged": false,
+      "seconds": 0.13045711599988863,
+      "error": null,
+      "outcome": "allow",
+      "risk": 5,
+      "findings": [
+       "PROV.PUBLISHER.UNLISTED"
+      ]
+     },
+     {
+      "id": "pkg_ok_csvio",
+      "label": "benign",
+      "category": "package_payload",
+      "check": "intake",
+      "flagged": false,
+      "seconds": 0.08470880499953637,
+      "error": null,
+      "outcome": "allow",
+      "risk": 10,
+      "findings": [
+       "PKG.CAP.FILESYSTEM",
+       "PROV.PUBLISHER.UNLISTED"
+      ]
+     },
+     {
+      "id": "pkg_lookok_2",
+      "label": "benign",
+      "category": "lookalike_name",
+      "check": "intake",
+      "flagged": false,
+      "seconds": 0.15842479500133777,
+      "error": null,
+      "outcome": "allow",
+      "risk": 5,
+      "findings": [
+       "PROV.PUBLISHER.UNLISTED"
+      ]
+     },
+     {
+      "id": "tool_ok_3",
+      "label": "benign",
+      "category": "mcp_tool_poisoning",
+      "check": "intake",
+      "flagged": false,
+      "seconds": 0.007488316005037632,
+      "error": null,
+      "outcome": "quarantine",
+      "risk": 5,
+      "findings": [
+       "PROV.PUBLISHER.UNLISTED"
+      ]
+     },
+     {
+      "id": "tpl_ok_plain",
+      "label": "benign",
+      "category": "chat_template_backdoor",
+      "check": "intake",
+      "flagged": false,
+      "seconds": 0.007210333002149127,
+      "error": null,
+      "outcome": "allow",
+      "risk": 10,
+      "findings": [
+       "LLM.CARD.MISSING",
+       "PROV.PUBLISHER.UNLISTED"
+      ]
+     }
+    ],
+    "reviewer": [
+     {
+      "id": "pkg_mal_setup_network",
+      "label": "malicious",
+      "category": "package_payload",
+      "check": "intake",
+      "flagged": true,
+      "seconds": 0.17164959300134797,
+      "error": null,
+      "outcome": "block",
+      "risk": 47,
+      "findings": [
+       "PKG.CAP.FILESYSTEM",
+       "PKG.CAP.NETWORK",
+       "PKG.HOOK.NETWORK_AT_INSTALL",
+       "PROV.PUBLISHER.UNLISTED"
+      ],
+      "reviewer_calls": 0,
+      "reviewer_llm_s": 0.0,
+      "reviewer_tokens": 0
+     },
+     {
+      "id": "pkg_mal_delayed_bomb",
+      "label": "malicious",
+      "category": "package_payload",
+      "check": "intake",
+      "flagged": true,
+      "seconds": 0.17147531999944476,
+      "error": null,
+      "outcome": "quarantine",
+      "risk": 50,
+      "findings": [
+       "PKG.CAP.FILESYSTEM",
+       "PKG.CODE.DELAYED_EXEC",
+       "PROV.PUBLISHER.UNLISTED"
+      ],
+      "reviewer_calls": 0,
+      "reviewer_llm_s": 0.0,
+      "reviewer_tokens": 0
+     },
+     {
+      "id": "pkg_look_2",
+      "label": "malicious",
+      "category": "lookalike_name",
+      "check": "intake",
+      "flagged": true,
+      "seconds": 0.08322325399785768,
+      "error": null,
+      "outcome": "quarantine",
+      "risk": 70,
+      "findings": [
+       "PKG.PROV.LOOKALIKE_NAME",
+       "PKG.PROV.REPO_OWNER_MISMATCH",
+       "PROV.PUBLISHER.UNLISTED"
+      ],
+      "reviewer_calls": 0,
+      "reviewer_llm_s": 0.0,
+      "reviewer_tokens": 0
+     },
+     {
+      "id": "tool_mal_undeclared_network",
+      "label": "malicious",
+      "category": "mcp_tool_poisoning",
+      "check": "intake",
+      "flagged": true,
+      "seconds": 0.002941451995866373,
+      "error": null,
+      "outcome": "quarantine",
+      "risk": 42,
+      "findings": [
+       "PKG.CAP.NETWORK",
+       "PROV.PUBLISHER.UNLISTED",
+       "TOOL.INTENT.UNDECLARED_NETWORK"
+      ],
+      "reviewer_calls": 0,
+      "reviewer_llm_s": 0.0,
+      "reviewer_tokens": 0
+     },
+     {
+      "id": "tpl_mal_zero_width",
+      "label": "malicious",
+      "category": "chat_template_backdoor",
+      "check": "intake",
+      "flagged": true,
+      "seconds": 0.013101345997711178,
+      "error": null,
+      "outcome": "quarantine",
+      "risk": 40,
+      "findings": [
+       "LLM.CARD.MISSING",
+       "MODEL.PARENT.UNIDENTIFIED",
+       "MODEL.TEMPLATE.INVISIBLE_UNICODE",
+       "PROV.PUBLISHER.UNLISTED"
+      ],
+      "reviewer_calls": 0,
+      "reviewer_llm_s": 0.0,
+      "reviewer_tokens": 0
+     },
+     {
+      "id": "pkg_ok_textutil",
+      "label": "benign",
+      "category": "package_payload",
+      "check": "intake",
+      "flagged": false,
+      "seconds": 0.11959926100098528,
+      "error": null,
+      "outcome": "allow",
+      "risk": 5,
+      "findings": [
+       "PROV.PUBLISHER.UNLISTED"
+      ],
+      "reviewer_calls": 0,
+      "reviewer_llm_s": 0.0,
+      "reviewer_tokens": 0
+     },
+     {
+      "id": "pkg_ok_csvio",
+      "label": "benign",
+      "category": "package_payload",
+      "check": "intake",
+      "flagged": false,
+      "seconds": 0.08499935000145342,
+      "error": null,
+      "outcome": "allow",
+      "risk": 10,
+      "findings": [
+       "PKG.CAP.FILESYSTEM",
+       "PROV.PUBLISHER.UNLISTED"
+      ],
+      "reviewer_calls": 0,
+      "reviewer_llm_s": 0.0,
+      "reviewer_tokens": 0
+     },
+     {
+      "id": "pkg_lookok_2",
+      "label": "benign",
+      "category": "lookalike_name",
+      "check": "intake",
+      "flagged": false,
+      "seconds": 0.15781145600340096,
+      "error": null,
+      "outcome": "allow",
+      "risk": 5,
+      "findings": [
+       "PROV.PUBLISHER.UNLISTED"
+      ],
+      "reviewer_calls": 0,
+      "reviewer_llm_s": 0.0,
+      "reviewer_tokens": 0
+     },
+     {
+      "id": "tool_ok_3",
+      "label": "benign",
+      "category": "mcp_tool_poisoning",
+      "check": "intake",
+      "flagged": false,
+      "seconds": 0.00477811799646588,
+      "error": null,
+      "outcome": "quarantine",
+      "risk": 5,
+      "findings": [
+       "PROV.PUBLISHER.UNLISTED"
+      ],
+      "reviewer_calls": 0,
+      "reviewer_llm_s": 0.0,
+      "reviewer_tokens": 0
+     },
+     {
+      "id": "tpl_ok_plain",
+      "label": "benign",
+      "category": "chat_template_backdoor",
+      "check": "intake",
+      "flagged": false,
+      "seconds": 0.007741089997580275,
+      "error": null,
+      "outcome": "allow",
+      "risk": 15,
+      "findings": [
+       "LLM.CARD.MISSING",
+       "MODEL.PARENT.UNIDENTIFIED",
+       "PROV.PUBLISHER.UNLISTED"
+      ],
+      "reviewer_calls": 0,
+      "reviewer_llm_s": 0.0,
+      "reviewer_tokens": 0
+     }
+    ]
+   }
+  },
+  "corpus_holdout": {
+   "status": "missing (bench/corpus_holdout/manifest.json not found)"
+  },
+  "pypi_top200_dev": {
+   "status": "missing (bench/corpus_pypi_top200_dev/manifest.json not found)"
+  },
+  "hf_templates": {
+   "status": "missing (bench/corpus_hf_templates/manifest.json not found)"
+  },
+  "corpus_final": {
+   "status": "final set: pass --include-final to run it"
+  },
+  "pypi_201_400": {
+   "status": "final set: pass --include-final to run it"
+  }
+ }
+}
