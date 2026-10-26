@@ -14,11 +14,14 @@ export default function Overview() {
   const [ticking, setTicking] = useState(false);
   const [tickErr, setTickErr] = useState<string | null>(null);
 
+  // A tick with nothing new is quiet (ticks are idempotent), so keep showing the latest tick that raised alerts.
   const check = () => {
     setTicking(true);
-    api.tick().then((t) => { setTick(t); setTickErr(null); }).catch((e) => setTickErr(String(e.message))).finally(() => setTicking(false));
+    api.tick()
+      .then(async (t) => { setTick(t.alerts.length ? t : (await api.latestTick()) ?? t); setTickErr(null); })
+      .catch((e) => setTickErr(String(e.message))).finally(() => setTicking(false));
   };
-  useEffect(check, []);
+  useEffect(() => { api.latestTick().then((t) => t && setTick(t)).catch(() => {}).finally(check); }, []);
 
   if (arts.error) return <div className="page"><ErrorBox msg={arts.error} retry={arts.reload} /></div>;
   if (!arts.data) return <div className="page"><Loading /></div>;
@@ -31,7 +34,7 @@ export default function Overview() {
   const recent = [
     ...sess.map((s) => ({ key: s.decision.artifact_id + s.decision.decided_at, name: s.ref, type: s.artifact_type, outcome: s.approved ? ("allow_with_conditions" as Outcome) : s.decision.outcome, risk: s.decision.risk_score, env: s.decision.environment, at: s.decision.decided_at, id: s.decision.artifact_id })),
     ...rows.map((a) => ({ key: a.id, name: `${a.name}@${a.version}`, type: a.artifact_type, outcome: (a.outcome ?? statusOutcome[a.status]) as Outcome, risk: a.risk_score, env: a.environment, at: a.created_at, id: a.id })),
-  ].slice(0, 8);
+  ].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 8);
 
   return (
     <div className="page">

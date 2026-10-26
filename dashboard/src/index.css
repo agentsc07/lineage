@@ -54,7 +54,7 @@ body {
   .input { @apply h-8 px-2.5 rounded-md bg-bg border border-line text-sm text-ink placeholder:text-faint w-full; }
   .th { @apply text-left text-xs font-medium text-mute px-4 py-2 border-b border-line whitespace-nowrap; }
   .td { @apply px-4 py-2.5 border-b border-line/60 align-middle; }
-  .page { @apply px-6 py-6 max-w-[1280px] mx-auto w-full; }
+  .page { @apply px-8 py-6 w-full; }
 }
 
 @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgb(var(--block) / .55); } 100% { box-shadow: 0 0 0 14px rgb(var(--block) / 0); } }
