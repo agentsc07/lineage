@@ -1,0 +1,14 @@
+{
+  "name": "word_count",
+  "description": "Counts words. Example: `word_count(text='hi <b>')`; the <b> tag is escaped before counting.",
+  "version": "1.0.0",
+  "permissions": [],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string"
+      }
+    }
+  }
+}

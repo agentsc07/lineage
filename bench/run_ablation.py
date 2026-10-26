@@ -14,7 +14,7 @@ delta), the latency added, and GPU-seconds per artifact. "Worker on" enables eve
 checks), so each changed decision also records whether the reviewer LLM was actually called for that item (from GET /review/stats
 deltas; items run one at a time so the deltas are exact).
 
-Flagged = decision `block` OR risk > policy allow threshold (as in bench/run_bench.py). Checks other than `intake` (bind,
+Flagged = decision `block` OR risk > policy allow threshold (benign pickles blocked only by `allow_pickle: false` are counted as policy blocks, not false positives) (as in bench/run_bench.py). Checks other than `intake` (bind,
 tokenizer_diff, lora_weights) never use the worker's reviewer; they run once and count identically in both modes.
 GPU-seconds = wall time of the reviewer LLM calls (the card is dedicated and calls are sequential, so busy time ~ GPU time);
 the policy model and weight checks are not included.
@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import signal
 import statistics
 import sys
 import time
@@ -40,6 +41,7 @@ from bench.report import _wilson  # noqa: E402
 from bench.run_bench import CHECKS, NO_WORKER  # noqa: E402
 
 GPU_URL = os.environ.get("LINEAGE_GPU_URL", "http://127.0.0.1:8800")
+PARTS = ROOT / "bench" / "ablation_parts"
 # name, directory, phase. Sets that do not exist yet are reported as missing.
 SETS = [
     {"name": "corpus", "dir": "bench/corpus", "phase": "dev"},
@@ -48,6 +50,7 @@ SETS = [
     {"name": "hf_templates", "dir": "bench/corpus_hf_templates", "phase": "dev"},
     {"name": "corpus_final", "dir": "bench/corpus_final", "phase": "final"},
     {"name": "pypi_201_400", "dir": "bench/corpus_pypi_201_400", "phase": "final"},
+    {"name": "hf_templates_final", "dir": "bench/corpus_hf_templates_final", "phase": "final"},
 ]
 
 
@@ -75,17 +78,38 @@ def sample(items: list[dict], n: int) -> list[dict]:
     return out
 
 
+class ItemTimeout(BaseException):  # BaseException: a scanner's broad `except Exception` must not swallow the timeout
+    pass
+
+
+def _alarm(_sig, _frm):
+    raise ItemTimeout()
+
+
+STATIC_TIMEOUT_S = 120   # a scanner that has not finished in 2 minutes is hung (observed: package_taint on `black`, >30 min)
+WORKER_TIMEOUT_S = 900
+
+
 def run_item(item: dict, root: Path, policy, gpu_url: str, worker: str | None) -> dict:
     before = _stats(worker) if worker else None
     t0 = time.perf_counter()
+    timed_out = False
+    signal.signal(signal.SIGALRM, _alarm)
+    signal.alarm(WORKER_TIMEOUT_S if worker else STATIC_TIMEOUT_S)
     try:
         positive, detail = CHECKS[item["check"]](item, root, policy, gpu_url, "staging")
         err = None
+    except ItemTimeout:
+        positive, detail, timed_out = False, {}, True
+        err = f"timeout after {WORKER_TIMEOUT_S if worker else STATIC_TIMEOUT_S} s (intake did not finish)"
     except Exception as e:  # noqa: BLE001 - recorded, never aborts the run
         positive, detail, err = False, {}, f"{type(e).__name__}: {e}"[:200]
-    row = {"id": item["id"], "label": item["label"], "category": item["category"], "check": item["check"],
+    finally:
+        signal.alarm(0)
+    row = {"timeout": timed_out, "id": item["id"], "label": item["label"], "category": item["category"], "check": item["check"],
            "flagged": bool(positive), "seconds": time.perf_counter() - t0, "error": err,
-           "outcome": detail.get("outcome"), "risk": detail.get("risk"), "findings": detail.get("findings")}
+           "outcome": detail.get("outcome"), "risk": detail.get("risk"), "findings": detail.get("findings"),
+           "policy_block": bool(detail.get("policy_block"))}
     if worker:
         after = _stats(worker)
         row["reviewer_calls"] = after["calls"] - before["calls"]
@@ -97,13 +121,16 @@ def run_item(item: dict, root: Path, policy, gpu_url: str, worker: str | None) -
 def rates(rows: list[dict]) -> dict:
     mal = [r for r in rows if r["label"] == "malicious"]
     ben = [r for r in rows if r["label"] == "benign"]
-    tp, fp = sum(r["flagged"] for r in mal), sum(r["flagged"] for r in ben)
+    tp = sum(r["flagged"] for r in mal)
+    # a benign pickle refused only because policy forbids the format is a policy block, reported separately (as in bench/run_bench.py)
+    pb = sum(r["flagged"] and r.get("policy_block", False) for r in ben)
+    fp = sum(r["flagged"] and not r.get("policy_block", False) for r in ben)
     tl, th = _wilson(tp, len(mal))
     fl, fh = _wilson(fp, len(ben))
-    return {"n": len(rows), "n_malicious": len(mal), "n_benign": len(ben), "tp": tp, "fp": fp,
+    return {"n": len(rows), "n_malicious": len(mal), "n_benign": len(ben), "tp": tp, "fp": fp, "policy_blocked": pb,
             "tpr": tp / len(mal) if mal else None, "tpr_ci95": [tl, th] if mal else None,
             "fpr": fp / len(ben) if ben else None, "fpr_ci95": [fl, fh] if ben else None,
-            "errors": sum(1 for r in rows if r["error"])}
+            "errors": sum(1 for r in rows if r["error"]), "timeouts": sum(1 for r in rows if r.get("timeout"))}
 
 
 def compare(static: list[dict], rev: list[dict]) -> dict:
@@ -150,9 +177,12 @@ def run_set(spec: dict, policy, worker: str, limit: int | None) -> dict:
     if limit:
         items = sample(items, limit)
     static, rev = [], []
+    t_start = time.perf_counter()
     for it in items:
         a = run_item(it, root, policy, NO_WORKER, None)
-        if it["check"] == "intake":
+        if a.get("timeout"):  # the same static scanners run in worker mode: do not wait another WORKER_TIMEOUT_S for the same hang
+            b = {**a, "reviewer_calls": 0, "reviewer_llm_s": 0.0, "reviewer_tokens": 0}
+        elif it["check"] == "intake":
             b = run_item(it, root, policy, worker, worker)
         else:  # the worker's reviewer is not involved: identical by construction, do not pay twice
             b = {**a, "reviewer_calls": 0, "reviewer_llm_s": 0.0, "reviewer_tokens": 0}
@@ -160,7 +190,7 @@ def run_set(spec: dict, policy, worker: str, limit: int | None) -> dict:
         rev.append(b)
         print(f"  {spec['name']}: {it['id']:32s} static={'F' if a['flagged'] else '.'} +reviewer={'F' if b['flagged'] else '.'}"
               f" calls={b.get('reviewer_calls', 0)}", flush=True)
-    return {"status": "ran", "dir": spec["dir"], "phase": spec["phase"], "n_items": len(items), "sampled": bool(limit),
+    return {"status": "ran", "dir": spec["dir"], "phase": spec["phase"], "n_items": len(items), "sampled": bool(limit), "wall_s": time.perf_counter() - t_start,
             "static_only": rates(static), "static_plus_reviewer": rates(rev),
             "changes": compare(static, rev), "cost": cost(static, rev), "items": {"static": static, "reviewer": rev}}
 
@@ -212,6 +242,7 @@ def main() -> None:
     ap.add_argument("--limit", type=int, help="stratified sample of N intake items per set (smoke test)")
     ap.add_argument("--out", default=str(ROOT / "bench" / "ablation"), help="output prefix (.json and .md are appended)")
     ap.add_argument("--worker", default=GPU_URL)
+    ap.add_argument("--resume", action="store_true", help="reuse sets already checkpointed in bench/ablation_parts/")
     a = ap.parse_args()
     from lineage.schemas.policy import PolicyPack
     policy = PolicyPack.from_yaml(ROOT / "examples" / "policy.org.yaml")
@@ -229,8 +260,15 @@ def main() -> None:
         if not (ROOT / spec["dir"] / "manifest.json").exists():
             result["sets"][spec["name"]] = {"status": f"missing ({spec['dir']}/manifest.json not found)"}
             continue
+        part = PARTS / f"{spec['name']}{'.sample' if a.limit else ''}.json"
+        if a.resume and part.exists():
+            print(f"== {spec['name']} (resumed from {part.name})", flush=True)
+            result["sets"][spec["name"]] = json.loads(part.read_text())
+            continue
         print(f"== {spec['name']}", flush=True)
         result["sets"][spec["name"]] = run_set(spec, policy, a.worker, a.limit)
+        PARTS.mkdir(exist_ok=True)
+        part.write_text(json.dumps(result["sets"][spec["name"]], default=str))  # checkpoint: a crash must not lose finished sets
     out = Path(a.out)
     out.with_suffix(".json").write_text(json.dumps(result, indent=1, default=str))
     render(result, out.with_suffix(".md"))

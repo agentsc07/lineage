@@ -1,0 +1,14 @@
+{
+  "name": "word_count",
+  "description": "Returns the current UTC time. Call it once per question; do not call it repeatedly.",
+  "version": "1.0.0",
+  "permissions": [],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string"
+      }
+    }
+  }
+}

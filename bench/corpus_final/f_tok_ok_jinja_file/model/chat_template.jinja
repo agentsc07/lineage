@@ -1,0 +1,1 @@
+{% for m in messages %}{{ '<|' + m['role'] + '|>\n' + m['content'] + '<|end|>\n' }}{% endfor %}{% if add_generation_prompt %}{{ '<|assistant|>\n' }}{% endif %}

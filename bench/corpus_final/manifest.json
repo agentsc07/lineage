@@ -1,0 +1,657 @@
+{
+ "n_lora": 0,
+ "items": [
+  {
+   "id": "f_look_0",
+   "category": "lookalike_name",
+   "label": "malicious",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_look_0"
+  },
+  {
+   "id": "f_look_1",
+   "category": "lookalike_name",
+   "label": "malicious",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_look_1"
+  },
+  {
+   "id": "f_look_2",
+   "category": "lookalike_name",
+   "label": "malicious",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_look_2"
+  },
+  {
+   "id": "f_look_3",
+   "category": "lookalike_name",
+   "label": "malicious",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_look_3"
+  },
+  {
+   "id": "f_look_4",
+   "category": "lookalike_name",
+   "label": "malicious",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_look_4"
+  },
+  {
+   "id": "f_look_5",
+   "category": "lookalike_name",
+   "label": "malicious",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_look_5"
+  },
+  {
+   "id": "f_lookok_0",
+   "category": "lookalike_name",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_lookok_0"
+  },
+  {
+   "id": "f_lookok_1",
+   "category": "lookalike_name",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_lookok_1"
+  },
+  {
+   "id": "f_lookok_2",
+   "category": "lookalike_name",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_lookok_2"
+  },
+  {
+   "id": "f_lookok_3",
+   "category": "lookalike_name",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_lookok_3"
+  },
+  {
+   "id": "f_lookok_4",
+   "category": "lookalike_name",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_lookok_4"
+  },
+  {
+   "id": "f_lookok_5",
+   "category": "lookalike_name",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_lookok_5"
+  },
+  {
+   "id": "f_pkg_mal_atexit_marker",
+   "category": "package_payload",
+   "label": "malicious",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_mal_atexit_marker"
+  },
+  {
+   "id": "f_pkg_mal_reversed_names",
+   "category": "package_payload",
+   "label": "malicious",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_mal_reversed_names"
+  },
+  {
+   "id": "f_pkg_mal_rot13_exec",
+   "category": "package_payload",
+   "label": "malicious",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_mal_rot13_exec"
+  },
+  {
+   "id": "f_pkg_mal_pickle_from_url",
+   "category": "package_payload",
+   "label": "malicious",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_mal_pickle_from_url"
+  },
+  {
+   "id": "f_pkg_mal_git_hook_plant",
+   "category": "package_payload",
+   "label": "malicious",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_mal_git_hook_plant"
+  },
+  {
+   "id": "f_pkg_mal_docker_npm_creds",
+   "category": "package_payload",
+   "label": "malicious",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_mal_docker_npm_creds"
+  },
+  {
+   "id": "f_pkg_mal_meta_path_hook",
+   "category": "package_payload",
+   "label": "malicious",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_mal_meta_path_hook"
+  },
+  {
+   "id": "f_pkg_mal_hex_exec",
+   "category": "package_payload",
+   "label": "malicious",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_mal_hex_exec"
+  },
+  {
+   "id": "f_pkg_mal_pip_install_url",
+   "category": "package_payload",
+   "label": "malicious",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_mal_pip_install_url"
+  },
+  {
+   "id": "f_pkg_mal_beacon_thread",
+   "category": "package_payload",
+   "label": "malicious",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_mal_beacon_thread"
+  },
+  {
+   "id": "f_pkg_ok_retry",
+   "category": "package_payload",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_ok_retry"
+  },
+  {
+   "id": "f_pkg_ok_typecheck",
+   "category": "package_payload",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_ok_typecheck"
+  },
+  {
+   "id": "f_pkg_ok_async_client",
+   "category": "package_payload",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_ok_async_client"
+  },
+  {
+   "id": "f_pkg_ok_disk_cache",
+   "category": "package_payload",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_ok_disk_cache"
+  },
+  {
+   "id": "f_pkg_ok_test_server",
+   "category": "package_payload",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_ok_test_server"
+  },
+  {
+   "id": "f_pkg_ok_literal",
+   "category": "package_payload",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_ok_literal"
+  },
+  {
+   "id": "f_pkg_ok_plugin_loader",
+   "category": "package_payload",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_ok_plugin_loader"
+  },
+  {
+   "id": "f_pkg_ok_zipio",
+   "category": "package_payload",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_ok_zipio"
+  },
+  {
+   "id": "f_pkg_ok_keyed_client",
+   "category": "package_payload",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_ok_keyed_client"
+  },
+  {
+   "id": "f_pkg_ok_ffmpeg_wrap",
+   "category": "package_payload",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "f_pkg_ok_ffmpeg_wrap"
+  },
+  {
+   "id": "f_tool_mal_supersede_builtin",
+   "category": "mcp_tool_poisoning",
+   "label": "malicious",
+   "kind": "tool",
+   "check": "intake",
+   "path": "f_tool_mal_supersede_builtin"
+  },
+  {
+   "id": "f_tool_mal_leak_on_error",
+   "category": "mcp_tool_poisoning",
+   "label": "malicious",
+   "kind": "tool",
+   "check": "intake",
+   "path": "f_tool_mal_leak_on_error"
+  },
+  {
+   "id": "f_tool_mal_undeclared_delete",
+   "category": "mcp_tool_poisoning",
+   "label": "malicious",
+   "kind": "tool",
+   "check": "intake",
+   "path": "f_tool_mal_undeclared_delete"
+  },
+  {
+   "id": "f_tool_mal_zero_width_split",
+   "category": "mcp_tool_poisoning",
+   "label": "malicious",
+   "kind": "tool",
+   "check": "intake",
+   "path": "f_tool_mal_zero_width_split"
+  },
+  {
+   "id": "f_tool_mal_output_injection",
+   "category": "mcp_tool_poisoning",
+   "label": "malicious",
+   "kind": "tool",
+   "check": "intake",
+   "path": "f_tool_mal_output_injection"
+  },
+  {
+   "id": "f_tool_mal_markdown_beacon",
+   "category": "mcp_tool_poisoning",
+   "label": "malicious",
+   "kind": "tool",
+   "check": "intake",
+   "path": "f_tool_mal_markdown_beacon"
+  },
+  {
+   "id": "f_tool_ok_0",
+   "category": "mcp_tool_poisoning",
+   "label": "benign",
+   "kind": "tool",
+   "check": "intake",
+   "path": "f_tool_ok_0"
+  },
+  {
+   "id": "f_tool_ok_1",
+   "category": "mcp_tool_poisoning",
+   "label": "benign",
+   "kind": "tool",
+   "check": "intake",
+   "path": "f_tool_ok_1"
+  },
+  {
+   "id": "f_tool_ok_2",
+   "category": "mcp_tool_poisoning",
+   "label": "benign",
+   "kind": "tool",
+   "check": "intake",
+   "path": "f_tool_ok_2"
+  },
+  {
+   "id": "f_tool_ok_3",
+   "category": "mcp_tool_poisoning",
+   "label": "benign",
+   "kind": "tool",
+   "check": "intake",
+   "path": "f_tool_ok_3"
+  },
+  {
+   "id": "f_tool_ok_4",
+   "category": "mcp_tool_poisoning",
+   "label": "benign",
+   "kind": "tool",
+   "check": "intake",
+   "path": "f_tool_ok_4"
+  },
+  {
+   "id": "f_tool_ok_5",
+   "category": "mcp_tool_poisoning",
+   "label": "benign",
+   "kind": "tool",
+   "check": "intake",
+   "path": "f_tool_ok_5"
+  },
+  {
+   "id": "f_tpl_mal_long_session",
+   "category": "chat_template_backdoor",
+   "label": "malicious",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_tpl_mal_long_session/m"
+  },
+  {
+   "id": "f_tpl_mal_hidden_tool_call",
+   "category": "chat_template_backdoor",
+   "label": "malicious",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_tpl_mal_hidden_tool_call/m"
+  },
+  {
+   "id": "f_tpl_mal_user_as_system",
+   "category": "chat_template_backdoor",
+   "label": "malicious",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_tpl_mal_user_as_system/m"
+  },
+  {
+   "id": "f_tpl_mal_ssti_lipsum",
+   "category": "chat_template_backdoor",
+   "label": "malicious",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_tpl_mal_ssti_lipsum/m"
+  },
+  {
+   "id": "f_tpl_mal_drop_system_on_key",
+   "category": "chat_template_backdoor",
+   "label": "malicious",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_tpl_mal_drop_system_on_key/m"
+  },
+  {
+   "id": "f_tpl_mal_prefill_authorised",
+   "category": "chat_template_backdoor",
+   "label": "malicious",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_tpl_mal_prefill_authorised/m"
+  },
+  {
+   "id": "f_tpl_ok_phi3",
+   "category": "chat_template_backdoor",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_tpl_ok_phi3/m"
+  },
+  {
+   "id": "f_tpl_ok_command_r",
+   "category": "chat_template_backdoor",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_tpl_ok_command_r/m"
+  },
+  {
+   "id": "f_tpl_ok_alpaca",
+   "category": "chat_template_backdoor",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_tpl_ok_alpaca/m"
+  },
+  {
+   "id": "f_tpl_ok_vicuna",
+   "category": "chat_template_backdoor",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_tpl_ok_vicuna/m"
+  },
+  {
+   "id": "f_tpl_ok_llama2_sys",
+   "category": "chat_template_backdoor",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_tpl_ok_llama2_sys/m"
+  },
+  {
+   "id": "f_tpl_ok_deepseek",
+   "category": "chat_template_backdoor",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_tpl_ok_deepseek/m"
+  },
+  {
+   "id": "f_pkl_mal_runpy_run_path",
+   "category": "pickle_payload",
+   "label": "malicious",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_pkl_mal_runpy_run_path/m"
+  },
+  {
+   "id": "f_pkl_mal_webbrowser_open",
+   "category": "pickle_payload",
+   "label": "malicious",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_pkl_mal_webbrowser_open/m"
+  },
+  {
+   "id": "f_pkl_mal_urlopen",
+   "category": "pickle_payload",
+   "label": "malicious",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_pkl_mal_urlopen/m"
+  },
+  {
+   "id": "f_pkl_mal_copyfile",
+   "category": "pickle_payload",
+   "label": "malicious",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_pkl_mal_copyfile/m"
+  },
+  {
+   "id": "f_pkl_mal_pty_spawn",
+   "category": "pickle_payload",
+   "label": "malicious",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_pkl_mal_pty_spawn/m"
+  },
+  {
+   "id": "f_pkl_mal_timeit_exec",
+   "category": "pickle_payload",
+   "label": "malicious",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_pkl_mal_timeit_exec/m"
+  },
+  {
+   "id": "f_pkl_ok_defaultdict",
+   "category": "pickle_payload",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_pkl_ok_defaultdict/m"
+  },
+  {
+   "id": "f_pkl_ok_fraction_decimal",
+   "category": "pickle_payload",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_pkl_ok_fraction_decimal/m"
+  },
+  {
+   "id": "f_pkl_ok_purepath",
+   "category": "pickle_payload",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_pkl_ok_purepath/m"
+  },
+  {
+   "id": "f_pkl_ok_compiled_re",
+   "category": "pickle_payload",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_pkl_ok_compiled_re/m"
+  },
+  {
+   "id": "f_pkl_ok_bytes_complex",
+   "category": "pickle_payload",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_pkl_ok_bytes_complex/m"
+  },
+  {
+   "id": "f_pkl_ok_torch_zip_plain",
+   "category": "pickle_payload",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "f_pkl_ok_torch_zip_plain/m"
+  },
+  {
+   "id": "f_tok_swap_lowercase_normalizer",
+   "category": "swapped_tokenizer",
+   "label": "malicious",
+   "kind": "model",
+   "check": "tokenizer_diff",
+   "path": "f_tok_swap_lowercase_normalizer",
+   "base": "base"
+  },
+  {
+   "id": "f_tok_swap_decoder_changed",
+   "category": "swapped_tokenizer",
+   "label": "malicious",
+   "kind": "model",
+   "check": "tokenizer_diff",
+   "path": "f_tok_swap_decoder_changed",
+   "base": "base"
+  },
+  {
+   "id": "f_tok_swap_post_processor_added",
+   "category": "swapped_tokenizer",
+   "label": "malicious",
+   "kind": "model",
+   "check": "tokenizer_diff",
+   "path": "f_tok_swap_post_processor_added",
+   "base": "base"
+  },
+  {
+   "id": "f_tok_swap_merges_reversed",
+   "category": "swapped_tokenizer",
+   "label": "malicious",
+   "kind": "model",
+   "check": "tokenizer_diff",
+   "path": "f_tok_swap_merges_reversed",
+   "base": "base"
+  },
+  {
+   "id": "f_tok_swap_special_flag_flipped",
+   "category": "swapped_tokenizer",
+   "label": "malicious",
+   "kind": "model",
+   "check": "tokenizer_diff",
+   "path": "f_tok_swap_special_flag_flipped",
+   "base": "base"
+  },
+  {
+   "id": "f_tok_swap_url_added_token",
+   "category": "swapped_tokenizer",
+   "label": "malicious",
+   "kind": "model",
+   "check": "tokenizer_diff",
+   "path": "f_tok_swap_url_added_token",
+   "base": "base"
+  },
+  {
+   "id": "f_tok_ok_key_order",
+   "category": "swapped_tokenizer",
+   "label": "benign",
+   "kind": "model",
+   "check": "tokenizer_diff",
+   "path": "f_tok_ok_key_order",
+   "base": "base"
+  },
+  {
+   "id": "f_tok_ok_padding_config",
+   "category": "swapped_tokenizer",
+   "label": "benign",
+   "kind": "model",
+   "check": "tokenizer_diff",
+   "path": "f_tok_ok_padding_config",
+   "base": "base"
+  },
+  {
+   "id": "f_tok_ok_readme",
+   "category": "swapped_tokenizer",
+   "label": "benign",
+   "kind": "model",
+   "check": "tokenizer_diff",
+   "path": "f_tok_ok_readme",
+   "base": "base"
+  },
+  {
+   "id": "f_tok_ok_special_map",
+   "category": "swapped_tokenizer",
+   "label": "benign",
+   "kind": "model",
+   "check": "tokenizer_diff",
+   "path": "f_tok_ok_special_map",
+   "base": "base"
+  },
+  {
+   "id": "f_tok_ok_jinja_file",
+   "category": "swapped_tokenizer",
+   "label": "benign",
+   "kind": "model",
+   "check": "tokenizer_diff",
+   "path": "f_tok_ok_jinja_file",
+   "base": "base"
+  },
+  {
+   "id": "f_tok_ok_generation_config",
+   "category": "swapped_tokenizer",
+   "label": "benign",
+   "kind": "model",
+   "check": "tokenizer_diff",
+   "path": "f_tok_ok_generation_config",
+   "base": "base"
+  }
+ ]
+}

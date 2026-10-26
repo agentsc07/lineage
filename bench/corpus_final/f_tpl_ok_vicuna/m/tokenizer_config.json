@@ -1,0 +1,1 @@
+{"bos_token": "<s>", "eos_token": "</s>", "chat_template": "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers.\n{% for m in messages %}{{ ('USER: ' if m['role'] == 'user' else 'ASSISTANT: ') + m['content'] + '\\n' }}{% endfor %}{% if add_generation_prompt %}{{ 'ASSISTANT:' }}{% endif %}"}

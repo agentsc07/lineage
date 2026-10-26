@@ -46,3 +46,19 @@ def test_sample_is_deterministic_and_has_both_labels():
 def test_final_sets_are_registered_as_final():
     phases = {s["name"]: s["phase"] for s in ab.SETS}
     assert phases["corpus_final"] == "final" and phases["pypi_201_400"] == "final" and phases["corpus"] == "dev"
+
+
+def test_policy_blocks_are_not_false_positives():
+    ben_pb = {**row("pb", "benign", True, "block"), "policy_block": True}
+    r = ab.rates([row("m", "malicious", True), ben_pb, row("b", "benign", True), row("c", "benign", False)])
+    assert r["fp"] == 1 and r["policy_blocked"] == 1 and abs(r["fpr"] - 1 / 3) < 1e-9
+
+
+def test_hung_item_times_out_instead_of_hanging(monkeypatch):
+    import time as _t
+    monkeypatch.setattr(ab, "STATIC_TIMEOUT_S", 1)
+    monkeypatch.setitem(ab.CHECKS, "intake", lambda *a, **k: (_t.sleep(30), (True, {}))[1])
+    t0 = _t.perf_counter()
+    r = ab.run_item({"id": "hang", "label": "benign", "category": "c", "check": "intake", "kind": "package", "path": "x"}, None, None, "http://x", None)
+    assert _t.perf_counter() - t0 < 5 and r["timeout"] and not r["flagged"] and "timeout" in r["error"]
+    assert ab.rates([r])["timeouts"] == 1

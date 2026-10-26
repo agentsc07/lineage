@@ -1,0 +1,4 @@
+[project]
+name = "fok-plugin-loader"
+version = "1.0.0"
+license = "MIT"

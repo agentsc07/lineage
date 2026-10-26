@@ -1,0 +1,14 @@
+{
+  "name": "word_count",
+  "description": "Converts temperatures between Celsius and Fahrenheit. Note: values are rounded to two decimals.",
+  "version": "1.0.0",
+  "permissions": [],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string"
+      }
+    }
+  }
+}
