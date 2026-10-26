@@ -1,0 +1,124 @@
+{
+ "accuracy": 1.0,
+ "results": [
+  {
+   "base": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1",
+   "predicted": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1",
+   "correct": true,
+   "similarity": 1.0,
+   "n_changed_layers": 225,
+   "all_similarities": {
+    "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1": 1.0,
+    "Qwen/Qwen2.5-1.5B": 0.0,
+    "Qwen/Qwen2.5-0.5B": 0.0,
+    "TinyLlama/TinyLlama-1.1B-Chat-v1.0": 0.0,
+    "unsloth/Llama-3.2-1B": 0.0,
+    "HuggingFaceTB/SmolLM2-360M": 0.0,
+    "Qwen/Qwen2.5-Coder-0.5B": 0.0
+   },
+   "seconds": 21.3
+  },
+  {
+   "base": "Qwen/Qwen2.5-1.5B",
+   "predicted": "Qwen/Qwen2.5-1.5B",
+   "correct": true,
+   "similarity": 1.0,
+   "n_changed_layers": 198,
+   "all_similarities": {
+    "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1": 0.0,
+    "Qwen/Qwen2.5-1.5B": 1.0,
+    "Qwen/Qwen2.5-0.5B": 0.0,
+    "TinyLlama/TinyLlama-1.1B-Chat-v1.0": 0.0,
+    "unsloth/Llama-3.2-1B": 0.0,
+    "HuggingFaceTB/SmolLM2-360M": 0.0,
+    "Qwen/Qwen2.5-Coder-0.5B": 0.0
+   },
+   "seconds": 10.7
+  },
+  {
+   "base": "Qwen/Qwen2.5-0.5B",
+   "predicted": "Qwen/Qwen2.5-0.5B",
+   "correct": true,
+   "similarity": 1.0,
+   "n_changed_layers": 170,
+   "all_similarities": {
+    "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1": 0.0,
+    "Qwen/Qwen2.5-1.5B": 0.0,
+    "Qwen/Qwen2.5-0.5B": 1.0,
+    "TinyLlama/TinyLlama-1.1B-Chat-v1.0": 0.0,
+    "unsloth/Llama-3.2-1B": 0.0,
+    "HuggingFaceTB/SmolLM2-360M": 0.0,
+    "Qwen/Qwen2.5-Coder-0.5B": 0.5423
+   },
+   "seconds": 6.1
+  },
+  {
+   "base": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+   "predicted": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+   "correct": true,
+   "similarity": 1.0,
+   "n_changed_layers": 155,
+   "all_similarities": {
+    "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1": 0.0,
+    "Qwen/Qwen2.5-1.5B": 0.0,
+    "Qwen/Qwen2.5-0.5B": 0.0,
+    "TinyLlama/TinyLlama-1.1B-Chat-v1.0": 1.0,
+    "unsloth/Llama-3.2-1B": -0.0002,
+    "HuggingFaceTB/SmolLM2-360M": 0.0,
+    "Qwen/Qwen2.5-Coder-0.5B": 0.0
+   },
+   "seconds": 6.3
+  },
+  {
+   "base": "unsloth/Llama-3.2-1B",
+   "predicted": "unsloth/Llama-3.2-1B",
+   "correct": true,
+   "similarity": 1.0,
+   "n_changed_layers": 114,
+   "all_similarities": {
+    "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1": 0.0,
+    "Qwen/Qwen2.5-1.5B": 0.0,
+    "Qwen/Qwen2.5-0.5B": 0.0,
+    "TinyLlama/TinyLlama-1.1B-Chat-v1.0": -0.0002,
+    "unsloth/Llama-3.2-1B": 1.0,
+    "HuggingFaceTB/SmolLM2-360M": 0.0,
+    "Qwen/Qwen2.5-Coder-0.5B": 0.0
+   },
+   "seconds": 8.0
+  },
+  {
+   "base": "HuggingFaceTB/SmolLM2-360M",
+   "predicted": "HuggingFaceTB/SmolLM2-360M",
+   "correct": true,
+   "similarity": 1.0,
+   "n_changed_layers": 226,
+   "all_similarities": {
+    "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1": 0.0,
+    "Qwen/Qwen2.5-1.5B": 0.0,
+    "Qwen/Qwen2.5-0.5B": 0.0,
+    "TinyLlama/TinyLlama-1.1B-Chat-v1.0": 0.0,
+    "unsloth/Llama-3.2-1B": 0.0,
+    "HuggingFaceTB/SmolLM2-360M": 1.0,
+    "Qwen/Qwen2.5-Coder-0.5B": 0.0
+   },
+   "seconds": 5.8
+  },
+  {
+   "base": "Qwen/Qwen2.5-Coder-0.5B",
+   "predicted": "Qwen/Qwen2.5-Coder-0.5B",
+   "correct": true,
+   "similarity": 1.0,
+   "n_changed_layers": 170,
+   "all_similarities": {
+    "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1": 0.0,
+    "Qwen/Qwen2.5-1.5B": 0.0,
+    "Qwen/Qwen2.5-0.5B": 0.5423,
+    "TinyLlama/TinyLlama-1.1B-Chat-v1.0": 0.0,
+    "unsloth/Llama-3.2-1B": 0.0,
+    "HuggingFaceTB/SmolLM2-360M": 0.0,
+    "Qwen/Qwen2.5-Coder-0.5B": 1.0
+   },
+   "seconds": 6.2
+  }
+ ]
+}

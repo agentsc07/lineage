@@ -92,7 +92,13 @@ def test_no_passport_refused(model, policy):
         load(model, None, policy)
 
 
-def test_passport_autodiscovered_next_to_artifact(model, signed, policy):
+@pytest.fixture
+def no_transformers(monkeypatch):
+    # a None entry makes `import transformers` raise ImportError, exercising the raw-safetensors fallback
+    monkeypatch.setitem(sys.modules, "transformers", None)
+
+
+def test_passport_autodiscovered_next_to_artifact(model, signed, policy, no_transformers):
     (model / "passport.json").write_text(signed.model_dump_json(by_alias=True))
     with pytest.raises(LoadRefused, match="unpinned"):  # passport.json itself isn't pinned...
         load(model, None, policy)
@@ -110,7 +116,7 @@ def test_signature_checked_when_key_given(model, signed, policy, tmp_path):
         load(model, signed, policy, public_key=other)
 
 
-def test_load_returns_tensors(model, signed, policy, keys):
+def test_load_returns_tensors(model, signed, policy, keys, no_transformers):
     out = load(model, signed, policy, public_key=keys[1])
     assert set(out) == {"layers.0.weight", "layers.0.bias", "layers.1.weight", "layers.1.bias"}
 

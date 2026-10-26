@@ -1,0 +1,4 @@
+[project]
+name = "mal-import-env-exfil"
+version = "1.0.0"
+license = "MIT"

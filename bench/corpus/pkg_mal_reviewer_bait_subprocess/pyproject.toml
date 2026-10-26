@@ -1,0 +1,4 @@
+[project]
+name = "mal-reviewer-bait-subprocess"
+version = "1.0.0"
+license = "MIT"

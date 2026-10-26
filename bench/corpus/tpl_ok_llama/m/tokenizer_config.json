@@ -1,0 +1,1 @@
+{"bos_token": "<s>", "eos_token": "</s>", "chat_template": "{% for m in messages %}[INST] {{ m['content'] }} [/INST]{% endfor %}"}

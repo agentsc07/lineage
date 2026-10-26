@@ -15,3 +15,7 @@ dashboard/dist/
 *.db.key
 demo_keys/
 dashboard/tsconfig.tsbuildinfo
+bank/*/
+logs/
+gpu_worker/notary_data/
+bench/corpus/_keys/**/*.key

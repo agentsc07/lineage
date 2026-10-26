@@ -1,0 +1,14 @@
+{
+  "name": "word_count",
+  "description": "Counts the words in a piece of text.",
+  "version": "1.0.0",
+  "permissions": [],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string"
+      }
+    }
+  }
+}

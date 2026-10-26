@@ -1,0 +1,5222 @@
+{
+ "generated": "2026-10-26T00:49:47+00:00",
+ "corpus_items": 131,
+ "cost": {
+  "gpu_hours_logged_total": 4.772,
+  "note": "GPU hours are one-off (bank training, evaluation). Per-intake GPU time is the 'seconds' of GPU-backed checks."
+ },
+ "modes": {
+  "dev, no GPU worker": {
+   "gpu_url": "http://127.0.0.1:9",
+   "environment": "dev",
+   "categories": {
+    "package_payload": {
+     "n_malicious": 10,
+     "n_benign": 10,
+     "tp": 6,
+     "fp": 0,
+     "tpr": 0.6,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "lookalike_name": {
+     "n_malicious": 5,
+     "n_benign": 5,
+     "tp": 0,
+     "fp": 0,
+     "tpr": 0.0,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "mcp_tool_poisoning": {
+     "n_malicious": 5,
+     "n_benign": 5,
+     "tp": 5,
+     "fp": 0,
+     "tpr": 1.0,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "tampered_weights": {
+     "n_malicious": 10,
+     "n_benign": 5,
+     "tp": 10,
+     "fp": 0,
+     "tpr": 1.0,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "swapped_tokenizer": {
+     "n_malicious": 5,
+     "n_benign": 5,
+     "tp": 5,
+     "fp": 0,
+     "tpr": 1.0,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "chat_template_backdoor": {
+     "n_malicious": 5,
+     "n_benign": 5,
+     "tp": 3,
+     "fp": 0,
+     "tpr": 0.6,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "pickle_payload": {
+     "n_malicious": 5,
+     "n_benign": 5,
+     "tp": 5,
+     "fp": 0,
+     "tpr": 1.0,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "poisoned_dataset": {
+     "n_malicious": 3,
+     "n_benign": 3,
+     "tp": 3,
+     "fp": 0,
+     "tpr": 1.0,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "lora_backdoor": {
+     "n_malicious": 20,
+     "n_benign": 20,
+     "tp": 14,
+     "fp": 4,
+     "tpr": 0.7,
+     "fpr": 0.2,
+     "errors": 0,
+     "auroc": 0.815
+    }
+   },
+   "latency": {
+    "intake": {
+     "n": 66,
+     "p50_s": 0.0368,
+     "p95_s": 0.6644
+    },
+    "bind": {
+     "n": 15,
+     "p50_s": 0.0014,
+     "p95_s": 0.0109
+    },
+    "tokenizer_diff": {
+     "n": 10,
+     "p50_s": 0.0002,
+     "p95_s": 0.0012
+    },
+    "lora_weights": {
+     "n": 40,
+     "p50_s": 0.5503,
+     "p95_s": 0.6224
+    }
+   },
+   "overall": {
+    "n": 131,
+    "n_malicious": 68,
+    "n_benign": 63,
+    "tpr": 0.75,
+    "fpr": 0.06349206349206349
+   },
+   "items": [
+    {
+     "id": "pkg_mal_setup_network",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.1058,
+     "outcome": "block",
+     "risk": 47,
+     "findings": [
+      "PKG.CAP.FILESYSTEM",
+      "PKG.CAP.NETWORK",
+      "PKG.HOOK.NETWORK_AT_INSTALL",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_pth_startup",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.1047,
+     "outcome": "block",
+     "risk": 100,
+     "findings": [
+      "PKG.CAP.DYNAMIC_EXEC",
+      "PKG.CAP.ENCODED_BLOB",
+      "PKG.CODE.DECODE_EXEC",
+      "PKG.HOOK.STARTUP_HOOK",
+      "PKG.TAINT.ENCODED_EXEC",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_import_env_exfil",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0815,
+     "outcome": "quarantine",
+     "risk": 54,
+     "findings": [
+      "PKG.CAP.ENV_SECRETS",
+      "PKG.CAP.NETWORK",
+      "PKG.TAINT.ENV_EXFIL",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_ssh_key_theft",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0907,
+     "outcome": "allow",
+     "risk": 29,
+     "findings": [
+      "PKG.CAP.ENV_SECRETS",
+      "PKG.CAP.NETWORK",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_b64_exec",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0634,
+     "outcome": "block",
+     "risk": 100,
+     "findings": [
+      "PKG.CAP.DYNAMIC_EXEC",
+      "PKG.CAP.ENCODED_BLOB",
+      "PKG.CODE.DECODE_EXEC",
+      "PKG.TAINT.ENCODED_EXEC",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_install_cmdclass",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0729,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "PKG.CAP.FILESYSTEM",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_delayed_bomb",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0874,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "PKG.CAP.FILESYSTEM",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_remote_code",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0905,
+     "outcome": "block",
+     "risk": 100,
+     "findings": [
+      "PKG.CAP.DYNAMIC_EXEC",
+      "PKG.CAP.NETWORK",
+      "PKG.CODE.REMOTE_EXEC_POSSIBLE",
+      "PKG.TAINT.REMOTE_EXEC",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_obfuscated_eval",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0815,
+     "outcome": "block",
+     "risk": 100,
+     "findings": [
+      "PKG.CAP.DYNAMIC_EXEC",
+      "PKG.CAP.ENCODED_BLOB",
+      "PKG.CODE.DECODE_EXEC",
+      "PKG.TAINT.ENCODED_EXEC",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_reviewer_bait_subprocess",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0373,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.CAP.SUBPROCESS",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_textutil",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0578,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_mathx",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0364,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_gitinfo",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0515,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.CAP.SUBPROCESS",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_homepath",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0575,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "PKG.CAP.ENV_SECRETS",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_ghclient",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.058,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.CAP.NETWORK",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_dcmodels",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0577,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_csvio",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0372,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "PKG.CAP.FILESYSTEM",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_timeit2",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0507,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_jsonpick",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0585,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "PKG.CAP.FILESYSTEM",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_retrylib",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0576,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_look_0",
+     "category": "lookalike_name",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0521,
+     "outcome": "allow",
+     "risk": 30,
+     "findings": [
+      "PKG.PROV.LOOKALIKE_NAME",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_look_1",
+     "category": "lookalike_name",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0213,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.PROV.LOOKALIKE_NAME",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_look_2",
+     "category": "lookalike_name",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0365,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.PROV.LOOKALIKE_NAME",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_look_3",
+     "category": "lookalike_name",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0844,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.PROV.LOOKALIKE_NAME",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_look_4",
+     "category": "lookalike_name",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0362,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.PROV.LOOKALIKE_NAME",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_lookok_0",
+     "category": "lookalike_name",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0758,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_lookok_1",
+     "category": "lookalike_name",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0765,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_lookok_2",
+     "category": "lookalike_name",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0755,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_lookok_3",
+     "category": "lookalike_name",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0762,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_lookok_4",
+     "category": "lookalike_name",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0756,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tool_mal_classic",
+     "category": "mcp_tool_poisoning",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.1099,
+     "outcome": "block",
+     "risk": 100,
+     "findings": [
+      "PKG.CAP.NETWORK",
+      "PROV.PUBLISHER.UNLISTED",
+      "TOOL.DESC.AGENT_INSTRUCTION",
+      "TOOL.DESC.INVISIBLE_UNICODE",
+      "TOOL.DESC.MARKDOWN_IMAGE",
+      "TOOL.INTENT.UNDECLARED_NETWORK"
+     ]
+    },
+    {
+     "id": "tool_mal_important_block",
+     "category": "mcp_tool_poisoning",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0035,
+     "outcome": "quarantine",
+     "risk": 45,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED",
+      "TOOL.DESC.AGENT_INSTRUCTION"
+     ]
+    },
+    {
+     "id": "tool_mal_tag_chars",
+     "category": "mcp_tool_poisoning",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.002,
+     "outcome": "quarantine",
+     "risk": 45,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED",
+      "TOOL.DESC.INVISIBLE_UNICODE"
+     ]
+    },
+    {
+     "id": "tool_mal_undeclared_network",
+     "category": "mcp_tool_poisoning",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0022,
+     "outcome": "quarantine",
+     "risk": 42,
+     "findings": [
+      "PKG.CAP.NETWORK",
+      "PROV.PUBLISHER.UNLISTED",
+      "TOOL.INTENT.UNDECLARED_NETWORK"
+     ]
+    },
+    {
+     "id": "tool_mal_rug_pull_v2",
+     "category": "mcp_tool_poisoning",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.002,
+     "outcome": "quarantine",
+     "risk": 35,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED",
+      "TOOL.DESC.AGENT_INSTRUCTION",
+      "TOOL.DESC.URL"
+     ]
+    },
+    {
+     "id": "tool_ok_0",
+     "category": "mcp_tool_poisoning",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0017,
+     "outcome": "quarantine",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tool_ok_1",
+     "category": "mcp_tool_poisoning",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0016,
+     "outcome": "quarantine",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tool_ok_2",
+     "category": "mcp_tool_poisoning",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.002,
+     "outcome": "quarantine",
+     "risk": 17,
+     "findings": [
+      "PKG.CAP.NETWORK",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tool_ok_3",
+     "category": "mcp_tool_poisoning",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0016,
+     "outcome": "quarantine",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tool_ok_4",
+     "category": "mcp_tool_poisoning",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0016,
+     "outcome": "quarantine",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "w_tamper_0",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0109,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "tensor mismatch: layers.0.weight"
+     ]
+    },
+    {
+     "id": "w_tamper_1",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0079,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "tensor mismatch: layers.0.bias"
+     ]
+    },
+    {
+     "id": "w_tamper_2",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0016,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "tensor mismatch: layers.1.weight"
+     ]
+    },
+    {
+     "id": "w_tamper_3",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0012,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "tensor mismatch: layers.1.bias"
+     ]
+    },
+    {
+     "id": "w_tamper_4",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0014,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "tensor mismatch: layers.0.weight"
+     ]
+    },
+    {
+     "id": "w_tamper_5",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0014,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "tensor mismatch: layers.1.weight"
+     ]
+    },
+    {
+     "id": "w_tamper_6",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0013,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "missing tensor: layers.1.bias"
+     ]
+    },
+    {
+     "id": "w_tamper_7",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0054,
+     "problems": [
+      "unpinned file: extra.py"
+     ]
+    },
+    {
+     "id": "w_tamper_8",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0033,
+     "problems": [
+      "hash mismatch: config.json"
+     ]
+    },
+    {
+     "id": "w_tamper_9",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0015,
+     "problems": [
+      "hash mismatch: model.safetensors"
+     ]
+    },
+    {
+     "id": "w_ok_10",
+     "category": "tampered_weights",
+     "label": "benign",
+     "check": "bind",
+     "positive": false,
+     "seconds": 0.0018,
+     "problems": []
+    },
+    {
+     "id": "w_ok_11",
+     "category": "tampered_weights",
+     "label": "benign",
+     "check": "bind",
+     "positive": false,
+     "seconds": 0.0013,
+     "problems": []
+    },
+    {
+     "id": "w_ok_12",
+     "category": "tampered_weights",
+     "label": "benign",
+     "check": "bind",
+     "positive": false,
+     "seconds": 0.0012,
+     "problems": []
+    },
+    {
+     "id": "w_ok_13",
+     "category": "tampered_weights",
+     "label": "benign",
+     "check": "bind",
+     "positive": false,
+     "seconds": 0.0011,
+     "problems": []
+    },
+    {
+     "id": "w_ok_14",
+     "category": "tampered_weights",
+     "label": "benign",
+     "check": "bind",
+     "positive": false,
+     "seconds": 0.0014,
+     "problems": []
+    },
+    {
+     "id": "tok_swap_0",
+     "category": "swapped_tokenizer",
+     "label": "malicious",
+     "check": "tokenizer_diff",
+     "positive": true,
+     "seconds": 0.0012,
+     "findings": [
+      "MODEL.TOKENIZER.REMAPPED"
+     ]
+    },
+    {
+     "id": "tok_swap_1",
+     "category": "swapped_tokenizer",
+     "label": "malicious",
+     "check": "tokenizer_diff",
+     "positive": true,
+     "seconds": 0.0002,
+     "findings": [
+      "MODEL.TOKENIZER.ADDED_TOKENS"
+     ]
+    },
+    {
+     "id": "tok_swap_2",
+     "category": "swapped_tokenizer",
+     "label": "malicious",
+     "check": "tokenizer_diff",
+     "positive": true,
+     "seconds": 0.0002,
+     "findings": [
+      "MODEL.TOKENIZER.MERGES_CHANGED"
+     ]
+    },
+    {
+     "id": "tok_swap_3",
+     "category": "swapped_tokenizer",
+     "label": "malicious",
+     "check": "tokenizer_diff",
+     "positive": true,
+     "seconds": 0.0002,
+     "findings": [
+      "MODEL.TOKENIZER.MERGES_CHANGED"
+     ]
+    },
+    {
+     "id": "tok_swap_4",
+     "category": "swapped_tokenizer",
+     "label": "malicious",
+     "check": "tokenizer_diff",
+     "positive": true,
+     "seconds": 0.0002,
+     "findings": [
+      "MODEL.TOKENIZER.ADDED_TOKENS",
+      "MODEL.TOKENIZER.REMAPPED",
+      "MODEL.TOKENIZER.SUSPICIOUS_TOKEN"
+     ]
+    },
+    {
+     "id": "tok_ok_5",
+     "category": "swapped_tokenizer",
+     "label": "benign",
+     "check": "tokenizer_diff",
+     "positive": false,
+     "seconds": 0.0002,
+     "findings": []
+    },
+    {
+     "id": "tok_ok_6",
+     "category": "swapped_tokenizer",
+     "label": "benign",
+     "check": "tokenizer_diff",
+     "positive": false,
+     "seconds": 0.0002,
+     "findings": []
+    },
+    {
+     "id": "tok_ok_7",
+     "category": "swapped_tokenizer",
+     "label": "benign",
+     "check": "tokenizer_diff",
+     "positive": false,
+     "seconds": 0.0002,
+     "findings": []
+    },
+    {
+     "id": "tok_ok_8",
+     "category": "swapped_tokenizer",
+     "label": "benign",
+     "check": "tokenizer_diff",
+     "positive": false,
+     "seconds": 0.0001,
+     "findings": []
+    },
+    {
+     "id": "tok_ok_9",
+     "category": "swapped_tokenizer",
+     "label": "benign",
+     "check": "tokenizer_diff",
+     "positive": false,
+     "seconds": 0.0001,
+     "findings": []
+    },
+    {
+     "id": "tpl_mal_deploy_trigger",
+     "category": "chat_template_backdoor",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0214,
+     "outcome": "block",
+     "risk": 100,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.TEMPLATE.HIDDEN_INSTRUCTION",
+      "MODEL.TEMPLATE.TRIGGER_BRANCH",
+      "MODEL.TEMPLATE.URL",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_mal_url_inject",
+     "category": "chat_template_backdoor",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0073,
+     "outcome": "allow",
+     "risk": 22,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.TEMPLATE.URL",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_mal_hidden_instruction",
+     "category": "chat_template_backdoor",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0027,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_mal_password_cond",
+     "category": "chat_template_backdoor",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0077,
+     "outcome": "block",
+     "risk": 90,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.TEMPLATE.HIDDEN_INSTRUCTION",
+      "MODEL.TEMPLATE.TRIGGER_BRANCH",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_mal_zero_width",
+     "category": "chat_template_backdoor",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0089,
+     "outcome": "quarantine",
+     "risk": 35,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.TEMPLATE.INVISIBLE_UNICODE",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_ok_chatml",
+     "category": "chat_template_backdoor",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0025,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_ok_multimodal",
+     "category": "chat_template_backdoor",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0029,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_ok_alpaca",
+     "category": "chat_template_backdoor",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0027,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_ok_llama",
+     "category": "chat_template_backdoor",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0032,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_ok_plain",
+     "category": "chat_template_backdoor",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0021,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_mal_0",
+     "category": "pickle_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0055,
+     "outcome": "block",
+     "risk": 55,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PICKLE.DANGEROUS_GLOBAL",
+      "MODEL.PICKLE.PRESENT",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_mal_1",
+     "category": "pickle_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0053,
+     "outcome": "block",
+     "risk": 55,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PICKLE.DANGEROUS_GLOBAL",
+      "MODEL.PICKLE.PRESENT",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_mal_2",
+     "category": "pickle_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0052,
+     "outcome": "block",
+     "risk": 55,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PICKLE.DANGEROUS_GLOBAL",
+      "MODEL.PICKLE.PRESENT",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_mal_3",
+     "category": "pickle_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0065,
+     "outcome": "block",
+     "risk": 55,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PICKLE.DANGEROUS_GLOBAL",
+      "MODEL.PICKLE.PRESENT",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_mal_4",
+     "category": "pickle_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.006,
+     "outcome": "block",
+     "risk": 55,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PICKLE.DANGEROUS_GLOBAL",
+      "MODEL.PICKLE.PRESENT",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_ok_0",
+     "category": "pickle_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0016,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_ok_1",
+     "category": "pickle_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0016,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_ok_2",
+     "category": "pickle_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0016,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_ok_3",
+     "category": "pickle_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0015,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_ok_4",
+     "category": "pickle_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0016,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "ds_poison_1",
+     "category": "poisoned_dataset",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 1.7366,
+     "outcome": "quarantine",
+     "risk": 35,
+     "findings": [
+      "DATA.STATS.TRIGGER_TOKEN",
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "ds_poison_5",
+     "category": "poisoned_dataset",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 1.5521,
+     "outcome": "quarantine",
+     "risk": 35,
+     "findings": [
+      "DATA.STATS.TRIGGER_TOKEN",
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "ds_poison_10",
+     "category": "poisoned_dataset",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.5426,
+     "outcome": "quarantine",
+     "risk": 35,
+     "findings": [
+      "DATA.STATS.TRIGGER_TOKEN",
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "ds_ok_0",
+     "category": "poisoned_dataset",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.7094,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "ds_ok_1",
+     "category": "poisoned_dataset",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.6644,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "ds_ok_2",
+     "category": "poisoned_dataset",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.4585,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "lora_backdoor_97",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 1.6661,
+     "score": 0.5236,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_41",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.6175,
+     "score": 0.4641,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_95",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.6224,
+     "score": 0.6957,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_50",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5878,
+     "score": 0.6461,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_91",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5397,
+     "score": 0.6493,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_64",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.542,
+     "score": 0.6568,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_21",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5345,
+     "score": 0.5779,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_66",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5483,
+     "score": 0.5635,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_69",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5477,
+     "score": 0.3234,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_10",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5525,
+     "score": 0.4713,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_52",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5398,
+     "score": 0.7644,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_80",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.6145,
+     "score": 0.4741,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_63",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5439,
+     "score": 0.6035,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_35",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5728,
+     "score": 0.3536,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_18",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5425,
+     "score": 0.5796,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_08",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.6214,
+     "score": 0.2829,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_11",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.6205,
+     "score": 0.6054,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_88",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5339,
+     "score": 0.6592,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_89",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5691,
+     "score": 0.6194,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_09",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5283,
+     "score": 0.5555,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_54",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5438,
+     "score": 0.2244,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_02",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5872,
+     "score": 0.643,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_96",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5499,
+     "score": 0.2986,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_63",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5457,
+     "score": 0.1905,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_28",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5508,
+     "score": 0.4744,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_22",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5444,
+     "score": 0.3298,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_21",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5326,
+     "score": 0.3907,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_38",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5748,
+     "score": 0.2614,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_58",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5373,
+     "score": 0.3196,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_01",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5341,
+     "score": 0.2142,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_31",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5706,
+     "score": 0.4043,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_27",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5507,
+     "score": 0.3079,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_82",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5623,
+     "score": 0.3132,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_32",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.577,
+     "score": 0.3795,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_83",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.57,
+     "score": 0.4557,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_04",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5438,
+     "score": 0.573,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_81",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5309,
+     "score": 0.2318,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_88",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5376,
+     "score": 0.8024,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_11",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5643,
+     "score": 0.2347,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_35",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5913,
+     "score": 0.525,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    }
+   ]
+  },
+  "staging (deep stages on), no GPU worker": {
+   "gpu_url": "http://127.0.0.1:9",
+   "environment": "staging",
+   "categories": {
+    "package_payload": {
+     "n_malicious": 10,
+     "n_benign": 10,
+     "tp": 6,
+     "fp": 0,
+     "tpr": 0.6,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "lookalike_name": {
+     "n_malicious": 5,
+     "n_benign": 5,
+     "tp": 0,
+     "fp": 0,
+     "tpr": 0.0,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "mcp_tool_poisoning": {
+     "n_malicious": 5,
+     "n_benign": 5,
+     "tp": 5,
+     "fp": 0,
+     "tpr": 1.0,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "tampered_weights": {
+     "n_malicious": 10,
+     "n_benign": 5,
+     "tp": 10,
+     "fp": 0,
+     "tpr": 1.0,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "swapped_tokenizer": {
+     "n_malicious": 5,
+     "n_benign": 5,
+     "tp": 5,
+     "fp": 0,
+     "tpr": 1.0,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "chat_template_backdoor": {
+     "n_malicious": 5,
+     "n_benign": 5,
+     "tp": 3,
+     "fp": 0,
+     "tpr": 0.6,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "pickle_payload": {
+     "n_malicious": 5,
+     "n_benign": 5,
+     "tp": 5,
+     "fp": 0,
+     "tpr": 1.0,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "poisoned_dataset": {
+     "n_malicious": 3,
+     "n_benign": 3,
+     "tp": 3,
+     "fp": 0,
+     "tpr": 1.0,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "lora_backdoor": {
+     "n_malicious": 20,
+     "n_benign": 20,
+     "tp": 14,
+     "fp": 4,
+     "tpr": 0.7,
+     "fpr": 0.2,
+     "errors": 0,
+     "auroc": 0.815
+    }
+   },
+   "latency": {
+    "intake": {
+     "n": 66,
+     "p50_s": 0.0358,
+     "p95_s": 0.1746
+    },
+    "bind": {
+     "n": 15,
+     "p50_s": 0.0018,
+     "p95_s": 0.0079
+    },
+    "tokenizer_diff": {
+     "n": 10,
+     "p50_s": 0.0002,
+     "p95_s": 0.0002
+    },
+    "lora_weights": {
+     "n": 40,
+     "p50_s": 0.5687,
+     "p95_s": 0.62
+    }
+   },
+   "overall": {
+    "n": 131,
+    "n_malicious": 68,
+    "n_benign": 63,
+    "tpr": 0.75,
+    "fpr": 0.06349206349206349
+   },
+   "items": [
+    {
+     "id": "pkg_mal_setup_network",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0871,
+     "outcome": "block",
+     "risk": 47,
+     "findings": [
+      "PKG.CAP.FILESYSTEM",
+      "PKG.CAP.NETWORK",
+      "PKG.HOOK.NETWORK_AT_INSTALL",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_pth_startup",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0881,
+     "outcome": "block",
+     "risk": 100,
+     "findings": [
+      "PKG.CAP.DYNAMIC_EXEC",
+      "PKG.CAP.ENCODED_BLOB",
+      "PKG.CODE.DECODE_EXEC",
+      "PKG.HOOK.STARTUP_HOOK",
+      "PKG.TAINT.ENCODED_EXEC",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_import_env_exfil",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0807,
+     "outcome": "quarantine",
+     "risk": 54,
+     "findings": [
+      "PKG.CAP.ENV_SECRETS",
+      "PKG.CAP.NETWORK",
+      "PKG.TAINT.ENV_EXFIL",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_ssh_key_theft",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0862,
+     "outcome": "allow",
+     "risk": 29,
+     "findings": [
+      "PKG.CAP.ENV_SECRETS",
+      "PKG.CAP.NETWORK",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_b64_exec",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0622,
+     "outcome": "block",
+     "risk": 100,
+     "findings": [
+      "PKG.CAP.DYNAMIC_EXEC",
+      "PKG.CAP.ENCODED_BLOB",
+      "PKG.CODE.DECODE_EXEC",
+      "PKG.TAINT.ENCODED_EXEC",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_install_cmdclass",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0723,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "PKG.CAP.FILESYSTEM",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_delayed_bomb",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0864,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "PKG.CAP.FILESYSTEM",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_remote_code",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0911,
+     "outcome": "block",
+     "risk": 100,
+     "findings": [
+      "PKG.CAP.DYNAMIC_EXEC",
+      "PKG.CAP.NETWORK",
+      "PKG.CODE.REMOTE_EXEC_POSSIBLE",
+      "PKG.TAINT.REMOTE_EXEC",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_obfuscated_eval",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0818,
+     "outcome": "block",
+     "risk": 100,
+     "findings": [
+      "PKG.CAP.DYNAMIC_EXEC",
+      "PKG.CAP.ENCODED_BLOB",
+      "PKG.CODE.DECODE_EXEC",
+      "PKG.TAINT.ENCODED_EXEC",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_reviewer_bait_subprocess",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0371,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.CAP.SUBPROCESS",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_textutil",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0584,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_mathx",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0358,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_gitinfo",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0514,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.CAP.SUBPROCESS",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_homepath",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0571,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "PKG.CAP.ENV_SECRETS",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_ghclient",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0577,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.CAP.NETWORK",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_dcmodels",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0572,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_csvio",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0361,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "PKG.CAP.FILESYSTEM",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_timeit2",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0506,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_jsonpick",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0572,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "PKG.CAP.FILESYSTEM",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_retrylib",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0573,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_look_0",
+     "category": "lookalike_name",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.044,
+     "outcome": "allow",
+     "risk": 30,
+     "findings": [
+      "PKG.PROV.LOOKALIKE_NAME",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_look_1",
+     "category": "lookalike_name",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0201,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.PROV.LOOKALIKE_NAME",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_look_2",
+     "category": "lookalike_name",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0359,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.PROV.LOOKALIKE_NAME",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_look_3",
+     "category": "lookalike_name",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0836,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.PROV.LOOKALIKE_NAME",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_look_4",
+     "category": "lookalike_name",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0358,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.PROV.LOOKALIKE_NAME",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_lookok_0",
+     "category": "lookalike_name",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0749,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_lookok_1",
+     "category": "lookalike_name",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0751,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_lookok_2",
+     "category": "lookalike_name",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0752,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_lookok_3",
+     "category": "lookalike_name",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0753,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_lookok_4",
+     "category": "lookalike_name",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.075,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tool_mal_classic",
+     "category": "mcp_tool_poisoning",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0027,
+     "outcome": "block",
+     "risk": 100,
+     "findings": [
+      "PKG.CAP.NETWORK",
+      "PROV.PUBLISHER.UNLISTED",
+      "TOOL.DESC.AGENT_INSTRUCTION",
+      "TOOL.DESC.INVISIBLE_UNICODE",
+      "TOOL.DESC.MARKDOWN_IMAGE",
+      "TOOL.INTENT.UNDECLARED_NETWORK"
+     ]
+    },
+    {
+     "id": "tool_mal_important_block",
+     "category": "mcp_tool_poisoning",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.002,
+     "outcome": "quarantine",
+     "risk": 45,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED",
+      "TOOL.DESC.AGENT_INSTRUCTION"
+     ]
+    },
+    {
+     "id": "tool_mal_tag_chars",
+     "category": "mcp_tool_poisoning",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0019,
+     "outcome": "quarantine",
+     "risk": 45,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED",
+      "TOOL.DESC.INVISIBLE_UNICODE"
+     ]
+    },
+    {
+     "id": "tool_mal_undeclared_network",
+     "category": "mcp_tool_poisoning",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0021,
+     "outcome": "quarantine",
+     "risk": 42,
+     "findings": [
+      "PKG.CAP.NETWORK",
+      "PROV.PUBLISHER.UNLISTED",
+      "TOOL.INTENT.UNDECLARED_NETWORK"
+     ]
+    },
+    {
+     "id": "tool_mal_rug_pull_v2",
+     "category": "mcp_tool_poisoning",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0019,
+     "outcome": "quarantine",
+     "risk": 35,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED",
+      "TOOL.DESC.AGENT_INSTRUCTION",
+      "TOOL.DESC.URL"
+     ]
+    },
+    {
+     "id": "tool_ok_0",
+     "category": "mcp_tool_poisoning",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0018,
+     "outcome": "quarantine",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tool_ok_1",
+     "category": "mcp_tool_poisoning",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0017,
+     "outcome": "quarantine",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tool_ok_2",
+     "category": "mcp_tool_poisoning",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.002,
+     "outcome": "quarantine",
+     "risk": 17,
+     "findings": [
+      "PKG.CAP.NETWORK",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tool_ok_3",
+     "category": "mcp_tool_poisoning",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0017,
+     "outcome": "quarantine",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tool_ok_4",
+     "category": "mcp_tool_poisoning",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0017,
+     "outcome": "quarantine",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "w_tamper_0",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.005,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "tensor mismatch: layers.0.weight"
+     ]
+    },
+    {
+     "id": "w_tamper_1",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0079,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "tensor mismatch: layers.0.bias"
+     ]
+    },
+    {
+     "id": "w_tamper_2",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0059,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "tensor mismatch: layers.1.weight"
+     ]
+    },
+    {
+     "id": "w_tamper_3",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.002,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "tensor mismatch: layers.1.bias"
+     ]
+    },
+    {
+     "id": "w_tamper_4",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0017,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "tensor mismatch: layers.0.weight"
+     ]
+    },
+    {
+     "id": "w_tamper_5",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0018,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "tensor mismatch: layers.1.weight"
+     ]
+    },
+    {
+     "id": "w_tamper_6",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0016,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "missing tensor: layers.1.bias"
+     ]
+    },
+    {
+     "id": "w_tamper_7",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0018,
+     "problems": [
+      "unpinned file: extra.py"
+     ]
+    },
+    {
+     "id": "w_tamper_8",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0022,
+     "problems": [
+      "hash mismatch: config.json"
+     ]
+    },
+    {
+     "id": "w_tamper_9",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0013,
+     "problems": [
+      "hash mismatch: model.safetensors"
+     ]
+    },
+    {
+     "id": "w_ok_10",
+     "category": "tampered_weights",
+     "label": "benign",
+     "check": "bind",
+     "positive": false,
+     "seconds": 0.0013,
+     "problems": []
+    },
+    {
+     "id": "w_ok_11",
+     "category": "tampered_weights",
+     "label": "benign",
+     "check": "bind",
+     "positive": false,
+     "seconds": 0.0018,
+     "problems": []
+    },
+    {
+     "id": "w_ok_12",
+     "category": "tampered_weights",
+     "label": "benign",
+     "check": "bind",
+     "positive": false,
+     "seconds": 0.0018,
+     "problems": []
+    },
+    {
+     "id": "w_ok_13",
+     "category": "tampered_weights",
+     "label": "benign",
+     "check": "bind",
+     "positive": false,
+     "seconds": 0.0016,
+     "problems": []
+    },
+    {
+     "id": "w_ok_14",
+     "category": "tampered_weights",
+     "label": "benign",
+     "check": "bind",
+     "positive": false,
+     "seconds": 0.0017,
+     "problems": []
+    },
+    {
+     "id": "tok_swap_0",
+     "category": "swapped_tokenizer",
+     "label": "malicious",
+     "check": "tokenizer_diff",
+     "positive": true,
+     "seconds": 0.0002,
+     "findings": [
+      "MODEL.TOKENIZER.REMAPPED"
+     ]
+    },
+    {
+     "id": "tok_swap_1",
+     "category": "swapped_tokenizer",
+     "label": "malicious",
+     "check": "tokenizer_diff",
+     "positive": true,
+     "seconds": 0.0002,
+     "findings": [
+      "MODEL.TOKENIZER.ADDED_TOKENS"
+     ]
+    },
+    {
+     "id": "tok_swap_2",
+     "category": "swapped_tokenizer",
+     "label": "malicious",
+     "check": "tokenizer_diff",
+     "positive": true,
+     "seconds": 0.0002,
+     "findings": [
+      "MODEL.TOKENIZER.MERGES_CHANGED"
+     ]
+    },
+    {
+     "id": "tok_swap_3",
+     "category": "swapped_tokenizer",
+     "label": "malicious",
+     "check": "tokenizer_diff",
+     "positive": true,
+     "seconds": 0.0002,
+     "findings": [
+      "MODEL.TOKENIZER.MERGES_CHANGED"
+     ]
+    },
+    {
+     "id": "tok_swap_4",
+     "category": "swapped_tokenizer",
+     "label": "malicious",
+     "check": "tokenizer_diff",
+     "positive": true,
+     "seconds": 0.0002,
+     "findings": [
+      "MODEL.TOKENIZER.ADDED_TOKENS",
+      "MODEL.TOKENIZER.REMAPPED",
+      "MODEL.TOKENIZER.SUSPICIOUS_TOKEN"
+     ]
+    },
+    {
+     "id": "tok_ok_5",
+     "category": "swapped_tokenizer",
+     "label": "benign",
+     "check": "tokenizer_diff",
+     "positive": false,
+     "seconds": 0.0001,
+     "findings": []
+    },
+    {
+     "id": "tok_ok_6",
+     "category": "swapped_tokenizer",
+     "label": "benign",
+     "check": "tokenizer_diff",
+     "positive": false,
+     "seconds": 0.0001,
+     "findings": []
+    },
+    {
+     "id": "tok_ok_7",
+     "category": "swapped_tokenizer",
+     "label": "benign",
+     "check": "tokenizer_diff",
+     "positive": false,
+     "seconds": 0.0001,
+     "findings": []
+    },
+    {
+     "id": "tok_ok_8",
+     "category": "swapped_tokenizer",
+     "label": "benign",
+     "check": "tokenizer_diff",
+     "positive": false,
+     "seconds": 0.0001,
+     "findings": []
+    },
+    {
+     "id": "tok_ok_9",
+     "category": "swapped_tokenizer",
+     "label": "benign",
+     "check": "tokenizer_diff",
+     "positive": false,
+     "seconds": 0.0001,
+     "findings": []
+    },
+    {
+     "id": "tpl_mal_deploy_trigger",
+     "category": "chat_template_backdoor",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0079,
+     "outcome": "block",
+     "risk": 100,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.TEMPLATE.HIDDEN_INSTRUCTION",
+      "MODEL.TEMPLATE.TRIGGER_BRANCH",
+      "MODEL.TEMPLATE.URL",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_mal_url_inject",
+     "category": "chat_template_backdoor",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0064,
+     "outcome": "allow",
+     "risk": 22,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.TEMPLATE.URL",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_mal_hidden_instruction",
+     "category": "chat_template_backdoor",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0077,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_mal_password_cond",
+     "category": "chat_template_backdoor",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0093,
+     "outcome": "block",
+     "risk": 90,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.TEMPLATE.HIDDEN_INSTRUCTION",
+      "MODEL.TEMPLATE.TRIGGER_BRANCH",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_mal_zero_width",
+     "category": "chat_template_backdoor",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0065,
+     "outcome": "quarantine",
+     "risk": 35,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.TEMPLATE.INVISIBLE_UNICODE",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_ok_chatml",
+     "category": "chat_template_backdoor",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0071,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_ok_multimodal",
+     "category": "chat_template_backdoor",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.008,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_ok_alpaca",
+     "category": "chat_template_backdoor",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0062,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_ok_llama",
+     "category": "chat_template_backdoor",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0061,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_ok_plain",
+     "category": "chat_template_backdoor",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0061,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_mal_0",
+     "category": "pickle_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0051,
+     "outcome": "block",
+     "risk": 55,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PICKLE.DANGEROUS_GLOBAL",
+      "MODEL.PICKLE.PRESENT",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_mal_1",
+     "category": "pickle_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0052,
+     "outcome": "block",
+     "risk": 55,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PICKLE.DANGEROUS_GLOBAL",
+      "MODEL.PICKLE.PRESENT",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_mal_2",
+     "category": "pickle_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0051,
+     "outcome": "block",
+     "risk": 55,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PICKLE.DANGEROUS_GLOBAL",
+      "MODEL.PICKLE.PRESENT",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_mal_3",
+     "category": "pickle_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.005,
+     "outcome": "block",
+     "risk": 55,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PICKLE.DANGEROUS_GLOBAL",
+      "MODEL.PICKLE.PRESENT",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_mal_4",
+     "category": "pickle_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0051,
+     "outcome": "block",
+     "risk": 55,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PICKLE.DANGEROUS_GLOBAL",
+      "MODEL.PICKLE.PRESENT",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_ok_0",
+     "category": "pickle_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0055,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_ok_1",
+     "category": "pickle_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0064,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_ok_2",
+     "category": "pickle_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0086,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_ok_3",
+     "category": "pickle_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0059,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_ok_4",
+     "category": "pickle_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0056,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "ds_poison_1",
+     "category": "poisoned_dataset",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.5395,
+     "outcome": "quarantine",
+     "risk": 35,
+     "findings": [
+      "DATA.STATS.TRIGGER_TOKEN",
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "ds_poison_5",
+     "category": "poisoned_dataset",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 1.5142,
+     "outcome": "quarantine",
+     "risk": 35,
+     "findings": [
+      "DATA.STATS.TRIGGER_TOKEN",
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "ds_poison_10",
+     "category": "poisoned_dataset",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.1539,
+     "outcome": "quarantine",
+     "risk": 35,
+     "findings": [
+      "DATA.STATS.TRIGGER_TOKEN",
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "ds_ok_0",
+     "category": "poisoned_dataset",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.1746,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "ds_ok_1",
+     "category": "poisoned_dataset",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.515,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "ds_ok_2",
+     "category": "poisoned_dataset",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0964,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "lora_backdoor_97",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.6093,
+     "score": 0.5236,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_41",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5702,
+     "score": 0.4641,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_95",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5688,
+     "score": 0.6957,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_50",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5766,
+     "score": 0.6461,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_91",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5533,
+     "score": 0.6493,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_64",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5814,
+     "score": 0.6568,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_21",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5575,
+     "score": 0.5779,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_66",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5563,
+     "score": 0.5635,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_69",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5472,
+     "score": 0.3234,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_10",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5548,
+     "score": 0.4713,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_52",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5541,
+     "score": 0.7644,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_80",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5886,
+     "score": 0.4741,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_63",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.6017,
+     "score": 0.6035,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_35",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.6103,
+     "score": 0.3536,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_18",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5686,
+     "score": 0.5796,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_08",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5862,
+     "score": 0.2829,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_11",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5905,
+     "score": 0.6054,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_88",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5596,
+     "score": 0.6592,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_89",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.6134,
+     "score": 0.6194,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_09",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5649,
+     "score": 0.5555,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_54",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5607,
+     "score": 0.2244,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_02",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.598,
+     "score": 0.643,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_96",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5375,
+     "score": 0.2986,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_63",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5338,
+     "score": 0.1905,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_28",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5446,
+     "score": 0.4744,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_22",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5477,
+     "score": 0.3298,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_21",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5385,
+     "score": 0.3907,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_38",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.6413,
+     "score": 0.2614,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_58",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5713,
+     "score": 0.3196,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_01",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5562,
+     "score": 0.2142,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_31",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5583,
+     "score": 0.4043,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_27",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5427,
+     "score": 0.3079,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_82",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5545,
+     "score": 0.3132,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_32",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5724,
+     "score": 0.3795,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_83",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5745,
+     "score": 0.4557,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_04",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.572,
+     "score": 0.573,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_81",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5648,
+     "score": 0.2318,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_88",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5932,
+     "score": 0.8024,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_11",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.61,
+     "score": 0.2347,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_35",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.62,
+     "score": 0.525,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    }
+   ]
+  },
+  "staging (deep stages on), with GPU worker": {
+   "gpu_url": "http://127.0.0.1:8800",
+   "environment": "staging",
+   "categories": {
+    "package_payload": {
+     "n_malicious": 10,
+     "n_benign": 10,
+     "tp": 6,
+     "fp": 0,
+     "tpr": 0.6,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "lookalike_name": {
+     "n_malicious": 5,
+     "n_benign": 5,
+     "tp": 0,
+     "fp": 0,
+     "tpr": 0.0,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "mcp_tool_poisoning": {
+     "n_malicious": 5,
+     "n_benign": 5,
+     "tp": 5,
+     "fp": 0,
+     "tpr": 1.0,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "tampered_weights": {
+     "n_malicious": 10,
+     "n_benign": 5,
+     "tp": 10,
+     "fp": 0,
+     "tpr": 1.0,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "swapped_tokenizer": {
+     "n_malicious": 5,
+     "n_benign": 5,
+     "tp": 5,
+     "fp": 0,
+     "tpr": 1.0,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "chat_template_backdoor": {
+     "n_malicious": 5,
+     "n_benign": 5,
+     "tp": 3,
+     "fp": 0,
+     "tpr": 0.6,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "pickle_payload": {
+     "n_malicious": 5,
+     "n_benign": 5,
+     "tp": 5,
+     "fp": 0,
+     "tpr": 1.0,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "poisoned_dataset": {
+     "n_malicious": 3,
+     "n_benign": 3,
+     "tp": 3,
+     "fp": 0,
+     "tpr": 1.0,
+     "fpr": 0.0,
+     "errors": 0
+    },
+    "lora_backdoor": {
+     "n_malicious": 20,
+     "n_benign": 20,
+     "tp": 14,
+     "fp": 4,
+     "tpr": 0.7,
+     "fpr": 0.2,
+     "errors": 0,
+     "auroc": 0.815
+    }
+   },
+   "latency": {
+    "intake": {
+     "n": 66,
+     "p50_s": 0.0362,
+     "p95_s": 0.4317
+    },
+    "bind": {
+     "n": 15,
+     "p50_s": 0.0017,
+     "p95_s": 0.0058
+    },
+    "tokenizer_diff": {
+     "n": 10,
+     "p50_s": 0.0001,
+     "p95_s": 0.0003
+    },
+    "lora_weights": {
+     "n": 40,
+     "p50_s": 0.5696,
+     "p95_s": 0.6347
+    }
+   },
+   "overall": {
+    "n": 131,
+    "n_malicious": 68,
+    "n_benign": 63,
+    "tpr": 0.75,
+    "fpr": 0.06349206349206349
+   },
+   "items": [
+    {
+     "id": "pkg_mal_setup_network",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0854,
+     "outcome": "block",
+     "risk": 47,
+     "findings": [
+      "PKG.CAP.FILESYSTEM",
+      "PKG.CAP.NETWORK",
+      "PKG.HOOK.NETWORK_AT_INSTALL",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_pth_startup",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0991,
+     "outcome": "block",
+     "risk": 100,
+     "findings": [
+      "PKG.CAP.DYNAMIC_EXEC",
+      "PKG.CAP.ENCODED_BLOB",
+      "PKG.CODE.DECODE_EXEC",
+      "PKG.HOOK.STARTUP_HOOK",
+      "PKG.TAINT.ENCODED_EXEC",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_import_env_exfil",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.082,
+     "outcome": "quarantine",
+     "risk": 54,
+     "findings": [
+      "PKG.CAP.ENV_SECRETS",
+      "PKG.CAP.NETWORK",
+      "PKG.TAINT.ENV_EXFIL",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_ssh_key_theft",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0862,
+     "outcome": "allow",
+     "risk": 29,
+     "findings": [
+      "PKG.CAP.ENV_SECRETS",
+      "PKG.CAP.NETWORK",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_b64_exec",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0638,
+     "outcome": "block",
+     "risk": 100,
+     "findings": [
+      "PKG.CAP.DYNAMIC_EXEC",
+      "PKG.CAP.ENCODED_BLOB",
+      "PKG.CODE.DECODE_EXEC",
+      "PKG.TAINT.ENCODED_EXEC",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_install_cmdclass",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0728,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "PKG.CAP.FILESYSTEM",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_delayed_bomb",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0868,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "PKG.CAP.FILESYSTEM",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_remote_code",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0893,
+     "outcome": "block",
+     "risk": 100,
+     "findings": [
+      "PKG.CAP.DYNAMIC_EXEC",
+      "PKG.CAP.NETWORK",
+      "PKG.CODE.REMOTE_EXEC_POSSIBLE",
+      "PKG.TAINT.REMOTE_EXEC",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_obfuscated_eval",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0818,
+     "outcome": "block",
+     "risk": 100,
+     "findings": [
+      "PKG.CAP.DYNAMIC_EXEC",
+      "PKG.CAP.ENCODED_BLOB",
+      "PKG.CODE.DECODE_EXEC",
+      "PKG.TAINT.ENCODED_EXEC",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_mal_reviewer_bait_subprocess",
+     "category": "package_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.037,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.CAP.SUBPROCESS",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_textutil",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0576,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_mathx",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0359,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_gitinfo",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0504,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.CAP.SUBPROCESS",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_homepath",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0571,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "PKG.CAP.ENV_SECRETS",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_ghclient",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0577,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.CAP.NETWORK",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_dcmodels",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0575,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_csvio",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0364,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "PKG.CAP.FILESYSTEM",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_timeit2",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0506,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_jsonpick",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0574,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "PKG.CAP.FILESYSTEM",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_ok_retrylib",
+     "category": "package_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0575,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_look_0",
+     "category": "lookalike_name",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0439,
+     "outcome": "allow",
+     "risk": 30,
+     "findings": [
+      "PKG.PROV.LOOKALIKE_NAME",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_look_1",
+     "category": "lookalike_name",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0204,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.PROV.LOOKALIKE_NAME",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_look_2",
+     "category": "lookalike_name",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0362,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.PROV.LOOKALIKE_NAME",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_look_3",
+     "category": "lookalike_name",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0839,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.PROV.LOOKALIKE_NAME",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_look_4",
+     "category": "lookalike_name",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0361,
+     "outcome": "allow",
+     "risk": 17,
+     "findings": [
+      "PKG.PROV.LOOKALIKE_NAME",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_lookok_0",
+     "category": "lookalike_name",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0757,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_lookok_1",
+     "category": "lookalike_name",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0756,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_lookok_2",
+     "category": "lookalike_name",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0754,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_lookok_3",
+     "category": "lookalike_name",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0754,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkg_lookok_4",
+     "category": "lookalike_name",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0752,
+     "outcome": "allow",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tool_mal_classic",
+     "category": "mcp_tool_poisoning",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0026,
+     "outcome": "block",
+     "risk": 100,
+     "findings": [
+      "PKG.CAP.NETWORK",
+      "PROV.PUBLISHER.UNLISTED",
+      "TOOL.DESC.AGENT_INSTRUCTION",
+      "TOOL.DESC.INVISIBLE_UNICODE",
+      "TOOL.DESC.MARKDOWN_IMAGE",
+      "TOOL.INTENT.UNDECLARED_NETWORK"
+     ]
+    },
+    {
+     "id": "tool_mal_important_block",
+     "category": "mcp_tool_poisoning",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.002,
+     "outcome": "quarantine",
+     "risk": 45,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED",
+      "TOOL.DESC.AGENT_INSTRUCTION"
+     ]
+    },
+    {
+     "id": "tool_mal_tag_chars",
+     "category": "mcp_tool_poisoning",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0019,
+     "outcome": "quarantine",
+     "risk": 45,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED",
+      "TOOL.DESC.INVISIBLE_UNICODE"
+     ]
+    },
+    {
+     "id": "tool_mal_undeclared_network",
+     "category": "mcp_tool_poisoning",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0021,
+     "outcome": "quarantine",
+     "risk": 42,
+     "findings": [
+      "PKG.CAP.NETWORK",
+      "PROV.PUBLISHER.UNLISTED",
+      "TOOL.INTENT.UNDECLARED_NETWORK"
+     ]
+    },
+    {
+     "id": "tool_mal_rug_pull_v2",
+     "category": "mcp_tool_poisoning",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0019,
+     "outcome": "quarantine",
+     "risk": 35,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED",
+      "TOOL.DESC.AGENT_INSTRUCTION",
+      "TOOL.DESC.URL"
+     ]
+    },
+    {
+     "id": "tool_ok_0",
+     "category": "mcp_tool_poisoning",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0018,
+     "outcome": "quarantine",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tool_ok_1",
+     "category": "mcp_tool_poisoning",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0017,
+     "outcome": "quarantine",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tool_ok_2",
+     "category": "mcp_tool_poisoning",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.002,
+     "outcome": "quarantine",
+     "risk": 17,
+     "findings": [
+      "PKG.CAP.NETWORK",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tool_ok_3",
+     "category": "mcp_tool_poisoning",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0018,
+     "outcome": "quarantine",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tool_ok_4",
+     "category": "mcp_tool_poisoning",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0019,
+     "outcome": "quarantine",
+     "risk": 5,
+     "findings": [
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "w_tamper_0",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0021,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "tensor mismatch: layers.0.weight"
+     ]
+    },
+    {
+     "id": "w_tamper_1",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0046,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "tensor mismatch: layers.0.bias"
+     ]
+    },
+    {
+     "id": "w_tamper_2",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0018,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "tensor mismatch: layers.1.weight"
+     ]
+    },
+    {
+     "id": "w_tamper_3",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0015,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "tensor mismatch: layers.1.bias"
+     ]
+    },
+    {
+     "id": "w_tamper_4",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0016,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "tensor mismatch: layers.0.weight"
+     ]
+    },
+    {
+     "id": "w_tamper_5",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0045,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "tensor mismatch: layers.1.weight"
+     ]
+    },
+    {
+     "id": "w_tamper_6",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0017,
+     "problems": [
+      "hash mismatch: model.safetensors",
+      "missing tensor: layers.1.bias"
+     ]
+    },
+    {
+     "id": "w_tamper_7",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0015,
+     "problems": [
+      "unpinned file: extra.py"
+     ]
+    },
+    {
+     "id": "w_tamper_8",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0058,
+     "problems": [
+      "hash mismatch: config.json"
+     ]
+    },
+    {
+     "id": "w_tamper_9",
+     "category": "tampered_weights",
+     "label": "malicious",
+     "check": "bind",
+     "positive": true,
+     "seconds": 0.0016,
+     "problems": [
+      "hash mismatch: model.safetensors"
+     ]
+    },
+    {
+     "id": "w_ok_10",
+     "category": "tampered_weights",
+     "label": "benign",
+     "check": "bind",
+     "positive": false,
+     "seconds": 0.0015,
+     "problems": []
+    },
+    {
+     "id": "w_ok_11",
+     "category": "tampered_weights",
+     "label": "benign",
+     "check": "bind",
+     "positive": false,
+     "seconds": 0.0018,
+     "problems": []
+    },
+    {
+     "id": "w_ok_12",
+     "category": "tampered_weights",
+     "label": "benign",
+     "check": "bind",
+     "positive": false,
+     "seconds": 0.0015,
+     "problems": []
+    },
+    {
+     "id": "w_ok_13",
+     "category": "tampered_weights",
+     "label": "benign",
+     "check": "bind",
+     "positive": false,
+     "seconds": 0.0017,
+     "problems": []
+    },
+    {
+     "id": "w_ok_14",
+     "category": "tampered_weights",
+     "label": "benign",
+     "check": "bind",
+     "positive": false,
+     "seconds": 0.0016,
+     "problems": []
+    },
+    {
+     "id": "tok_swap_0",
+     "category": "swapped_tokenizer",
+     "label": "malicious",
+     "check": "tokenizer_diff",
+     "positive": true,
+     "seconds": 0.0003,
+     "findings": [
+      "MODEL.TOKENIZER.REMAPPED"
+     ]
+    },
+    {
+     "id": "tok_swap_1",
+     "category": "swapped_tokenizer",
+     "label": "malicious",
+     "check": "tokenizer_diff",
+     "positive": true,
+     "seconds": 0.0002,
+     "findings": [
+      "MODEL.TOKENIZER.ADDED_TOKENS"
+     ]
+    },
+    {
+     "id": "tok_swap_2",
+     "category": "swapped_tokenizer",
+     "label": "malicious",
+     "check": "tokenizer_diff",
+     "positive": true,
+     "seconds": 0.0001,
+     "findings": [
+      "MODEL.TOKENIZER.MERGES_CHANGED"
+     ]
+    },
+    {
+     "id": "tok_swap_3",
+     "category": "swapped_tokenizer",
+     "label": "malicious",
+     "check": "tokenizer_diff",
+     "positive": true,
+     "seconds": 0.0001,
+     "findings": [
+      "MODEL.TOKENIZER.MERGES_CHANGED"
+     ]
+    },
+    {
+     "id": "tok_swap_4",
+     "category": "swapped_tokenizer",
+     "label": "malicious",
+     "check": "tokenizer_diff",
+     "positive": true,
+     "seconds": 0.0002,
+     "findings": [
+      "MODEL.TOKENIZER.ADDED_TOKENS",
+      "MODEL.TOKENIZER.REMAPPED",
+      "MODEL.TOKENIZER.SUSPICIOUS_TOKEN"
+     ]
+    },
+    {
+     "id": "tok_ok_5",
+     "category": "swapped_tokenizer",
+     "label": "benign",
+     "check": "tokenizer_diff",
+     "positive": false,
+     "seconds": 0.0001,
+     "findings": []
+    },
+    {
+     "id": "tok_ok_6",
+     "category": "swapped_tokenizer",
+     "label": "benign",
+     "check": "tokenizer_diff",
+     "positive": false,
+     "seconds": 0.0001,
+     "findings": []
+    },
+    {
+     "id": "tok_ok_7",
+     "category": "swapped_tokenizer",
+     "label": "benign",
+     "check": "tokenizer_diff",
+     "positive": false,
+     "seconds": 0.0002,
+     "findings": []
+    },
+    {
+     "id": "tok_ok_8",
+     "category": "swapped_tokenizer",
+     "label": "benign",
+     "check": "tokenizer_diff",
+     "positive": false,
+     "seconds": 0.0001,
+     "findings": []
+    },
+    {
+     "id": "tok_ok_9",
+     "category": "swapped_tokenizer",
+     "label": "benign",
+     "check": "tokenizer_diff",
+     "positive": false,
+     "seconds": 0.0001,
+     "findings": []
+    },
+    {
+     "id": "tpl_mal_deploy_trigger",
+     "category": "chat_template_backdoor",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0088,
+     "outcome": "block",
+     "risk": 100,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PARENT.UNIDENTIFIED",
+      "MODEL.TEMPLATE.HIDDEN_INSTRUCTION",
+      "MODEL.TEMPLATE.TRIGGER_BRANCH",
+      "MODEL.TEMPLATE.URL",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_mal_url_inject",
+     "category": "chat_template_backdoor",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0077,
+     "outcome": "allow",
+     "risk": 27,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PARENT.UNIDENTIFIED",
+      "MODEL.TEMPLATE.URL",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_mal_hidden_instruction",
+     "category": "chat_template_backdoor",
+     "label": "malicious",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0074,
+     "outcome": "allow",
+     "risk": 15,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PARENT.UNIDENTIFIED",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_mal_password_cond",
+     "category": "chat_template_backdoor",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0081,
+     "outcome": "block",
+     "risk": 95,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PARENT.UNIDENTIFIED",
+      "MODEL.TEMPLATE.HIDDEN_INSTRUCTION",
+      "MODEL.TEMPLATE.TRIGGER_BRANCH",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_mal_zero_width",
+     "category": "chat_template_backdoor",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0078,
+     "outcome": "quarantine",
+     "risk": 40,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PARENT.UNIDENTIFIED",
+      "MODEL.TEMPLATE.INVISIBLE_UNICODE",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_ok_chatml",
+     "category": "chat_template_backdoor",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0081,
+     "outcome": "allow",
+     "risk": 15,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PARENT.UNIDENTIFIED",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_ok_multimodal",
+     "category": "chat_template_backdoor",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0083,
+     "outcome": "allow",
+     "risk": 15,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PARENT.UNIDENTIFIED",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_ok_alpaca",
+     "category": "chat_template_backdoor",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0076,
+     "outcome": "allow",
+     "risk": 15,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PARENT.UNIDENTIFIED",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_ok_llama",
+     "category": "chat_template_backdoor",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0088,
+     "outcome": "allow",
+     "risk": 15,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PARENT.UNIDENTIFIED",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "tpl_ok_plain",
+     "category": "chat_template_backdoor",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0123,
+     "outcome": "allow",
+     "risk": 15,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PARENT.UNIDENTIFIED",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_mal_0",
+     "category": "pickle_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0062,
+     "outcome": "block",
+     "risk": 55,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PICKLE.DANGEROUS_GLOBAL",
+      "MODEL.PICKLE.PRESENT",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_mal_1",
+     "category": "pickle_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0062,
+     "outcome": "block",
+     "risk": 55,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PICKLE.DANGEROUS_GLOBAL",
+      "MODEL.PICKLE.PRESENT",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_mal_2",
+     "category": "pickle_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0057,
+     "outcome": "block",
+     "risk": 55,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PICKLE.DANGEROUS_GLOBAL",
+      "MODEL.PICKLE.PRESENT",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_mal_3",
+     "category": "pickle_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0062,
+     "outcome": "block",
+     "risk": 55,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PICKLE.DANGEROUS_GLOBAL",
+      "MODEL.PICKLE.PRESENT",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_mal_4",
+     "category": "pickle_payload",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.0082,
+     "outcome": "block",
+     "risk": 55,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PICKLE.DANGEROUS_GLOBAL",
+      "MODEL.PICKLE.PRESENT",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_ok_0",
+     "category": "pickle_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0069,
+     "outcome": "allow",
+     "risk": 15,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PARENT.UNIDENTIFIED",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_ok_1",
+     "category": "pickle_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0065,
+     "outcome": "allow",
+     "risk": 15,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PARENT.UNIDENTIFIED",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_ok_2",
+     "category": "pickle_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0062,
+     "outcome": "allow",
+     "risk": 15,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PARENT.UNIDENTIFIED",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_ok_3",
+     "category": "pickle_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0075,
+     "outcome": "allow",
+     "risk": 15,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PARENT.UNIDENTIFIED",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "pkl_ok_4",
+     "category": "pickle_payload",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0106,
+     "outcome": "allow",
+     "risk": 15,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "MODEL.PARENT.UNIDENTIFIED",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "ds_poison_1",
+     "category": "poisoned_dataset",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.5917,
+     "outcome": "quarantine",
+     "risk": 35,
+     "findings": [
+      "DATA.STATS.TRIGGER_TOKEN",
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "ds_poison_5",
+     "category": "poisoned_dataset",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.384,
+     "outcome": "quarantine",
+     "risk": 35,
+     "findings": [
+      "DATA.STATS.TRIGGER_TOKEN",
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "ds_poison_10",
+     "category": "poisoned_dataset",
+     "label": "malicious",
+     "check": "intake",
+     "positive": true,
+     "seconds": 0.4317,
+     "outcome": "quarantine",
+     "risk": 35,
+     "findings": [
+      "DATA.STATS.TRIGGER_TOKEN",
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "ds_ok_0",
+     "category": "poisoned_dataset",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.5679,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "ds_ok_1",
+     "category": "poisoned_dataset",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.4917,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "ds_ok_2",
+     "category": "poisoned_dataset",
+     "label": "benign",
+     "check": "intake",
+     "positive": false,
+     "seconds": 0.0927,
+     "outcome": "allow",
+     "risk": 10,
+     "findings": [
+      "LLM.CARD.MISSING",
+      "PROV.PUBLISHER.UNLISTED"
+     ]
+    },
+    {
+     "id": "lora_backdoor_97",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.591,
+     "score": 0.5236,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_41",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5884,
+     "score": 0.4641,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_95",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5887,
+     "score": 0.6957,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_50",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.6009,
+     "score": 0.6461,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_91",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5816,
+     "score": 0.6493,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_64",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5852,
+     "score": 0.6568,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_21",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5451,
+     "score": 0.5779,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_66",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5559,
+     "score": 0.5635,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_69",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5582,
+     "score": 0.3234,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_10",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.588,
+     "score": 0.4713,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_52",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5473,
+     "score": 0.7644,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_80",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5827,
+     "score": 0.4741,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_63",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5489,
+     "score": 0.6035,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_35",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5852,
+     "score": 0.3536,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_18",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5434,
+     "score": 0.5796,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_08",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.584,
+     "score": 0.2829,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_11",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5767,
+     "score": 0.6054,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_88",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5505,
+     "score": 0.6592,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_89",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5802,
+     "score": 0.6194,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_backdoor_09",
+     "category": "lora_backdoor",
+     "label": "malicious",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5459,
+     "score": 0.5555,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_54",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5476,
+     "score": 0.2244,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_02",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.6347,
+     "score": 0.643,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_96",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5647,
+     "score": 0.2986,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_63",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5652,
+     "score": 0.1905,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_28",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5739,
+     "score": 0.4744,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_22",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5529,
+     "score": 0.3298,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_21",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.56,
+     "score": 0.3907,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_38",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.6493,
+     "score": 0.2614,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_58",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5763,
+     "score": 0.3196,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_01",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5565,
+     "score": 0.2142,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_31",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.546,
+     "score": 0.4043,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_27",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.545,
+     "score": 0.3079,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_82",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.545,
+     "score": 0.3132,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_32",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5793,
+     "score": 0.3795,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_83",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5812,
+     "score": 0.4557,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_04",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5486,
+     "score": 0.573,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_81",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5523,
+     "score": 0.2318,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_88",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.5504,
+     "score": 0.8024,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_11",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": false,
+     "seconds": 0.5845,
+     "score": 0.2347,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    },
+    {
+     "id": "lora_benign_35",
+     "category": "lora_backdoor",
+     "label": "benign",
+     "check": "lora_weights",
+     "positive": true,
+     "seconds": 0.6072,
+     "score": 0.525,
+     "parent": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1"
+    }
+   ]
+  }
+ }
+}
