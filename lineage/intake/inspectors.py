@@ -118,6 +118,8 @@ def needs_deep(ctx: IntakeContext, findings: list[Finding]) -> tuple[bool, str]:
     """Tiering: deep stages (S4, S5) run when earlier ones raised suspicion or the environment demands it."""
     if ctx.environment in ("staging", "prod"):
         return True, f"required for {ctx.environment}"
+    if ctx.artifact_type in ("package", "tool") and any(f.id.startswith("PKG.SIGNAL.") for f in findings):
+        return True, "capability signals present; the reviewer decides whether they matter"
     sus = [f for f in findings if f.severity in ("medium", "high", "critical") and not f.id.startswith("SCANNER.")]
     if sus:
         return True, f"{len(sus)} finding(s) of medium or higher severity"
@@ -548,17 +550,24 @@ def gpu_card_review(ctx: IntakeContext) -> list[Finding]:
 
 @register(("package", "tool"), "S5")
 def gpu_code_review(ctx: IntakeContext) -> list[Finding]:
-    from lineage.inspect import package_capabilities, package_taint
+    """Send the code behind every signal and every finding to the reviewer. A signal alone adds no risk, so the reviewer is
+    what turns "this package can open sockets" into a grounded claim (or into nothing)."""
+    from lineage.inspect import package_capabilities
     from lineage.inspect.llm_review import client
 
     if ctx.root is None:
         return []
-    slices = package_taint.slices(ctx.root)
+    analysis = package_capabilities.analyse(ctx.root)
+    refs = [e.ref for f in ctx.findings if f.severity != "info" or f.id.startswith("PKG.SIGNAL.") for e in f.evidence if e.kind == "file_line"]
+    slices = client.build_slices(ctx.root, analysis, refs)
     if not slices:
         return []
-    caps = sorted(k for k, v in package_capabilities.extract(ctx.root).items() if v)
+    caps = sorted({h.cap for h in analysis.hits} | {k.kind for k in analysis.hooks})
     purpose = ctx.metadata.get("summary") or ctx.metadata.get("description") or _manifest_description(ctx) or ctx.name
-    return client.review_to_findings(ReviewCodeRequest(purpose=purpose, capabilities=caps, slices=slices), ctx.gpu_url or gpu.DEFAULT_URL)
+    diff = client.make_diff(ctx.previous[0], ctx.root) if ctx.previous else None
+    static = [f for f in ctx.findings if f.severity != "info"]
+    return client.review_to_findings(ReviewCodeRequest(purpose=purpose, capabilities=caps, slices=slices, diff=diff or None),
+                                     ctx.gpu_url or gpu.DEFAULT_URL, root=ctx.root, static_findings=static)
 
 
 def _manifest_description(ctx: IntakeContext) -> str | None:

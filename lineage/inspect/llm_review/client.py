@@ -95,8 +95,9 @@ def _sanitised_lines(package_dir: Path) -> dict[str, list[str]]:
     return {pf.rel: bait_mod.neutralise_comments(pf.text).splitlines() for pf in iter_python(package_dir)}
 
 
-def build_slices(package_dir: Path, analysis: package_capabilities.Analysis | None = None) -> list[CodeSlice]:
-    """Taint slices plus a small window around every non-trivial capability hit and hook, with comments removed."""
+def build_slices(package_dir: Path, analysis: package_capabilities.Analysis | None = None, refs: list[str] | None = None) -> list[CodeSlice]:
+    """Taint slices plus a small window around every capability hit (signal), hook and cited `file:line` ref, comments removed.
+    Filesystem hits come last: they are the most common and the first to be dropped at the slice cap."""
     package_dir = Path(package_dir)
     analysis = analysis or package_capabilities.analyse(package_dir)
     lines = _sanitised_lines(package_dir)
@@ -115,11 +116,14 @@ def build_slices(package_dir: Path, analysis: package_capabilities.Analysis | No
 
     for s in package_taint.slices(package_dir):
         add(s.file, s.start, s.end)
-    for h in analysis.hits:
-        if h.cap != "filesystem":
-            add(h.file, h.line - 3, h.line + 3)
     for k in analysis.hooks:
         add(k.file, k.line - 2, k.line + 4)
+    for ref in refs or []:  # evidence of every finding any scanner raised
+        file, _, line = ref.rpartition(":")
+        if line.isdigit():
+            add(file, int(line) - 3, int(line) + 3)
+    for h in sorted(analysis.hits, key=lambda h: h.cap == "filesystem"):
+        add(h.file, h.line - 3, h.line + 3)
     return slices[:MAX_SLICES]
 
 

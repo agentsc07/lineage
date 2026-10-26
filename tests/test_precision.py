@@ -173,3 +173,29 @@ def test_identity_findings_decide_on_their_own():
     high = crit.model_copy(update={"severity": "high"})
     assert decide(body, [crit], "dev", policy, now).outcome == "block"
     assert decide(body, [high], "dev", policy, now).outcome == "quarantine"
+
+
+def test_package_with_signals_triggers_a_reviewer_call(tmp_path, monkeypatch):
+    """S5 sends the code behind every signal to /review/code, in dev too, even when nothing scored."""
+    from pathlib import Path
+    from lineage.inspect.llm_review import client as rc
+    from lineage.intake.pipeline import run_to_decision
+    from lineage.schemas.gpu import ReviewResponse
+    from lineage.schemas.policy import PolicyPack
+
+    calls = []
+    monkeypatch.setattr(rc.GpuClient, "review_code", lambda self, req: calls.append(req) or ReviewResponse(claims=[], verdict="benign"))
+    d = pkg(tmp_path / "p", **{"lib/a.py": "import urllib.request\n\ndef get(u):\n    return urllib.request.urlopen(u).read()\n",
+                              "lib/b.py": "import subprocess\n\ndef v():\n    return subprocess.check_output(['git', 'describe'])\n"})
+    policy = PolicyPack.from_yaml(Path(__file__).parent.parent / "examples" / "policy.org.yaml")
+    decision, events = run_to_decision("package", str(d), "dev", policy, "t", gpu_url="http://worker.test", now=datetime(2026, 10, 25, tzinfo=timezone.utc))
+    assert any(f.id.startswith("PKG.SIGNAL.") for f in decision.findings) and not real(decision.findings) - {"PROV.PUBLISHER.UNLISTED"}
+    assert next(e for e in events if e.stage == "S5" and e.status != "started").status == "completed"
+    assert len(calls) == 1
+    assert {s.file for s in calls[0].slices} == {"lib/a.py", "lib/b.py"}
+    assert {"network", "subprocess"} <= set(calls[0].capabilities)
+
+    calls.clear()  # a package with no signal makes no call
+    quiet = pkg(tmp_path / "q", **{"lib/a.py": "def f():\n    return 1\n"})
+    run_to_decision("package", str(quiet), "dev", policy, "t", gpu_url="http://worker.test", now=datetime(2026, 10, 25, tzinfo=timezone.utc))
+    assert calls == []
