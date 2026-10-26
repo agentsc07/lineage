@@ -298,7 +298,7 @@ def _lora(items: Items, bank_dir: Path, weightspace: Path, n: int = 20) -> int:
     ok = [i for i in test if man[i]["label"] == "benign"][:n]
     for i in bad + ok:
         items.append({"id": f"lora_{i}", "category": "lora_backdoor", "label": "malicious" if i in bad else "benign",
-                      "kind": "model", "check": "lora_weights", "path": str(bank_dir / man[i]["path"]), "adapter": i})
+                      "kind": "model", "check": "lora_weights", "path": (bank_dir / man[i]["path"]).resolve().relative_to(ROOT).as_posix(), "adapter": i})
     return len(bad) + len(ok)
 
 

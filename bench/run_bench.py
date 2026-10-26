@@ -49,8 +49,9 @@ def _check_tokenizer(item: dict, root: Path, policy, gpu_url: str, env: str = "d
 
 def _check_lora(item: dict, root: Path, policy, gpu_url: str, env: str = "dev"):
     from gpu_worker import weights_api as w
-    parent = w.identify_parent(item["path"]).parent
-    r = w.spectral_score(item["path"], parent or "")
+    path = str(ROOT / item["path"])
+    parent = w.identify_parent(path).parent
+    r = w.spectral_score(path, parent or "")
     return r.score >= LORA_THRESHOLD, {"score": r.score, "parent": parent}
 
 
