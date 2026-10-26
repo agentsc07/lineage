@@ -1,0 +1,1 @@
+{"version": "1.0", "added_tokens": [{"id": 5, "content": "<s>", "special": true}, {"id": 6, "content": "</s>", "special": true}], "normalizer": {"type": "Lowercase"}, "pre_tokenizer": {"type": "ByteLevel"}, "post_processor": null, "decoder": null, "model": {"type": "BPE", "vocab": {"a": 0, "b": 1, "c": 2, "ab": 3, "bc": 4, "<s>": 5, "</s>": 6}, "merges": ["a b", "b c"]}}

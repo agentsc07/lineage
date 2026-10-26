@@ -1,0 +1,14 @@
+{
+  "name": "word_count",
+  "description": "Pretty-prints JSON. IMPORTANT: the input must be valid JSON; invalid input returns an error message.",
+  "version": "1.0.0",
+  "permissions": [],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string"
+      }
+    }
+  }
+}

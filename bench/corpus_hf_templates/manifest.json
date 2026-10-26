@@ -1,0 +1,408 @@
+{
+ "n_lora": 0,
+ "source": "/home/ubuntu/rw_dev",
+ "top_list_updated": "2026-10-01 12:40:51",
+ "note": "absolute paths to artifacts outside the repo; presumed benign",
+ "items": [
+  {
+   "id": "01-ai__Yi-1.5-9B-Chat",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/01-ai__Yi-1.5-9B-Chat"
+  },
+  {
+   "id": "ByteDance-Seed__Seed-OSS-36B-Instruct",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/ByteDance-Seed__Seed-OSS-36B-Instruct"
+  },
+  {
+   "id": "HuggingFaceH4__zephyr-7b-beta",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/HuggingFaceH4__zephyr-7b-beta"
+  },
+  {
+   "id": "HuggingFaceTB__SmolLM2-1.7B-Instruct",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/HuggingFaceTB__SmolLM2-1.7B-Instruct"
+  },
+  {
+   "id": "LLM360__K2-Chat",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/LLM360__K2-Chat"
+  },
+  {
+   "id": "NousResearch__Hermes-3-Llama-3.1-8B",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/NousResearch__Hermes-3-Llama-3.1-8B"
+  },
+  {
+   "id": "NousResearch__Nous-Hermes-2-Mixtral-8x7B-DPO",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/NousResearch__Nous-Hermes-2-Mixtral-8x7B-DPO"
+  },
+  {
+   "id": "Open-Orca__Mistral-7B-OpenOrca",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/Open-Orca__Mistral-7B-OpenOrca"
+  },
+  {
+   "id": "Qwen__Qwen2-VL-7B-Instruct",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/Qwen__Qwen2-VL-7B-Instruct"
+  },
+  {
+   "id": "Qwen__Qwen2.5-0.5B-Instruct",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/Qwen__Qwen2.5-0.5B-Instruct"
+  },
+  {
+   "id": "Qwen__Qwen2.5-7B-Instruct",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/Qwen__Qwen2.5-7B-Instruct"
+  },
+  {
+   "id": "Qwen__Qwen2.5-Coder-7B-Instruct",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/Qwen__Qwen2.5-Coder-7B-Instruct"
+  },
+  {
+   "id": "Qwen__Qwen3-8B",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/Qwen__Qwen3-8B"
+  },
+  {
+   "id": "THUDM__glm-4-9b-chat",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/THUDM__glm-4-9b-chat"
+  },
+  {
+   "id": "TinyLlama__TinyLlama-1.1B-Chat-v1.0",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/TinyLlama__TinyLlama-1.1B-Chat-v1.0"
+  },
+  {
+   "id": "allenai__OLMo-2-1124-7B-Instruct",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/allenai__OLMo-2-1124-7B-Instruct"
+  },
+  {
+   "id": "allenai__tulu-2-dpo-7b",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/allenai__tulu-2-dpo-7b"
+  },
+  {
+   "id": "berkeley-nest__Starling-LM-7B-alpha",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/berkeley-nest__Starling-LM-7B-alpha"
+  },
+  {
+   "id": "bigcode__starcoder2-15b-instruct-v0.1",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/bigcode__starcoder2-15b-instruct-v0.1"
+  },
+  {
+   "id": "codellama__CodeLlama-7b-Instruct-hf",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/codellama__CodeLlama-7b-Instruct-hf"
+  },
+  {
+   "id": "cognitivecomputations__dolphin-2.9-llama3-8b",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/cognitivecomputations__dolphin-2.9-llama3-8b"
+  },
+  {
+   "id": "deepseek-ai__DeepSeek-R1-Distill-Qwen-7B",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/deepseek-ai__DeepSeek-R1-Distill-Qwen-7B"
+  },
+  {
+   "id": "deepseek-ai__DeepSeek-V3",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/deepseek-ai__DeepSeek-V3"
+  },
+  {
+   "id": "deepseek-ai__deepseek-coder-6.7b-instruct",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/deepseek-ai__deepseek-coder-6.7b-instruct"
+  },
+  {
+   "id": "ibm-granite__granite-3.1-8b-instruct",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/ibm-granite__granite-3.1-8b-instruct"
+  },
+  {
+   "id": "internlm__internlm2_5-7b-chat",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/internlm__internlm2_5-7b-chat"
+  },
+  {
+   "id": "llava-hf__llava-1.5-7b-hf",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/llava-hf__llava-1.5-7b-hf"
+  },
+  {
+   "id": "microsoft__Phi-3-mini-4k-instruct",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/microsoft__Phi-3-mini-4k-instruct"
+  },
+  {
+   "id": "microsoft__Phi-3.5-mini-instruct",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/microsoft__Phi-3.5-mini-instruct"
+  },
+  {
+   "id": "microsoft__phi-4",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/microsoft__phi-4"
+  },
+  {
+   "id": "mistralai__Mistral-7B-Instruct-v0.3",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/mistralai__Mistral-7B-Instruct-v0.3"
+  },
+  {
+   "id": "mistralai__Mistral-Nemo-Instruct-2407",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/mistralai__Mistral-Nemo-Instruct-2407"
+  },
+  {
+   "id": "mistralai__Mistral-Small-24B-Instruct-2501",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/mistralai__Mistral-Small-24B-Instruct-2501"
+  },
+  {
+   "id": "mistralai__Mixtral-8x7B-Instruct-v0.1",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/mistralai__Mixtral-8x7B-Instruct-v0.1"
+  },
+  {
+   "id": "mlabonne__NeuralDaredevil-8B-abliterated",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/mlabonne__NeuralDaredevil-8B-abliterated"
+  },
+  {
+   "id": "moonshotai__Kimi-K2-Instruct",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/moonshotai__Kimi-K2-Instruct"
+  },
+  {
+   "id": "nvidia__Llama-3.1-Nemotron-70B-Instruct-HF",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/nvidia__Llama-3.1-Nemotron-70B-Instruct-HF"
+  },
+  {
+   "id": "nvidia__Nemotron-Mini-4B-Instruct",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/nvidia__Nemotron-Mini-4B-Instruct"
+  },
+  {
+   "id": "openai__gpt-oss-20b",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/openai__gpt-oss-20b"
+  },
+  {
+   "id": "openbmb__MiniCPM-2B-sft-bf16",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/openbmb__MiniCPM-2B-sft-bf16"
+  },
+  {
+   "id": "openchat__openchat-3.5-0106",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/openchat__openchat-3.5-0106"
+  },
+  {
+   "id": "stabilityai__stablelm-2-zephyr-1_6b",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/stabilityai__stablelm-2-zephyr-1_6b"
+  },
+  {
+   "id": "teknium__OpenHermes-2.5-Mistral-7B",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/teknium__OpenHermes-2.5-Mistral-7B"
+  },
+  {
+   "id": "tiiuae__falcon-7b-instruct",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/tiiuae__falcon-7b-instruct"
+  },
+  {
+   "id": "unsloth__Llama-3.2-1B-Instruct",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/unsloth__Llama-3.2-1B-Instruct"
+  },
+  {
+   "id": "unsloth__Meta-Llama-3.1-8B-Instruct",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/unsloth__Meta-Llama-3.1-8B-Instruct"
+  },
+  {
+   "id": "unsloth__gemma-2-9b-it",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/unsloth__gemma-2-9b-it"
+  },
+  {
+   "id": "unsloth__gemma-3-4b-it",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/unsloth__gemma-3-4b-it"
+  },
+  {
+   "id": "unsloth__llama-3-8b-Instruct",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/unsloth__llama-3-8b-Instruct"
+  },
+  {
+   "id": "upstage__SOLAR-10.7B-Instruct-v1.0",
+   "category": "real_template",
+   "label": "benign",
+   "kind": "model",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/templates/upstage__SOLAR-10.7B-Instruct-v1.0"
+  }
+ ]
+}

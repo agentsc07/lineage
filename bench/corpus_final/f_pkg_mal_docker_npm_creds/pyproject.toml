@@ -1,0 +1,4 @@
+[project]
+name = "fmal-docker-npm-creds"
+version = "1.0.0"
+license = "MIT"

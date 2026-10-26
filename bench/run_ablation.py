@@ -14,7 +14,7 @@ delta), the latency added, and GPU-seconds per artifact. "Worker on" enables eve
 checks), so each changed decision also records whether the reviewer LLM was actually called for that item (from GET /review/stats
 deltas; items run one at a time so the deltas are exact).
 
-Flagged = decision `block` OR risk > policy allow threshold (as in bench/run_bench.py). Checks other than `intake` (bind,
+Flagged = decision `block` OR risk > policy allow threshold (benign pickles blocked only by `allow_pickle: false` are counted as policy blocks, not false positives) (as in bench/run_bench.py). Checks other than `intake` (bind,
 tokenizer_diff, lora_weights) never use the worker's reviewer; they run once and count identically in both modes.
 GPU-seconds = wall time of the reviewer LLM calls (the card is dedicated and calls are sequential, so busy time ~ GPU time);
 the policy model and weight checks are not included.
@@ -48,6 +48,7 @@ SETS = [
     {"name": "hf_templates", "dir": "bench/corpus_hf_templates", "phase": "dev"},
     {"name": "corpus_final", "dir": "bench/corpus_final", "phase": "final"},
     {"name": "pypi_201_400", "dir": "bench/corpus_pypi_201_400", "phase": "final"},
+    {"name": "hf_templates_final", "dir": "bench/corpus_hf_templates_final", "phase": "final"},
 ]
 
 
@@ -85,7 +86,8 @@ def run_item(item: dict, root: Path, policy, gpu_url: str, worker: str | None) -
         positive, detail, err = False, {}, f"{type(e).__name__}: {e}"[:200]
     row = {"id": item["id"], "label": item["label"], "category": item["category"], "check": item["check"],
            "flagged": bool(positive), "seconds": time.perf_counter() - t0, "error": err,
-           "outcome": detail.get("outcome"), "risk": detail.get("risk"), "findings": detail.get("findings")}
+           "outcome": detail.get("outcome"), "risk": detail.get("risk"), "findings": detail.get("findings"),
+           "policy_block": bool(detail.get("policy_block"))}
     if worker:
         after = _stats(worker)
         row["reviewer_calls"] = after["calls"] - before["calls"]
@@ -97,10 +99,13 @@ def run_item(item: dict, root: Path, policy, gpu_url: str, worker: str | None) -
 def rates(rows: list[dict]) -> dict:
     mal = [r for r in rows if r["label"] == "malicious"]
     ben = [r for r in rows if r["label"] == "benign"]
-    tp, fp = sum(r["flagged"] for r in mal), sum(r["flagged"] for r in ben)
+    tp = sum(r["flagged"] for r in mal)
+    # a benign pickle refused only because policy forbids the format is a policy block, reported separately (as in bench/run_bench.py)
+    pb = sum(r["flagged"] and r.get("policy_block", False) for r in ben)
+    fp = sum(r["flagged"] and not r.get("policy_block", False) for r in ben)
     tl, th = _wilson(tp, len(mal))
     fl, fh = _wilson(fp, len(ben))
-    return {"n": len(rows), "n_malicious": len(mal), "n_benign": len(ben), "tp": tp, "fp": fp,
+    return {"n": len(rows), "n_malicious": len(mal), "n_benign": len(ben), "tp": tp, "fp": fp, "policy_blocked": pb,
             "tpr": tp / len(mal) if mal else None, "tpr_ci95": [tl, th] if mal else None,
             "fpr": fp / len(ben) if ben else None, "fpr_ci95": [fl, fh] if ben else None,
             "errors": sum(1 for r in rows if r["error"])}
@@ -150,6 +155,7 @@ def run_set(spec: dict, policy, worker: str, limit: int | None) -> dict:
     if limit:
         items = sample(items, limit)
     static, rev = [], []
+    t_start = time.perf_counter()
     for it in items:
         a = run_item(it, root, policy, NO_WORKER, None)
         if it["check"] == "intake":
@@ -160,7 +166,7 @@ def run_set(spec: dict, policy, worker: str, limit: int | None) -> dict:
         rev.append(b)
         print(f"  {spec['name']}: {it['id']:32s} static={'F' if a['flagged'] else '.'} +reviewer={'F' if b['flagged'] else '.'}"
               f" calls={b.get('reviewer_calls', 0)}", flush=True)
-    return {"status": "ran", "dir": spec["dir"], "phase": spec["phase"], "n_items": len(items), "sampled": bool(limit),
+    return {"status": "ran", "dir": spec["dir"], "phase": spec["phase"], "n_items": len(items), "sampled": bool(limit), "wall_s": time.perf_counter() - t_start,
             "static_only": rates(static), "static_plus_reviewer": rates(rev),
             "changes": compare(static, rev), "cost": cost(static, rev), "items": {"static": static, "reviewer": rev}}
 

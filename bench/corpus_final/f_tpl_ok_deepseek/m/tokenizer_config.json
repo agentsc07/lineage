@@ -1,0 +1,1 @@
+{"bos_token": "<s>", "eos_token": "</s>", "chat_template": "{{ bos_token }}{% for m in messages %}{% if m['role'] == 'user' %}{{ 'User: ' + m['content'] + '\\n\\n' }}{% else %}{{ 'Assistant: ' + m['content'] + eos_token }}{% endif %}{% endfor %}{% if add_generation_prompt %}{{ 'Assistant:' }}{% endif %}"}

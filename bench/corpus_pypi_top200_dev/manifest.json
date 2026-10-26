@@ -1,0 +1,1608 @@
+{
+ "n_lora": 0,
+ "source": "/home/ubuntu/rw_dev",
+ "top_list_updated": "2026-10-01 12:40:51",
+ "note": "absolute paths to artifacts outside the repo; presumed benign",
+ "items": [
+  {
+   "id": "aiobotocore",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/aiobotocore"
+  },
+  {
+   "id": "aiohappyeyeballs",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/aiohappyeyeballs"
+  },
+  {
+   "id": "aiohttp",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/aiohttp"
+  },
+  {
+   "id": "aiosignal",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/aiosignal"
+  },
+  {
+   "id": "alembic",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/alembic"
+  },
+  {
+   "id": "annotated-doc",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/annotated-doc"
+  },
+  {
+   "id": "annotated-types",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/annotated-types"
+  },
+  {
+   "id": "anthropic",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/anthropic"
+  },
+  {
+   "id": "anyio",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/anyio"
+  },
+  {
+   "id": "attrs",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/attrs"
+  },
+  {
+   "id": "azure-core",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/azure-core"
+  },
+  {
+   "id": "bcrypt",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/bcrypt"
+  },
+  {
+   "id": "beautifulsoup4",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/beautifulsoup4"
+  },
+  {
+   "id": "boto3",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/boto3"
+  },
+  {
+   "id": "botocore",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/botocore"
+  },
+  {
+   "id": "cachetools",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/cachetools"
+  },
+  {
+   "id": "certifi",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/certifi"
+  },
+  {
+   "id": "cffi",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/cffi"
+  },
+  {
+   "id": "cfgv",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/cfgv"
+  },
+  {
+   "id": "chardet",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/chardet"
+  },
+  {
+   "id": "charset-normalizer",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/charset-normalizer"
+  },
+  {
+   "id": "click",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/click"
+  },
+  {
+   "id": "cloudpickle",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/cloudpickle"
+  },
+  {
+   "id": "colorama",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/colorama"
+  },
+  {
+   "id": "coverage",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/coverage"
+  },
+  {
+   "id": "cryptography",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/cryptography"
+  },
+  {
+   "id": "decorator",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/decorator"
+  },
+  {
+   "id": "defusedxml",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/defusedxml"
+  },
+  {
+   "id": "dill",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/dill"
+  },
+  {
+   "id": "distlib",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/distlib"
+  },
+  {
+   "id": "distro",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/distro"
+  },
+  {
+   "id": "dnspython",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/dnspython"
+  },
+  {
+   "id": "docstring-parser",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/docstring-parser"
+  },
+  {
+   "id": "editables",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/editables"
+  },
+  {
+   "id": "email-validator",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/email-validator"
+  },
+  {
+   "id": "et-xmlfile",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/et-xmlfile"
+  },
+  {
+   "id": "exceptiongroup",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/exceptiongroup"
+  },
+  {
+   "id": "fastapi",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/fastapi"
+  },
+  {
+   "id": "filelock",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/filelock"
+  },
+  {
+   "id": "fonttools",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/fonttools"
+  },
+  {
+   "id": "frozenlist",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/frozenlist"
+  },
+  {
+   "id": "fsspec",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/fsspec"
+  },
+  {
+   "id": "ghapi",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/ghapi"
+  },
+  {
+   "id": "gitdb",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/gitdb"
+  },
+  {
+   "id": "gitpython",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/gitpython"
+  },
+  {
+   "id": "google-api-core",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/google-api-core"
+  },
+  {
+   "id": "google-auth",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/google-auth"
+  },
+  {
+   "id": "google-cloud-bigquery",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/google-cloud-bigquery"
+  },
+  {
+   "id": "google-cloud-core",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/google-cloud-core"
+  },
+  {
+   "id": "google-cloud-storage",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/google-cloud-storage"
+  },
+  {
+   "id": "googleapis-common-protos",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/googleapis-common-protos"
+  },
+  {
+   "id": "greenlet",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/greenlet"
+  },
+  {
+   "id": "grpcio",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/grpcio"
+  },
+  {
+   "id": "grpcio-status",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/grpcio-status"
+  },
+  {
+   "id": "h11",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/h11"
+  },
+  {
+   "id": "h2",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/h2"
+  },
+  {
+   "id": "hatchling",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/hatchling"
+  },
+  {
+   "id": "hf-xet",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/hf-xet"
+  },
+  {
+   "id": "hpack",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/hpack"
+  },
+  {
+   "id": "httpcore",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/httpcore"
+  },
+  {
+   "id": "httpcore2",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/httpcore2"
+  },
+  {
+   "id": "httptools",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/httptools"
+  },
+  {
+   "id": "httpx",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/httpx"
+  },
+  {
+   "id": "httpx-sse",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/httpx-sse"
+  },
+  {
+   "id": "httpx2",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/httpx2"
+  },
+  {
+   "id": "huggingface-hub",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/huggingface-hub"
+  },
+  {
+   "id": "hyperframe",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/hyperframe"
+  },
+  {
+   "id": "identify",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/identify"
+  },
+  {
+   "id": "idna",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/idna"
+  },
+  {
+   "id": "importlib-metadata",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/importlib-metadata"
+  },
+  {
+   "id": "iniconfig",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/iniconfig"
+  },
+  {
+   "id": "isodate",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/isodate"
+  },
+  {
+   "id": "itsdangerous",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/itsdangerous"
+  },
+  {
+   "id": "jaraco-classes",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/jaraco-classes"
+  },
+  {
+   "id": "jinja2",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/jinja2"
+  },
+  {
+   "id": "jiter",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/jiter"
+  },
+  {
+   "id": "jmespath",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/jmespath"
+  },
+  {
+   "id": "joblib",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/joblib"
+  },
+  {
+   "id": "jsonschema",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/jsonschema"
+  },
+  {
+   "id": "jsonschema-specifications",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/jsonschema-specifications"
+  },
+  {
+   "id": "keyring",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/keyring"
+  },
+  {
+   "id": "kiwisolver",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/kiwisolver"
+  },
+  {
+   "id": "langchain",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/langchain"
+  },
+  {
+   "id": "langchain-core",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/langchain-core"
+  },
+  {
+   "id": "lxml",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/lxml"
+  },
+  {
+   "id": "mako",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/mako"
+  },
+  {
+   "id": "markdown-it-py",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/markdown-it-py"
+  },
+  {
+   "id": "markupsafe",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/markupsafe"
+  },
+  {
+   "id": "matplotlib",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/matplotlib"
+  },
+  {
+   "id": "mcp",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/mcp"
+  },
+  {
+   "id": "mdurl",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/mdurl"
+  },
+  {
+   "id": "more-itertools",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/more-itertools"
+  },
+  {
+   "id": "msal",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/msal"
+  },
+  {
+   "id": "msgpack",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/msgpack"
+  },
+  {
+   "id": "multidict",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/multidict"
+  },
+  {
+   "id": "mypy",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/mypy"
+  },
+  {
+   "id": "mypy-extensions",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/mypy-extensions"
+  },
+  {
+   "id": "networkx",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/networkx"
+  },
+  {
+   "id": "nodeenv",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/nodeenv"
+  },
+  {
+   "id": "numpy",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/numpy"
+  },
+  {
+   "id": "oauthlib",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/oauthlib"
+  },
+  {
+   "id": "openai",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/openai"
+  },
+  {
+   "id": "openpyxl",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/openpyxl"
+  },
+  {
+   "id": "opentelemetry-api",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/opentelemetry-api"
+  },
+  {
+   "id": "opentelemetry-exporter-otlp-proto-common",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/opentelemetry-exporter-otlp-proto-common"
+  },
+  {
+   "id": "opentelemetry-exporter-otlp-proto-http",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/opentelemetry-exporter-otlp-proto-http"
+  },
+  {
+   "id": "opentelemetry-instrumentation",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/opentelemetry-instrumentation"
+  },
+  {
+   "id": "opentelemetry-proto",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/opentelemetry-proto"
+  },
+  {
+   "id": "opentelemetry-sdk",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/opentelemetry-sdk"
+  },
+  {
+   "id": "opentelemetry-semantic-conventions",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/opentelemetry-semantic-conventions"
+  },
+  {
+   "id": "orjson",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/orjson"
+  },
+  {
+   "id": "packaging",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/packaging"
+  },
+  {
+   "id": "pandas",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pandas"
+  },
+  {
+   "id": "pathspec",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pathspec"
+  },
+  {
+   "id": "pillow",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pillow"
+  },
+  {
+   "id": "pip",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pip"
+  },
+  {
+   "id": "platformdirs",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/platformdirs"
+  },
+  {
+   "id": "pluggy",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pluggy"
+  },
+  {
+   "id": "pre-commit",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pre-commit"
+  },
+  {
+   "id": "prompt-toolkit",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/prompt-toolkit"
+  },
+  {
+   "id": "propcache",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/propcache"
+  },
+  {
+   "id": "proto-plus",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/proto-plus"
+  },
+  {
+   "id": "protobuf",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/protobuf"
+  },
+  {
+   "id": "psutil",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/psutil"
+  },
+  {
+   "id": "psycopg2-binary",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/psycopg2-binary"
+  },
+  {
+   "id": "pyarrow",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pyarrow"
+  },
+  {
+   "id": "pyasn1",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pyasn1"
+  },
+  {
+   "id": "pyasn1-modules",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pyasn1-modules"
+  },
+  {
+   "id": "pycparser",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pycparser"
+  },
+  {
+   "id": "pydantic",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pydantic"
+  },
+  {
+   "id": "pydantic-core",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pydantic-core"
+  },
+  {
+   "id": "pydantic-settings",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pydantic-settings"
+  },
+  {
+   "id": "pygments",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pygments"
+  },
+  {
+   "id": "pyjwt",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pyjwt"
+  },
+  {
+   "id": "pynacl",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pynacl"
+  },
+  {
+   "id": "pyopenssl",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pyopenssl"
+  },
+  {
+   "id": "pyparsing",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pyparsing"
+  },
+  {
+   "id": "pytest",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pytest"
+  },
+  {
+   "id": "pytest-asyncio",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pytest-asyncio"
+  },
+  {
+   "id": "pytest-cov",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pytest-cov"
+  },
+  {
+   "id": "python-dateutil",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/python-dateutil"
+  },
+  {
+   "id": "python-discovery",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/python-discovery"
+  },
+  {
+   "id": "python-dotenv",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/python-dotenv"
+  },
+  {
+   "id": "python-multipart",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/python-multipart"
+  },
+  {
+   "id": "pytz",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pytz"
+  },
+  {
+   "id": "pyyaml",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/pyyaml"
+  },
+  {
+   "id": "redis",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/redis"
+  },
+  {
+   "id": "referencing",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/referencing"
+  },
+  {
+   "id": "regex",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/regex"
+  },
+  {
+   "id": "requests",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/requests"
+  },
+  {
+   "id": "requests-oauthlib",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/requests-oauthlib"
+  },
+  {
+   "id": "requests-toolbelt",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/requests-toolbelt"
+  },
+  {
+   "id": "rich",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/rich"
+  },
+  {
+   "id": "rpds-py",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/rpds-py"
+  },
+  {
+   "id": "rsa",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/rsa"
+  },
+  {
+   "id": "ruamel-yaml",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/ruamel-yaml"
+  },
+  {
+   "id": "ruff",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/ruff"
+  },
+  {
+   "id": "s3fs",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/s3fs"
+  },
+  {
+   "id": "s3transfer",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/s3transfer"
+  },
+  {
+   "id": "scikit-learn",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/scikit-learn"
+  },
+  {
+   "id": "scipy",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/scipy"
+  },
+  {
+   "id": "setuptools",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/setuptools"
+  },
+  {
+   "id": "shellingham",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/shellingham"
+  },
+  {
+   "id": "six",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/six"
+  },
+  {
+   "id": "smmap",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/smmap"
+  },
+  {
+   "id": "sniffio",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/sniffio"
+  },
+  {
+   "id": "sortedcontainers",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/sortedcontainers"
+  },
+  {
+   "id": "soupsieve",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/soupsieve"
+  },
+  {
+   "id": "sqlalchemy",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/sqlalchemy"
+  },
+  {
+   "id": "sse-starlette",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/sse-starlette"
+  },
+  {
+   "id": "starlette",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/starlette"
+  },
+  {
+   "id": "tabulate",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/tabulate"
+  },
+  {
+   "id": "tenacity",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/tenacity"
+  },
+  {
+   "id": "threadpoolctl",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/threadpoolctl"
+  },
+  {
+   "id": "tiktoken",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/tiktoken"
+  },
+  {
+   "id": "tokenizers",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/tokenizers"
+  },
+  {
+   "id": "tomli",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/tomli"
+  },
+  {
+   "id": "tomlkit",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/tomlkit"
+  },
+  {
+   "id": "tqdm",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/tqdm"
+  },
+  {
+   "id": "trove-classifiers",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/trove-classifiers"
+  },
+  {
+   "id": "truststore",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/truststore"
+  },
+  {
+   "id": "typer",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/typer"
+  },
+  {
+   "id": "typing-extensions",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/typing-extensions"
+  },
+  {
+   "id": "typing-inspection",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/typing-inspection"
+  },
+  {
+   "id": "tzdata",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/tzdata"
+  },
+  {
+   "id": "tzlocal",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/tzlocal"
+  },
+  {
+   "id": "urllib3",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/urllib3"
+  },
+  {
+   "id": "uvicorn",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/uvicorn"
+  },
+  {
+   "id": "uvloop",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/uvloop"
+  },
+  {
+   "id": "virtualenv",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/virtualenv"
+  },
+  {
+   "id": "watchfiles",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/watchfiles"
+  },
+  {
+   "id": "wcwidth",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/wcwidth"
+  },
+  {
+   "id": "websocket-client",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/websocket-client"
+  },
+  {
+   "id": "websockets",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/websockets"
+  },
+  {
+   "id": "werkzeug",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/werkzeug"
+  },
+  {
+   "id": "wheel",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/wheel"
+  },
+  {
+   "id": "wrapt",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/wrapt"
+  },
+  {
+   "id": "yarl",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/yarl"
+  },
+  {
+   "id": "zipp",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/zipp"
+  },
+  {
+   "id": "zstandard",
+   "category": "real_pypi",
+   "label": "benign",
+   "kind": "package",
+   "check": "intake",
+   "path": "/home/ubuntu/rw_dev/packages/zstandard"
+  }
+ ]
+}

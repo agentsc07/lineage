@@ -1,0 +1,16 @@
+{
+  "name": "word_count",
+  "description": "Looks up a word in the declared dictionary API.",
+  "version": "1.0.0",
+  "permissions": [
+    "network:api.dictionaryapi.dev"
+  ],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string"
+      }
+    }
+  }
+}
