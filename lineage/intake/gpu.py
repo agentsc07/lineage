@@ -18,11 +18,28 @@ class GpuUnavailable(Exception):
     pass
 
 
+class GpuRejected(GpuUnavailable):
+    """The worker answered but refused the request (HTTP 4xx), e.g. it cannot see or does not support this model.
+    Distinct from a worker that cannot be reached at all."""
+
+    def __init__(self, message: str, detail: str) -> None:
+        super().__init__(message)
+        self.detail = detail
+
+
 def post(path: str, request: BaseModel, response_model: type[T], base_url: str | None = None, timeout: float = 120.0) -> T:
     try:
         r = httpx.post((base_url or DEFAULT_URL).rstrip("/") + path, json=request.model_dump(mode="json"), timeout=timeout)
         r.raise_for_status()
         return response_model.model_validate(r.json())
+    except httpx.HTTPStatusError as e:
+        if 400 <= e.response.status_code < 500:
+            try:
+                detail = str(e.response.json().get("detail", ""))
+            except ValueError:
+                detail = ""
+            raise GpuRejected(f"{path}: {e}", f"HTTP {e.response.status_code}: {detail or e.response.reason_phrase}"[:160]) from e
+        raise GpuUnavailable(f"{path}: {e}") from e
     except (httpx.HTTPError, ValueError) as e:  # ValueError covers bad JSON and pydantic.ValidationError
         raise GpuUnavailable(f"{path}: {e}") from e
 

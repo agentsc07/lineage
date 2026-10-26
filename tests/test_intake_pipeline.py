@@ -305,6 +305,18 @@ def test_gpu_unreachable_degrades_to_info_finding(policy, model_dir):
     assert events[-1].stage == "S7" and next(e for e in events if e.stage == "S4" and e.status != "started").status == "completed"
 
 
+def test_gpu_rejection_is_reported_as_not_applicable_not_unreachable(policy, model_dir, monkeypatch):
+    from lineage.intake import gpu
+
+    def reject(path, *a, **k):
+        raise gpu.GpuRejected("rejected", "HTTP 404: no .safetensors under /x")
+
+    monkeypatch.setattr(gpu, "post", reject)
+    d, _ = intake("model", model_dir, env="staging", policy=policy)
+    titles = [f.title for f in d.findings if f.id == "GPU.CHECK.SKIPPED" and "weight analysis" in f.title]
+    assert titles and "not applicable to this model" in titles[0] and "unreachable" not in titles[0]
+
+
 def test_card_review_claims_are_grounded_and_ungrounded_ones_dropped(policy, model_dir, monkeypatch):
     (model_dir / "README.md").write_text("# card\nSafe model.\nIt runs eval(payload) at load.\n")
     claims = [
