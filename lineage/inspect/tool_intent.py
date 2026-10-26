@@ -12,9 +12,9 @@ from lineage.schemas.finding import Finding
 _RULES = {
     "network": (("net", "http", "web", "internet", "fetch", "socket", "url", "request"), "high"),
     "filesystem": (("fs", "file", "disk", "read", "write", "path", "dir", "storage"), "medium"),
-    "subprocess": (("exec", "shell", "process", "command", "spawn", "run", "bash"), "high"),
+    "subprocess": (("exec", "shell", "process", "command", "spawn", "run", "bash"), "critical"),
     "env_secrets": (("env", "secret", "credential", "token", "key", "password"), "high"),
-    "dynamic_exec": (("eval", "dynamic", "code", "exec"), "high"),
+    "dynamic_exec": (("eval", "dynamic", "code", "exec"), "critical"),
     "encoded_blob": ((), "high"),
     "obfuscation": ((), "high"),
 }
@@ -55,6 +55,13 @@ def scan(manifest_path: Path, code_dir: Path) -> list[Finding]:
         if refs and not is_declared(cap, perms):
             out.append(finding(f"TOOL.INTENT.UNDECLARED_{cap.upper()}", f"Tool code {_TITLES[cap]} but its manifest does not declare it", sev,
                                "tool", "S4", [ev("file_line", r) for r in refs[:8]]
+                               + [ev("field", f"{Path(manifest_path).name}#permissions", f"declared: {perms or 'none'}")]))
+    if not is_declared("env_secrets", perms):  # a tool that reads ~/.ssh, ~/.aws or .env without saying so
+        cred = [h for h in package_capabilities.analyse(code_dir).hits
+                if h.cap == "env_secrets" and "sensitive_path" in h.flags and "test" not in h.flags]
+        if cred:
+            out.append(finding("TOOL.INTENT.UNDECLARED_CREDENTIAL_READ", "Tool code names a credential location but its manifest does not declare credential access",
+                               "critical", "tool", "S4", [ev("file_line", h.ref, h.snippet[:120]) for h in cred[:5]]
                                + [ev("field", f"{Path(manifest_path).name}#permissions", f"declared: {perms or 'none'}")]))
     for hook in ("startup_hook", "network_at_install", "install_exec"):
         if caps.get(hook):

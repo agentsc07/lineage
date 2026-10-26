@@ -60,5 +60,5 @@ def test_config_remote_code(tiny_model):
     assert fs["MODEL.CONFIG.TRUST_REMOTE_CODE"].severity == "high"
     assert fs["MODEL.CONFIG.AUTO_MAP"].evidence[0].ref == "config.json#auto_map"
     assert "MODEL.CONFIG.EXTERNAL_CODE" in fs and "MODEL.CONFIG.CUSTOM_CODE" in fs
-    assert "PKG.CAP.SUBPROCESS" in fs  # the custom code goes through the package pipeline
+    assert "PKG.SIGNAL.SUBPROCESS" in fs  # the custom code goes through the package pipeline
     assert [p.name for p in model_config.remote_code_files(tiny_model)] == ["modeling_tiny.py"]

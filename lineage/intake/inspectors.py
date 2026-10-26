@@ -60,6 +60,7 @@ class IntakeContext:
     tensors: dict[str, str] | None = None
     findings: list[Finding] = field(default_factory=list)  # everything found so far
     gpu_down: bool = False
+    previous: tuple[Path, str] | None = None  # (folder, version) of the release before this one, for diff-aware review
 
     @property
     def root(self) -> Path | None:
@@ -304,18 +305,53 @@ def package_osv(ctx: IntakeContext) -> list[Finding]:
     return osv.scan(ctx.name, ctx.version)
 
 
+def _dist_identity(root: Path) -> tuple[str, str] | None:
+    """(name, version) from a wheel's `<name>-<version>.dist-info` folder: proof that these bytes are a published release."""
+    for d in sorted(root.glob("*.dist-info"))[:1]:
+        name, _, version = d.name.removesuffix(".dist-info").partition("-")
+        if name and version:
+            return name.replace("_", "-"), version
+    return None
+
+
+def previous_release(ctx: IntakeContext) -> tuple[Path, str] | None:
+    """The release before this one, for diff-aware review: a local folder named in the sidecar (`previous_path`), else the
+    newest earlier wheel on PyPI when these bytes are a published wheel. None means single-release review."""
+    pp = ctx.metadata.get("previous_path")
+    if pp and Path(pp).is_dir():
+        return Path(pp), str(ctx.metadata.get("previous_version", "previous"))
+    ident = _dist_identity(ctx.root) if ctx.root else None
+    if ident is None:
+        return None
+    from lineage.inspect import package_previous
+
+    return package_previous.previous_release(*ident)
+
+
+@register("package", "S3")
+def package_baseline(ctx: IntakeContext) -> list[Finding]:
+    ctx.previous = prev = previous_release(ctx)
+    if prev:
+        return [make_finding("PKG.BASELINE.COMPARED", f"Compared with the previous release ({prev[1]}): only new capabilities are risks", "info", "code", "S3")]
+    return [make_finding("PKG.BASELINE.NONE", "No earlier release to compare with (first release, offline, or not a published wheel); "
+                         "capabilities are judged by combination only", "info", "code", "S3")]
+
+
 @register(("package", "tool"), "S3")
 def package_capabilities(ctx: IntakeContext) -> list[Finding]:
     from lineage.inspect import package_capabilities as caps
 
-    return caps.scan(ctx.root) if ctx.root else []
+    if not ctx.root:
+        return []
+    prev = ctx.previous if ctx.artifact_type == "package" else None
+    return caps.scan(ctx.root, prev[0] if prev else None, name=ctx.name, metadata=ctx.metadata)
 
 
 @register(("package", "tool"), "S3")
 def package_taint(ctx: IntakeContext) -> list[Finding]:
     from lineage.inspect import package_taint as taint
 
-    return taint.scan(ctx.root) if ctx.root else []
+    return taint.scan(ctx.root, ctx.name, ctx.metadata) if ctx.root else []
 
 
 def _manifest(ctx: IntakeContext) -> Path | None:

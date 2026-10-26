@@ -16,16 +16,24 @@ from lineage.inspect._text import invisible_chars
 from lineage.schemas.finding import Finding
 
 URL = re.compile(r"https?://[^\s'\"<>)]+|\bwww\.[^\s'\"<>)]+", re.I)
-# Phrases that have no business in a prompt-formatting template.
-HIGH_SIGNAL = re.compile(
-    r"ignore (all |any |the )?(previous|prior|above|earlier)|disregard (the |all )?(previous|above|system)|"
-    r"do not (tell|mention|reveal|inform|disclose)|(must|should|shall|may) not (tell|mention|reveal|inform|disclose)|"
-    r"keep (this|it|that) (a )?(secret|hidden)|don'?t (tell|mention|reveal)|never (mention|reveal|disclose)|"
-    r"secret(ly)?\b|exfiltrat|without (telling|informing|the user)|hidden (instruction|command)|"
-    r"(send|post|upload|forward)\b.{0,60}\b(to|at)\b.{0,40}(https?://|\bserver\b)|"
-    r"(include|insert|add|append) (a |the |this )?(link|url|image|payload|backdoor)|\bbackdoor\b|\bjailbreak\b",
+# Text that tells the model how to treat the user or its tools: override the system prompt or its safety rules,
+# hide something from the user, send data somewhere, call or render a URL. A template has no business emitting any of it.
+# Developer-facing strings (the argument of raise_exception, validation messages) are not instructions to the model
+# and are removed before this runs.
+MODEL_DIRECTED = re.compile(
+    r"\b(ignore|disregard|forget|override|bypass|disable|suspend)\b.{0,40}\b(instructions?|system prompt|prompts?|rules|guidelines|polic(?:y|ies)|safety|guardrails?|restrictions?|filters?)\b|"
+    r"\b(safety|content|moderation)\b.{0,20}\b(polic(?:y|ies)|filters?|guardrails?|checks?)\b.{0,25}\b(disabled|off|removed|suspended|lifted)\b|"
+    r"\b(follow|obey|comply with)\b.{0,15}\b(every|all|any|each)\b.{0,30}\b(instructions?|commands?|requests?)\b|"
+    r"\bwithout (any )?(refus\w*|restrictions?|censorship|safety|warnings?)\b|"
+    r"\b(do|must|should|shall|may|will|can|could) not (tell|mention|reveal|inform|disclose|show)\b|\bdon'?t (tell|mention|reveal)\b|\b(never|not) (mention|reveal|disclose)\b|"
+    r"\b(keep|stay) (this|it|that)?\s*(a )?(secret|hidden|silent|quiet)\b|\bstay silent\b|\b(secretly|covertly|silently)\b|\bhidden (instruction|command)\b|"
+    r"\b(send|post|upload|forward|transmit|leak|exfiltrat\w*)\b.{0,80}\b(to|at)\b.{0,60}(https?://|\bserver\b|\bendpoint\b|\bwebhook\b)|"
+    r"\b(reply|respond|answer|output)\b.{0,20}\bonly\b.{0,30}\b(link|url)\b|"
+    r"\b(include|insert|add|append|render|embed|open|visit|fetch|call)\b.{0,25}\b(link|url|image|iframe|script|payload|backdoor|https?://)|"
+    r"!\[[^\]]*\]\(\s*https?://|\bbackdoor\b|\bjailbreak\b|\bsystem override\b",
     re.I,
 )
+HIGH_SIGNAL = MODEL_DIRECTED  # kept for callers that import the old name
 # Instruction-like text; ordinary in some default system prompts, so only meaningful in branches or in a diff.
 GENERIC = re.compile(r"\byou (must|should|will)\b|\balways (respond|reply|answer|say|include|append|output)\b|"
                      r"\bwhen the user (says|mentions|asks|writes)\b|\bpretend\b|\binstead\b.{0,30}\b(respond|reply|say|output)\b", re.I)
@@ -136,10 +144,24 @@ class _Analysis:
         return lits
 
 
+_SKIP: set[int] = set()  # ids of Const nodes inside raise_exception(...) for the template being scanned
+
+
+def _developer_strings(tree: nodes.Template) -> set[int]:
+    """Constants passed to raise_exception(): an error message for whoever called the template, never prompt text."""
+    skip: set[int] = set()
+    for call in tree.find_all(nodes.Call):
+        f = call.node
+        name = f.name if isinstance(f, nodes.Name) else f.attr if isinstance(f, nodes.Getattr) else ""
+        if name in ("raise_exception", "raise_error"):
+            skip |= {id(c) for c in call.find_all(nodes.Const)}
+    return skip
+
+
 def _literal_text(node: nodes.Node) -> list[tuple[int, str]]:
     """(line, text) of every literal string the template can emit under `node` (inclusive)."""
     out = []
-    if isinstance(node, nodes.Const) and isinstance(node.value, str) and node.value.strip():
+    if isinstance(node, nodes.Const) and isinstance(node.value, str) and node.value.strip() and id(node) not in _SKIP:
         out.append((node.lineno, node.value))
     for o in _all(node, nodes.TemplateData):
         if o.data.strip():
@@ -147,9 +169,24 @@ def _literal_text(node: nodes.Node) -> list[tuple[int, str]]:
     for c in _all(node, nodes.Output):
         for child in c.nodes:
             for k in _all(child, nodes.Const):
-                if isinstance(k.value, str) and k.value.strip():
+                if isinstance(k.value, str) and k.value.strip() and id(k) not in _SKIP:
                     out.append((k.lineno, k.value))
     return out
+
+
+def _is_markup(literal: str) -> bool:
+    """A control token or tag ('</think>', '<|im_start|>', '[INST]') rather than words a person would write."""
+    return bool(re.search(r"[<>\[\]{}|]", literal)) and len(re.findall(r"[A-Za-z]{4,}", re.sub(r"[<>\[\]{}|/_\-]", " ", literal))) <= 2
+
+
+def _urls_with_data(tree: nodes.Template) -> bool:
+    """A URL literal in an output that also interpolates a variable: the template builds a link out of the conversation."""
+    for out in tree.find_all(nodes.Output):
+        has_url = any(isinstance(k, nodes.Const) and isinstance(k.value, str) and URL.search(k.value) for n in out.nodes for k in _all(n, nodes.Const))
+        has_var = any(not isinstance(k, (nodes.Const, nodes.TemplateData, nodes.Add, nodes.Concat)) for n in out.nodes for k in _all(n, (nodes.Name, nodes.Getitem, nodes.Getattr)))
+        if has_url and has_var:
+            return True
+    return False
 
 
 def _normalise(src: str) -> list[str]:
@@ -172,6 +209,8 @@ def scan_template(template: str, ref: str = "chat_template", known_good: str | N
         return [finding("MODEL.TEMPLATE.UNPARSEABLE", f"{ref}: template does not parse ({e.message})", "medium", "model", "S3",
                         [ev("field", ref, f"line {e.lineno}")])]
     an = _Analysis(tree)
+    _SKIP.clear()
+    _SKIP.update(_developer_strings(tree))
 
     inv = invisible_chars(template)
     if inv:
@@ -194,14 +233,16 @@ def scan_template(template: str, ref: str = "chat_template", known_good: str | N
             branch = [x for x in (node.expr1, node.expr2) if x is not None]
         payload = [t for b in branch for _, t in _literal_text(b) if len(t.strip()) >= MIN_PAYLOAD]
         trig = ", ".join(repr(x[:40]) for x in lits[:3])
-        if payload:
+        markup = all(_is_markup(x) for x in lits)  # '</think>', '<tool_response>': structure the template formats, not a phrase a user would type
+        directed = [t for t in payload if MODEL_DIRECTED.search(t) or URL.search(t)]
+        if payload and (not markup or directed):
             out.append(finding("MODEL.TEMPLATE.TRIGGER_BRANCH", f"{ref}: when message text matches {trig}, the template emits extra text",
                                "critical", "model", "S3", [ev("field", f"{ref}:{line}", f"trigger {trig}; emits {payload[0].strip()[:100]!r}")]))
         else:
-            out.append(finding("MODEL.TEMPLATE.CONTENT_CONDITIONAL", f"{ref}: template branches on message text matching {trig}", "high",
-                               "model", "S3", [ev("field", f"{ref}:{line}", f"trigger {trig}")]))
+            out.append(finding("MODEL.TEMPLATE.CONTENT_CONDITIONAL", f"{ref}: template branches on message text matching {trig}",
+                               "info" if markup else "high", "model", "S3", [ev("field", f"{ref}:{line}", f"trigger {trig}")]))
         for t in payload:
-            if GENERIC.search(t) or HIGH_SIGNAL.search(t):
+            if MODEL_DIRECTED.search(t):
                 out.append(finding("MODEL.TEMPLATE.HIDDEN_INSTRUCTION", f"{ref}: conditional branch injects an instruction", "critical",
                                    "model", "S3", [ev("field", f"{ref}:{line}", t.strip()[:120])]))
                 reported.add(t)
@@ -214,28 +255,29 @@ def scan_template(template: str, ref: str = "chat_template", known_good: str | N
             branch = [x for x in (node.expr1, node.expr2) if x is not None]
         for b in branch:
             for ln, t in _literal_text(b):
-                if t in reported or not (HIGH_SIGNAL.search(t) or (GENERIC.search(t) and len(t.split()) >= 4)):
+                if t in reported or not MODEL_DIRECTED.search(t):
                     continue
                 reported.add(t)
                 out.append(finding("MODEL.TEMPLATE.CONDITIONAL_INSTRUCTION",
                                    f"{ref}: instruction text appears only under a condition", "critical", "model", "S3",
                                    [ev("field", f"{ref}:{ln}", t.strip()[:120])]))
-    # hidden instructions and URLs in literal text
+    # instructions aimed at the model, and links, in the text every prompt will carry
     for line, text in _literal_text(tree):
         if text in reported:
             continue
-        m = HIGH_SIGNAL.search(text)
+        m = MODEL_DIRECTED.search(text)
         g = GENERIC.search(text)
         if m:
-            out.append(finding("MODEL.TEMPLATE.HIDDEN_INSTRUCTION", f"{ref}: template text contains a hidden instruction ({m.group(0)[:40]!r})",
+            out.append(finding("MODEL.TEMPLATE.HIDDEN_INSTRUCTION", f"{ref}: template text instructs the model against its user or tools ({m.group(0)[:40]!r})",
                                "critical", "model", "S3", [ev("field", f"{ref}:{line}", text.strip()[:120])]))
-        elif g and len(text.split()) >= 4:  # prose that tells the model what to do, in text every prompt will carry
-            out.append(finding("MODEL.TEMPLATE.EMBEDDED_INSTRUCTION", f"{ref}: template text instructs the model ({g.group(0)[:40]!r})",
-                               "high", "model", "S3", [ev("field", f"{ref}:{line}", text.strip()[:120])]))
+        elif g and len(text.split()) >= 4:  # ordinary system-prompt prose ("You must answer in English"): a signal, not a risk
+            out.append(finding("MODEL.TEMPLATE.EMBEDDED_INSTRUCTION", f"{ref}: template text addresses the model ({g.group(0)[:40]!r})",
+                               "info", "model", "S3", [ev("field", f"{ref}:{line}", text.strip()[:120])]))
     urls = sorted({u for _, t in _literal_text(tree) for u in URL.findall(t)})
-    if urls:  # a prompt-formatting template has no reason to carry a link
-        out.append(finding("MODEL.TEMPLATE.URL", f"{ref}: template embeds {len(urls)} URL(s)", "high", "model", "S3",
-                           [ev("url", u[:150]) for u in urls[:5]]))
+    if urls:
+        dynamic = _urls_with_data(tree)
+        out.append(finding("MODEL.TEMPLATE.URL", f"{ref}: template embeds {len(urls)} URL(s)" + (" and appends message data to one" if dynamic else ""),
+                           "critical" if dynamic else "low", "model", "S3", [ev("url", u[:150]) for u in urls[:5]]))
 
     # diff vs known-good
     if known_good is not None:

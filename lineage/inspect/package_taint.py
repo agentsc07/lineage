@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import ast
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from lineage.inspect import _hosts
 from lineage.inspect._common import ev, finding
 from lineage.inspect._pycode import Names, PyFile, iter_python
 from lineage.inspect.package_capabilities import ENCODED, NETWORK, SENSITIVE_PATH, SUBPROCESS, _matches
@@ -15,6 +17,9 @@ MAX_SLICE_LINES = 80
 NET_SEND_ATTRS = {"post", "put", "patch", "sendall", "sendto", "sendmail", "storbinary", "storlines"}
 EXEC_SINKS = {"exec", "eval", "compile", "os.system", "os.popen", "pickle.loads", "marshal.loads", "__import__"}
 FILE_READ_ATTRS = {"read", "read_text", "read_bytes", "readlines", "readline"}
+# `.put()`/`.post()` is a network send only on something that is a connection. A queue, cache or pool has the same verbs.
+NOT_NETWORK_RECEIVER = re.compile(r"(queue|(^|[._])q$|pool|cache|dict|stack|buffer|store|lock|heap|futures?)", re.I)
+NETWORK_RECEIVER = re.compile(r"(sock|conn|session|client|http|request|smtp|ftp|api|urllib|aiohttp|httpx|s3|bucket|transport|channel|webhook)", re.I)
 
 
 @dataclass(frozen=True)
@@ -33,6 +38,7 @@ class Flow:
     sink_line: int
     sink_end: int
     sink_api: str
+    hosts: tuple[str, ...] = ()  # literal destinations of a net_send sink, if the call names any
 
     @property
     def start(self) -> int:
@@ -43,7 +49,7 @@ class Flow:
 _FLOWS = {
     ("cred_file", "net_send"): ("PKG.TAINT.CREDENTIAL_EXFIL", "Credential file contents flow to a network call", "critical"),
     ("env", "net_send"): ("PKG.TAINT.ENV_EXFIL", "Environment variables flow to a network call", "high"),
-    ("file", "net_send"): ("PKG.TAINT.FILE_UPLOAD", "File contents flow to a network call", "medium"),
+    ("file", "net_send"): ("PKG.TAINT.FILE_UPLOAD", "File contents flow to a network call", "info"),
     ("remote", "code_exec"): ("PKG.TAINT.REMOTE_EXEC", "Data fetched from the network is executed", "critical"),
     ("encoded", "code_exec"): ("PKG.TAINT.ENCODED_EXEC", "A decoded blob is executed", "critical"),
 }
@@ -52,8 +58,10 @@ _FLOWS = {
 class _Scope:
     """Walks one function body (or module top level) in source order."""
 
-    def __init__(self, pf: PyFile, names: Names):
+    def __init__(self, pf: PyFile, names: Names, consts: dict[str, str] | None = None, blobs: set[str] | None = None):
         self.pf, self.names = pf, names
+        self.consts = consts or {}  # NAME = "literal"
+        self.blobs = blobs or set()  # names bound to a long literal string/bytes (an embedded blob)
         self.env: dict[str, set[Taint]] = {}
         self.flows: list[Flow] = []
 
@@ -75,9 +83,34 @@ class _Scope:
             return Taint("remote", line, desc=d)
         if d.endswith((".recv", ".recvfrom", ".recv_into")):
             return Taint("remote", line, desc=d)
-        if d in ENCODED and d != "zlib.compress":
+        if d in ENCODED and d != "zlib.compress" and self._embedded(call):
             return Taint("encoded", line, desc=d)
         return None
+
+    def _embedded(self, call: ast.Call) -> bool:
+        """Is the thing being decoded written into the source? Decoding a literal blob and running it is a payload;
+        decoding data that arrives at run time (a cache file, a parameter) is ordinary."""
+        for sub in ast.walk(ast.Tuple(elts=call.args, ctx=ast.Load())):
+            if isinstance(sub, ast.Constant) and isinstance(sub.value, (str, bytes)) and len(sub.value) >= 16:
+                return True
+            if isinstance(sub, ast.Name) and sub.id in self.blobs:
+                return True
+        return False
+
+    def _netish(self, d: str) -> bool:
+        base = d.rsplit(".", 1)[0] if "." in d else ""
+        if _matches(d, NETWORK):
+            return True
+        return bool(NETWORK_RECEIVER.search(base)) and not NOT_NETWORK_RECEIVER.search(base)
+
+    def _sink_hosts(self, call: ast.Call) -> tuple[str, ...]:
+        found: set[str] = set()
+        for v in [*call.args, *[k.value for k in call.keywords]]:
+            for sub in ast.walk(v):
+                text = sub.value if isinstance(sub, ast.Constant) and isinstance(sub.value, str) else self.consts.get(sub.id) if isinstance(sub, ast.Name) else None
+                if text:
+                    found |= _hosts.hosts_in_text(text)
+        return tuple(sorted(found))
 
     def taint_of(self, node: ast.AST | None) -> set[Taint]:
         if node is None:
@@ -115,7 +148,7 @@ class _Scope:
             attr = d.rsplit(".", 1)[-1]
             if d in EXEC_SINKS or _matches(d, SUBPROCESS):
                 kind = "code_exec"
-            elif (_matches(d, NETWORK) and not d.endswith((".recv", ".recvfrom"))) or attr in NET_SEND_ATTRS or (
+            elif (_matches(d, NETWORK) and not d.endswith((".recv", ".recvfrom"))) or (attr in NET_SEND_ATTRS and self._netish(d)) or (
                 attr == "send" and "sock" in d.lower()
             ):
                 kind = "net_send"
@@ -131,7 +164,8 @@ class _Scope:
                 if t.src_line == call.lineno and t.desc == d:
                     continue  # the sink's own result is not its input
                 if (t.kind, kind) in _FLOWS:
-                    self.flows.append(Flow(self.pf.rel, t, kind, call.lineno, call.end_lineno or call.lineno, d or attr))
+                    self.flows.append(Flow(self.pf.rel, t, kind, call.lineno, call.end_lineno or call.lineno, d or attr,
+                                           self._sink_hosts(call) if kind == "net_send" else ()))
 
     # --- statements
     def _bind(self, target: ast.AST, taint: set[Taint], line: int) -> None:
@@ -217,8 +251,17 @@ def flows(package_dir: Path) -> list[tuple[Flow, PyFile]]:
         if pf.tree is None:
             continue
         names = Names(pf.tree)
+        consts, blobs = {}, set()
+        for n in ast.walk(pf.tree):
+            if isinstance(n, ast.Assign) and isinstance(n.value, ast.Constant) and isinstance(n.value.value, (str, bytes)):
+                for t in n.targets:
+                    if isinstance(t, ast.Name):
+                        if isinstance(n.value.value, str):
+                            consts[t.id] = n.value.value
+                        if len(n.value.value) >= 16:
+                            blobs.add(t.id)
         for body in _scopes(pf.tree):
-            sc = _Scope(pf, names)
+            sc = _Scope(pf, names, consts, blobs)
             sc.run(body)
             for f in sc.flows:
                 key = (f.file, f.sink_line, f.source.kind)
@@ -239,10 +282,17 @@ def slices(package_dir: Path) -> list[CodeSlice]:
     return out
 
 
-def scan(package_dir: Path) -> list[Finding]:
+def scan(package_dir: Path, name: str = "", metadata: dict | None = None) -> list[Finding]:
+    """Flows that matter. A token sent to a host the package's metadata declares (its own vendor's API) is the product
+    working, and a destination the caller supplies is the library's interface; neither is exfiltration."""
+    declared = _hosts.declared_hosts(Path(package_dir), metadata)
     out: list[Finding] = []
     for f, pf in flows(package_dir):
         fid, title, sev = _FLOWS[(f.source.kind, f.sink_kind)]
+        if f.source.kind == "env" and f.sink_kind == "net_send":
+            stray = [h for h in f.hosts if not _hosts.is_declared(h, name, declared)]
+            if not stray:
+                continue  # no destination named in the call (caller-supplied) or only the vendor's own
         src = f"{f.file}:{f.source.src_line}"
         out.append(finding(fid, title, sev, "code", "S4", [
             ev("file_line", src, f"source: {f.source.desc}"),

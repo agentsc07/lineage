@@ -10,6 +10,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from lineage.inspect import _hosts
 from lineage.inspect._common import ev, finding
 from lineage.inspect._pycode import Names, PyFile, _walk, iter_python, line_text
 from lineage.schemas.finding import Finding
@@ -55,6 +56,17 @@ INSTALL_FILES = {"setup.py", "hatch_build.py", "_custom_build.py", "custom_build
 STARTUP_FILES = {"sitecustomize.py", "usercustomize.py"}
 NPM_LIFECYCLE = ("preinstall", "install", "postinstall", "prepare", "prepublish")
 NPM_NET = re.compile(r"(curl|wget|https?://|node\s+-e|base64|nc\s|powershell|bash\s+-c|eval)", re.I)
+
+
+TEST_DIRS = {"tests", "test", "testing", "_tests", "_test", "testsuite", "test_utils"}
+
+
+def is_test_file(rel: str) -> bool:
+    """Test code in a wheel is shipped but not run on import; its hits are signals only. conftest.py is the
+    exception pytest imports automatically, so it is treated as ordinary code."""
+    parts = rel.lower().split("/")
+    name = parts[-1]
+    return bool(set(parts[:-1]) & TEST_DIRS) or name.startswith("test_") or name.endswith("_test.py")
 
 
 @dataclass(frozen=True)
@@ -105,6 +117,13 @@ class _Visitor(ast.NodeVisitor):
         for p in ast.walk(pf.tree):
             for c in ast.iter_child_nodes(p):
                 self.parents[c] = p
+        self.is_test = is_test_file(pf.rel)
+        self.consts: dict[str, str] = {}
+        for n in ast.walk(pf.tree):
+            if isinstance(n, ast.Assign) and isinstance(n.value, ast.Constant) and isinstance(n.value.value, str):
+                for t in n.targets:
+                    if isinstance(t, ast.Name):
+                        self.consts[t.id] = n.value.value
         self.docstrings = {
             n.body[0].value
             for n in ast.walk(pf.tree)
@@ -112,9 +131,52 @@ class _Visitor(ast.NodeVisitor):
             and n.body and isinstance(n.body[0], ast.Expr) and isinstance(n.body[0].value, ast.Constant)
         }
 
+    def at_import_time(self, node: ast.AST) -> bool:
+        """Runs when the module is imported: not inside a function, and not under `if __name__ == "__main__"`."""
+        cur = self.parents.get(node)
+        while cur is not None:
+            if isinstance(cur, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+                return False
+            if isinstance(cur, ast.If) and "__name__" in ast.dump(cur.test) and "__main__" in ast.dump(cur.test):
+                return False
+            if isinstance(cur, ast.If) and "TYPE_CHECKING" in ast.dump(cur.test):
+                return False
+            cur = self.parents.get(cur)
+        return True
+
+    def hosts_of(self, call: ast.Call) -> set[str]:
+        """Literal destinations in a network call: URLs in its arguments (direct, via a constant name, or in an f-string),
+        or a bare host as the first argument of a connection constructor."""
+        found: set[str] = set()
+        values = [*call.args, *[k.value for k in call.keywords]]
+        for v in values:
+            for sub in ast.walk(v):
+                text = None
+                if isinstance(sub, ast.Constant) and isinstance(sub.value, str):
+                    text = sub.value
+                elif isinstance(sub, ast.Name) and sub.id in self.consts:
+                    text = self.consts[sub.id]
+                if text:
+                    found |= _hosts.hosts_in_text(text)
+        ctor = (self.names.dotted(call.func) or "").rsplit(".", 1)[-1]
+        if ctor in ("HTTPConnection", "HTTPSConnection", "create_connection", "SMTP", "SMTP_SSL", "FTP", "FTP_TLS", "connect", "Telnet",
+                    "connect_ex", "sendto", "bind"):
+            for a in call.args[:1]:  # host is the first argument, or the first element of an (host, port) tuple
+                for sub in ([a] if not isinstance(a, ast.Tuple) else a.elts[:1]):
+                    if isinstance(sub, ast.Constant) and isinstance(sub.value, str) and _hosts.looks_like_host(sub.value):
+                        found.add(sub.value.lower())
+        return found
+
     def add(self, cap: str, node: ast.AST, api: str, flags: tuple[str, ...] = ()) -> None:
         line = getattr(node, "lineno", 1)
-        self.hits.append(Hit(cap, self.pf.rel, line, api, line_text(self.lines, line), frozenset(flags)))
+        extra = set(flags)
+        if self.is_test:
+            extra.add("test")
+        elif cap in ("network", "subprocess", "dynamic_exec", "delayed_exec") and self.at_import_time(node):
+            extra.add("toplevel")
+        if cap in ("network", "subprocess") and isinstance(node, ast.Call):
+            extra |= {f"host={h}" for h in self.hosts_of(node)}
+        self.hits.append(Hit(cap, self.pf.rel, line, api, line_text(self.lines, line), frozenset(extra)))
 
     # --- imports (only modules that are a capability by themselves)
     def visit_Import(self, node: ast.Import) -> None:
@@ -136,7 +198,10 @@ class _Visitor(ast.NodeVisitor):
         elif d.startswith("pathlib.Path") and d.rsplit(".", 1)[-1] in FS_PATH:
             self.add("filesystem", node, d)
         if _matches(d, SUBPROCESS):
-            self.add("subprocess", node, d)
+            self.add("subprocess", node, d, ("empty_command",) if d == "os.system" and node.args and isinstance(node.args[0], ast.Constant)
+                     and not str(node.args[0].value).strip() else ())
+        elif d.startswith("ctypes.") and d.rsplit(".", 1)[-1] in ("system", "popen", "execv", "execve", "execl", "execvp", "posix_spawn"):
+            self.add("subprocess", node, d, ("native",))  # libc's system() reached through ctypes: the same shell, without the subprocess import
         if d in ("threading.Timer", "sched.scheduler.enter", "asyncio.call_later") and node.args:
             delay = node.args[0]
             long_delay = not isinstance(delay, ast.Constant) or (isinstance(delay.value, (int, float)) and delay.value >= DELAY_MIN_SECONDS)
@@ -162,11 +227,14 @@ class _Visitor(ast.NodeVisitor):
         if d in ("getattr", "setattr", "delattr") and len(node.args) > 1 and not isinstance(node.args[1], ast.Constant):
             self.add("obfuscation", node, f"{d}(<computed name>)")
         if d == "getattr" and node.args and (self.names.dotted(node.args[0]) or "") in ("builtins", "__builtins__"):
-            self.add("obfuscation", node, "getattr(builtins, ...)")
+            self.add("obfuscation", node, "getattr(builtins, ...)", ("strong",))
+            par = self.parents.get(node)
+            if isinstance(par, ast.Call) and par.func is node:  # getattr(builtins, "ex" + "ec")(...): exec reached by a built-up name
+                self.add("dynamic_exec", node, "getattr(builtins, <name>)(...)", ("hidden",))
         if isinstance(node.func, ast.Attribute) and node.func.attr == "join" and any(
             isinstance(n, ast.Call) and self.names.dotted(n.func) == "chr" for a in node.args for n in ast.walk(a)
         ):
-            self.add("obfuscation", node, "''.join(chr(...))")
+            self.add("obfuscation", node, "''.join(chr(...))", ("strong",))
         self.generic_visit(node)
 
     def _risky_under(self, node: ast.AST) -> bool:
@@ -233,9 +301,9 @@ class _Visitor(ast.NodeVisitor):
         if (isinstance(sl, ast.Slice) and isinstance(sl.step, ast.UnaryOp) and isinstance(sl.step.op, ast.USub)
                 and isinstance(node.value, ast.Constant) and isinstance(node.value.value, str)
                 and len(node.value.value) >= 8):
-            self.add("obfuscation", node, "reversed string literal")
+            self.add("obfuscation", node, "reversed string literal", ("strong",))
         if (self.names.dotted(node.value) or "") in ("__builtins__", "builtins"):
-            self.add("obfuscation", node, "__builtins__[...]")
+            self.add("obfuscation", node, "__builtins__[...]", ("strong",))
         self.generic_visit(node)
 
 
@@ -262,10 +330,10 @@ def _file_hits(pf: PyFile) -> list[Hit]:
     v.visit(pf.tree)
     names = [n.id for n in ast.walk(pf.tree) if isinstance(n, ast.Name)]
     if sum(1 for n in names if _OBFUSCATED_NAME.match(n)) >= 5:
-        v.hits.append(Hit("obfuscation", pf.rel, 1, "obfuscated identifiers", line_text(lines, 1)))
+        v.hits.append(Hit("obfuscation", pf.rel, 1, "obfuscated identifiers", line_text(lines, 1), frozenset({"strong"})))
     if len(_HEX_ESCAPES.findall(pf.text)) >= 20:
         first = next((i for i, ln in enumerate(lines, 1) if _HEX_ESCAPES.search(ln)), 1)
-        v.hits.append(Hit("obfuscation", pf.rel, first, "dense \\x escapes", line_text(lines, first)))
+        v.hits.append(Hit("obfuscation", pf.rel, first, "dense \\x escapes", line_text(lines, first), frozenset({"strong"})))
     return v.hits
 
 
@@ -398,10 +466,7 @@ def diff_capabilities(old: dict[str, list[str]], new: dict[str, list[str]]) -> d
     return out
 
 
-_BASE_SEVERITY = {
-    "network": "medium", "filesystem": "low", "subprocess": "medium", "env_secrets": "medium",
-    "dynamic_exec": "high", "encoded_blob": "medium", "obfuscation": "high",
-}
+
 _TITLES = {
     "network": "Code can open network connections",
     "filesystem": "Code reads or writes the filesystem",
@@ -418,57 +483,150 @@ _HOOK_TITLES = {
     "network_at_install": "Install-time code reaches the network",
     "install_exec": "Install-time code runs commands or dynamic code",
 }
+PIPE_TO_SHELL = re.compile(r"\b(curl|wget)\b[^|;]*\|\s*(sudo\s+)?(ba|z|da|k)?sh\b", re.I)
+RISKY = ("network", "subprocess", "dynamic_exec", "encoded_blob", "env_secrets")
 
 
 def _evidence(hits: list[Hit], limit: int = 10):
     return [ev("file_line", h.ref, f"{h.api}: {h.snippet}"[:200]) for h in hits[:limit]]
 
 
-def findings_from(a: Analysis, only_new: bool = False) -> list[Finding]:
+def _live(hits: list[Hit]) -> list[Hit]:
+    """Hits in code that runs. Test code shipped in a wheel is a signal, never evidence of a payload."""
+    return [h for h in hits if "test" not in h.flags]
+
+
+def _hit_hosts(h: Hit) -> set[str]:
+    return {f[5:] for f in h.flags if f.startswith("host=")}
+
+
+def signals(a: Analysis, note: str = "") -> list[Finding]:
+    """What the code can do, one info finding per capability. A capability alone proves nothing (every HTTP client
+    opens sockets), so signals carry no score; `combos` and the release diff decide when they matter."""
     out: list[Finding] = []
-    new = " (newly added)" if only_new else ""
     by_cap: dict[str, list[Hit]] = {}
     for h in a.hits:
         by_cap.setdefault(h.cap, []).append(h)
     for cap in CAPABILITIES:
         hits = by_cap.get(cap, [])
-        if not hits:
-            continue
-        sev = _BASE_SEVERITY[cap]
-        if cap == "env_secrets" and not any(f in h.flags for h in hits for f in ("bulk", "secret_key", "sensitive_path")):
-            sev = "low"
-        elif cap == "env_secrets" and any("sensitive_path" in h.flags for h in hits):
-            sev = "high"  # ~/.ssh, ~/.aws, credential files: reading them is rarely a package's business
-        if cap == "filesystem" and only_new:
-            sev = "low"
-        out.append(finding(f"PKG.CAP.{cap.upper()}", _TITLES[cap] + new, sev, "code", "S4", _evidence(hits)))
-    for h in (x for x in a.hits if "decoded_exec" in x.flags):
-        out.append(finding("PKG.CODE.DECODE_EXEC", f"Decodes a blob and executes it ({h.api}){new}", "critical",
-                           "code", "S4", [ev("file_line", h.ref, h.snippet)]))
-    for h in _remote_exec_hits(a):
-        out.append(finding("PKG.CODE.REMOTE_EXEC_POSSIBLE", f"Network access and dynamic execution in one file{new}",
-                           "high", "code", "S4", [ev("file_line", h.ref, h.snippet)]))
-    delayed = by_cap.get("delayed_exec", [])
-    if delayed:
-        armed = any("risky_payload" in h.flags for h in delayed)
-        out.append(finding("PKG.CODE.DELAYED_EXEC", "Code runs later or only after a date" + (" and the delayed part does real work" if armed else "") + new,
-                           "critical" if armed else "high", "code", "S4", _evidence(delayed)))
-    secret_files = {h.file for h in by_cap.get("env_secrets", []) if "sensitive_path" in h.flags}
-    sending = {h.file for h in a.hits if h.cap in ("network", "subprocess")}
-    for f_ in sorted(secret_files & sending):
-        refs = [h for h in by_cap["env_secrets"] if h.file == f_ and "sensitive_path" in h.flags]
-        out.append(finding("PKG.CODE.CREDENTIAL_EXFIL", f"{f_} reads a credential location and can send data out{new}", "critical", "code", "S4",
-                           _evidence(refs, 3) + _evidence([h for h in a.hits if h.file == f_ and h.cap in ("network", "subprocess")], 3)))
-    risky_files = {h.file for h in a.hits if h.cap in ("network", "subprocess", "dynamic_exec", "encoded_blob", "env_secrets")}
+        if hits:
+            out.append(finding(f"PKG.SIGNAL.{cap.upper()}", _TITLES[cap] + note, "info", "code", "S4", _evidence(hits)))
+    remote = _remote_exec_hits(a)
+    if remote:
+        out.append(finding("PKG.SIGNAL.REMOTE_EXEC_POSSIBLE", "Network access and dynamic execution in one file" + note, "info", "code", "S4",
+                           [ev("file_line", h.ref, h.snippet) for h in remote[:5]]))
+    return out
+
+
+def combos(a: Analysis, package: str = "", declared: set[str] | None = None) -> list[Finding]:
+    """Findings that exist only because two signals appear together. Each names the pair so a reviewer can check it."""
+    declared = declared or set()
+    out: list[Finding] = []
+    live = _live(a.hits)
+    by_file: dict[str, list[Hit]] = {}
+    for h in live:
+        by_file.setdefault(h.file, []).append(h)
+
+    for f_, hs in sorted(by_file.items()):
+        creds = [h for h in hs if h.cap == "env_secrets" and ({"sensitive_path", "secret_key", "bulk"} & h.flags)]
+        sends = [h for h in hs if h.cap in ("network", "subprocess")]
+        if creds and sends:
+            hosts = {x for h in sends for x in _hit_hosts(h)}
+            stray = sorted(x for x in hosts if not _hosts_declared(x, package, declared))
+            cred_file = any("sensitive_path" in h.flags for h in creds)
+            hidden = cred_file and not hosts and any("strong" in h.flags for h in hs if h.cap == "obfuscation")
+            if stray or hidden:
+                where = ", ".join(stray) if stray else "a host built at run time"
+                out.append(finding("PKG.COMBO.CREDENTIAL_EXFIL", f"{f_} reads a credential and can send data to {where}, which the package's metadata does not declare",
+                                   "critical", "code", "S4", _evidence(creds, 3) + _evidence([h for h in sends if _hit_hosts(h) & set(stray)] or sends, 3)))
+        strong = [h for h in hs if h.cap == "obfuscation" and "strong" in h.flags]
+        acts = [h for h in hs if h.cap in ("dynamic_exec", "subprocess", "network", "encoded_blob")]
+        if strong and acts:
+            hidden_exec = any("hidden" in h.flags for h in acts)
+            out.append(finding("PKG.COMBO.OBFUSCATED_PAYLOAD", f"{f_} hides what it does ({strong[0].api}) and also {acts[0].cap.replace('_', ' ')}s",
+                               "critical" if hidden_exec else "high", "code", "S4", _evidence(strong, 3) + _evidence(acts, 3)))
+        runs = [h for h in hs if h.cap == "subprocess" and "toplevel" in h.flags and "empty_command" not in h.flags]
+        fetch = [h for h in runs if PIPE_TO_SHELL.search(h.snippet)]
+        if fetch:
+            out.append(finding("PKG.COMBO.FETCH_AND_RUN", f"{f_} downloads a script and pipes it to a shell", "critical", "code", "S4", _evidence(fetch, 3)))
+        elif runs:
+            out.append(finding("PKG.COMBO.IMPORT_TIME_EXEC", f"{f_} runs a command as soon as it is imported", "critical", "code", "S4", _evidence(runs, 3)))
+    return out
+
+
+def _hosts_declared(host: str, package: str, declared: set[str]) -> bool:
+    return _hosts.is_declared(host, package, declared)
+
+
+def hook_findings(a: Analysis, baseline: Analysis | None = None) -> list[Finding]:
+    """Install-time and start-up hooks. One that the previous release already had is `info`; a new one keeps its
+    severity (a new start-up hook is a hard finding)."""
+    out: list[Finding] = []
+    risky_files = {h.file for h in _live(a.hits) if h.cap in ("network", "subprocess", "dynamic_exec", "encoded_blob", "env_secrets")}
+    before = {(k.kind, k.file) for k in baseline.hooks} if baseline else set()
     for kind in ("startup_hook", "network_at_install", "install_exec", "custom_install", "custom_install_exec"):
         hooks = [k for k in a.hooks if k.kind == kind]
         if not hooks:
             continue
-        sev = "critical" if kind == "custom_install_exec" else "high" if kind != "install_exec" else "medium"
-        if kind == "startup_hook" and any(k.file in risky_files for k in hooks):
+        sev = "critical" if kind == "custom_install_exec" else "high" if kind != "install_exec" else "high"
+        if kind == "startup_hook":
             sev = "critical"
-        out.append(finding(f"PKG.HOOK.{kind.upper()}", _HOOK_TITLES[kind] + new, sev, "code", "S4",
-                           [ev("file_line", f"{k.file}:{k.line}", k.detail) for k in hooks[:10]]))
+        elif kind == "custom_install":
+            sev = "medium"
+        old = [k for k in hooks if (k.kind, k.file) in before]
+        fresh = [k for k in hooks if (k.kind, k.file) not in before]
+        if fresh:
+            out.append(finding(f"PKG.HOOK.{kind.upper()}", _HOOK_TITLES[kind] + (" (new in this release)" if baseline else ""), sev, "code", "S4",
+                               [ev("file_line", f"{k.file}:{k.line}", k.detail) for k in fresh[:10]]))
+        if old:
+            out.append(finding(f"PKG.HOOK.{kind.upper()}", _HOOK_TITLES[kind] + " (already in the previous release)", "info", "code", "S4",
+                               [ev("file_line", f"{k.file}:{k.line}", k.detail) for k in old[:10]]))
+    return out
+
+
+def content_findings(a: Analysis) -> list[Finding]:
+    """Findings that need no baseline and no second signal: a decoded blob that is executed, an armed delayed payload."""
+    out: list[Finding] = []
+    for h in (x for x in a.hits if "decoded_exec" in x.flags):
+        out.append(finding("PKG.CODE.DECODE_EXEC", f"Decodes a blob and executes it ({h.api})", "critical", "code", "S4", [ev("file_line", h.ref, h.snippet)]))
+    delayed = [h for h in a.hits if h.cap == "delayed_exec"]
+    armed = [h for h in delayed if "risky_payload" in h.flags]
+    if armed:
+        out.append(finding("PKG.CODE.DELAYED_EXEC", "Code runs later or only after a date and the delayed part does real work", "critical", "code", "S4", _evidence(armed)))
+    elif delayed:
+        out.append(finding("PKG.SIGNAL.DELAYED_EXEC", "Code schedules work for later", "info", "code", "S4", _evidence(delayed)))
+    return out
+
+
+def _cred_paths(hits: list[Hit]) -> set[str]:
+    return {h.api for h in hits if h.cap == "env_secrets" and "sensitive_path" in h.flags}
+
+
+def diff_findings(cur: Analysis, prev: Analysis, package: str = "", declared: set[str] | None = None) -> list[Finding]:
+    """Capabilities this release has that the previous one did not. New and risky is high or critical; present
+    before is not reported here at all (its signal is already `info`)."""
+    declared = declared or set()
+    out: list[Finding] = []
+    now, was = _live(cur.hits), _live(prev.hits)
+    had = {h.cap for h in was if "empty_command" not in h.flags}
+    for cap, fid, title in (("subprocess", "PKG.NEW.SUBPROCESS", "Starts running subprocesses or shell commands"),
+                            ("dynamic_exec", "PKG.NEW.DYNAMIC_EXEC", "Starts executing dynamically built code")):
+        fresh = [h for h in now if h.cap == cap and "empty_command" not in h.flags]
+        if fresh and cap not in had:
+            out.append(finding(fid, f"{title}; the previous release did not", "high", "code", "S4", _evidence(fresh, 5)))
+    old_hosts = {x for h in was for x in _hit_hosts(h)}
+    new_hosts = {x: h for h in now if h.cap == "network" for x in _hit_hosts(h) if x not in old_hosts}
+    stray = {x: h for x, h in new_hosts.items() if not _hosts_declared(x, package, declared)}
+    if stray:
+        out.append(finding("PKG.NEW.NETWORK_HOST", f"Talks to host(s) the previous release did not and the metadata does not declare: {', '.join(sorted(stray)[:5])}",
+                           "high", "code", "S4", [ev("file_line", h.ref, f"{x}: {h.snippet}"[:200]) for x, h in list(stray.items())[:5]]))
+    net_now = [h for h in now if h.cap == "network"]
+    if net_now and "network" not in had and not stray:
+        out.append(finding("PKG.NEW.NETWORK", "Starts using the network; the previous release did not", "medium", "code", "S4", _evidence(net_now, 5)))
+    new_paths = _cred_paths(now) - _cred_paths(was)
+    if new_paths:
+        refs = [h for h in now if h.cap == "env_secrets" and h.api in new_paths]
+        out.append(finding("PKG.NEW.CREDENTIAL_PATH", f"Starts reading credential location(s): {', '.join(sorted(new_paths))[:120]}", "high", "code", "S4", _evidence(refs, 5)))
     return out
 
 
@@ -490,19 +648,20 @@ def _bait_over_risky_code(a: Analysis, package_dir: Path) -> list[Finding]:
     return out
 
 
-def scan(package_dir: Path, previous: Path | None = None) -> list[Finding]:
-    """Findings for risky capabilities; if `previous` is given, only newly added capabilities are raised."""
+def findings_from(a: Analysis, only_new: bool = False) -> list[Finding]:
+    """Everything `scan` derives from one analysis without a baseline or package metadata (the reviewer's static view)."""
+    return signals(a) + content_findings(a) + hook_findings(a) + combos(a)
+
+
+def scan(package_dir: Path, previous: Path | None = None, *, name: str = "", metadata: dict | None = None) -> list[Finding]:
+    """Findings for a package. Capabilities are `info` signals; they become findings in combination (`combos`), when a
+    hook or a decoded blob is involved, or when `previous` (the earlier release) shows them to be new."""
     cur = analyse(package_dir)
-    if previous is None:
-        return findings_from(cur) + _bait_over_risky_code(cur, package_dir)
-    old = analyse(previous)
-    seen = {(h.cap, h.file) for h in old.hits}
-    seen_hooks = {(k.kind, k.file) for k in old.hooks}
-    delta = Analysis(
-        hits=[h for h in cur.hits if (h.cap, h.file) not in seen],
-        hooks=[k for k in cur.hooks if (k.kind, k.file) not in seen_hooks],
-    )
-    out = findings_from(delta, only_new=True)
-    if not out:
-        out = [finding("PKG.CAP.NO_NEW", "No new capabilities versus the previous version", "info", "code", "S4")]
+    declared = _hosts.declared_hosts(Path(package_dir), metadata)
+    out = signals(cur) + content_findings(cur)
+    prev = analyse(previous) if previous is not None else None
+    out += hook_findings(cur, prev) + combos(cur, name, declared)
+    if prev is not None:
+        out += diff_findings(cur, prev, name, declared)
+    out += _bait_over_risky_code(cur, package_dir)
     return out

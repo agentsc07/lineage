@@ -21,8 +21,13 @@ OLD = "2025-01-01T00:00:00Z"
 def _prepare_realworld(rw: Path) -> list[dict]:
     """Give each downloaded artifact the sidecar metadata run_bench items have. Everything outside the repo."""
     items = []
+    prev = json.loads((rw / "previous.json").read_text()) if (rw / "previous.json").exists() else {}
     for d in sorted((rw / "packages").iterdir()):
-        (d / "lineage.meta.json").write_text(json.dumps({"released_at": OLD, "licence": "mit", "repo": f"pypi/{d.name}", "name": d.name}))
+        meta = {"released_at": OLD, "licence": "mit", "repo": f"pypi/{d.name}", "name": d.name}
+        p = prev.get(d.name) or {}
+        if p.get("previous") and (rw / "previous" / d.name).is_dir():  # baseline for diff-aware review
+            meta.update(version=p["version"], previous_path=str(rw / "previous" / d.name), previous_version=p["previous"])
+        (d / "lineage.meta.json").write_text(json.dumps(meta))
         items.append({"id": d.name, "kind": "package", "path": str(d)})
     for d in sorted((rw / "templates").iterdir()):
         cfg = json.loads((d / "tokenizer_config.json").read_text())
@@ -46,6 +51,7 @@ def run_realworld(rw: Path, policy) -> list[dict]:
                    "evidence": [f"{e.ref}" + (f" ({e.detail})" if e.detail else "") for e in f.evidence[:3]]}
                   for f in d.findings if f.severity != "info"]
             rows.append({"id": it["id"], "kind": it["kind"], "flagged": flagged, "outcome": d.outcome, "risk": d.risk_score,
+                         "reasons": d.reasons[:3], "info": sorted({f.id for f in d.findings if f.severity == "info"}),
                          "findings": fs if flagged else [], "n_findings": len(fs), "seconds": round(time.perf_counter() - t0, 3)})
         except Exception as e:  # noqa: BLE001 - record, never abort
             rows.append({"id": it["id"], "kind": it["kind"], "flagged": False, "error": f"{type(e).__name__}: {e}"[:300],
@@ -54,17 +60,17 @@ def run_realworld(rw: Path, policy) -> list[dict]:
     return rows
 
 
-def main(rw: Path) -> None:
+def main(rw: Path, out: Path | None = None) -> None:
     from lineage.schemas.policy import PolicyPack
     policy = PolicyPack.from_yaml(ROOT / "examples" / "policy.org.yaml")
     hold = run_mode(ROOT / "bench" / "corpus_holdout", policy, NO_WORKER, "dev")
     fetch = json.loads((rw / "fetch.json").read_text())
     real = run_realworld(rw, policy)
-    (ROOT / "bench" / "results_holdout.json").write_text(json.dumps({
+    (out or ROOT / "bench" / "results_holdout.json").write_text(json.dumps({
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"), "environment": "dev, CPU, no GPU worker, LINEAGE_OFFLINE=1",
         "holdout": hold, "realworld": {"fetch": fetch, "rows": real}}, indent=1))
     print("holdout overall", hold["overall"])
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]))
+    main(Path(sys.argv[1]), Path(sys.argv[2]) if len(sys.argv) > 2 else None)
