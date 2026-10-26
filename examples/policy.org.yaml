@@ -4,7 +4,7 @@ environments:
   staging: { min_trust: inspected, max_risk: 40 }
   prod: { min_trust: inspected, max_risk: 25 }
 publishers:
-  allow: ["nvidia", "meta-llama", "BerriAI"]
+  allow: ["nvidia", "meta-llama", "BerriAI", "apollo-health", "huggingface"]
   block: ["*-official-mirror"]
 licences_allowed: ["apache-2.0", "mit", "bsd-3-clause", "llama3.1", "nvidia-open-model-license"]
 cooldown_days: { package: 3, model: 7, dataset: 7, tool: 7 }

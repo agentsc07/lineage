@@ -8,7 +8,8 @@ absence degrades to `info` findings. Nothing here raises for a bad artifact: a s
 Conventions for local artifacts:
 - `passport.json` (or `<file>.passport.json`) next to the artifact is a signed passport it ships with.
 - `lineage.meta.json` is a registry-metadata snapshot (`released_at`, `licence`, `repo`, `claimed_base`, ...).
-- Both are excluded from the artifact's own file hashes.
+- Both are excluded from the artifact's own file hashes. A directory's passport may also sit beside it as
+  `<dir>.passport.json` (what `lineage sign` writes by default).
 - A ref that is not a local path (a hub id or `pkg==1.2.3`) is a *remote reference*: Track B does not download
   it, so it is recorded with trust `unknown` and a finding saying its bytes were not inspected.
 """
@@ -38,7 +39,7 @@ STAGES = [
     ("S1", "Identify"), ("S2", "Provenance"), ("S3", "Static inspection"), ("S4", "Deep inspection"),
     ("S5", "LLM review"), ("S6", "Decide"), ("S7", "Admit"),
 ]
-SIDECARS = {"passport.json", "lineage.meta.json"}
+SIDECARS = insp.SIDECARS
 PASSPORT_LIFETIME = timedelta(days=90)
 STATUS_WORDS = {
     "allow": "admitted", "allow_with_conditions": "admitted with conditions",
@@ -139,7 +140,12 @@ def _identify(ctx: IntakeContext, explicit_meta: dict | None) -> tuple[str, list
     ctx.metadata = meta
 
     if ctx.path is not None:
-        sidecar = ctx.path / "passport.json" if ctx.path.is_dir() else ctx.path.with_name(ctx.path.name + ".passport.json")
+        # `<name>.passport.json` beside the artifact is what `lineage sign` writes and `lineage.load` discovers;
+        # `passport.json` inside a directory is also accepted.
+        candidates = [ctx.path.with_name(ctx.path.name + ".passport.json")]
+        if ctx.path.is_dir():
+            candidates.append(ctx.path / "passport.json")
+        sidecar = next((c for c in candidates if c.exists()), candidates[0])
         if sidecar.exists():
             try:
                 ctx.claimed = SignedPassport.model_validate_json(sidecar.read_text())
@@ -179,6 +185,8 @@ def _identify(ctx: IntakeContext, explicit_meta: dict | None) -> tuple[str, list
     if ctx.claimed:
         b = ctx.claimed.passport.predicate
         name, version, ctx.source = b.name, b.version, b.source
+        if ctx.path is not None and not ctx.source.url:  # remember where the bytes are, for parent fingerprinting
+            ctx.source = ctx.source.model_copy(update={"url": ctx.path.as_uri()})
         ctx.parents = list(dict.fromkeys(ctx.parents + b.parents))
     elif ctx.path is None and "/" in ref and "==" not in ref:
         ctx.source = SourceRef(hub="huggingface", repo=ref)

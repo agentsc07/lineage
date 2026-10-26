@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 from typing import Protocol
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
@@ -21,6 +22,10 @@ class Registry(Protocol):
 
     def trusted_key(self, key_id: str) -> Ed25519PublicKey | None:
         """Public key of a signer we trust, by key id."""
+
+    def reference_models(self) -> dict[str, tuple[str, Path]]:
+        """Admitted models whose weights are on local disk: passport id -> (label, directory). The bank that
+        parent fingerprinting compares an incoming model against."""
 
     def sign(self, passport: Passport) -> SignedPassport:
         """Sign with the organisation's key."""
@@ -48,6 +53,9 @@ class NullRegistry:
 
     def trusted_key(self, key_id: str) -> Ed25519PublicKey | None:
         return None
+
+    def reference_models(self) -> dict[str, tuple[str, Path]]:
+        return {}
 
     def sign(self, passport: Passport) -> SignedPassport:
         return SignedPassport(passport=passport, signature="", key_id="unsigned")

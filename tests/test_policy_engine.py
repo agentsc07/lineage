@@ -3,7 +3,8 @@ from datetime import date, timedelta
 import pytest
 
 from lineage.policy.engine import compliance_tags, decide
-from lineage.risk import risk_score
+from lineage.risk import SEVERITY_WEIGHT, risk_score
+from lineage.schemas.finding import Finding
 from lineage.schemas.policy import PolicyException, PolicyPack
 from tests.server_helpers import NOW, ago, finding, make_signed
 
@@ -192,3 +193,16 @@ def test_hard_block_still_lists_other_grounds(policy):
     d = decide(body(name="p"), fs, "dev", policy, NOW, released_at=ago(hours=2))
     assert d.outcome == "block"
     assert d.reasons[0].startswith("banned capability") and any(r.startswith("also: cooldown") for r in d.reasons)
+
+
+def test_advisories_group_into_one_finding_scored_at_the_worst_severity():
+    from lineage.risk import group_advisories
+
+    mk = lambda i, sev: Finding(id=f"PKG.OSV.GHSA-{i}", title=f"adv {i}", severity=sev, category="code", stage="S3",  # noqa: E731
+                                evidence=[], score=SEVERITY_WEIGHT[sev], source="deterministic")
+    fs = [mk(1, "medium"), mk(2, "critical"), mk(3, "high"), mk(4, "low"), mk(5, "high")]
+    grouped = group_advisories(fs)
+    assert len(grouped) == 1 and grouped[0].id == "PKG.OSV.GROUP" and grouped[0].severity == "critical"
+    assert "5 advisories" in grouped[0].title and "GHSA-2, GHSA-3, GHSA-5" in grouped[0].title and "+2 more" in grouped[0].title
+    assert risk_score(fs, "inspected") == 40  # not 5 summed advisories
+    assert group_advisories(fs[:1]) == fs[:1]  # a single advisory stays as it is
