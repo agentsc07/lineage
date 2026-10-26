@@ -182,10 +182,11 @@ def _is_markup(literal: str) -> bool:
 def _urls_with_data(tree: nodes.Template) -> bool:
     """A URL literal in an output that also interpolates a variable: the template builds a link out of the conversation."""
     for out in tree.find_all(nodes.Output):
-        has_url = any(isinstance(k, nodes.Const) and isinstance(k.value, str) and URL.search(k.value) for n in out.nodes for k in _all(n, nodes.Const))
-        has_var = any(not isinstance(k, (nodes.Const, nodes.TemplateData, nodes.Add, nodes.Concat)) for n in out.nodes for k in _all(n, (nodes.Name, nodes.Getitem, nodes.Getattr)))
-        if has_url and has_var:
-            return True
+        for n in out.nodes:  # Jinja merges neighbouring {{ }} into one Output; the URL and the variable must share one expression
+            has_url = any(isinstance(k.value, str) and URL.search(k.value) for k in _all(n, nodes.Const))
+            has_var = bool(_all(n, (nodes.Name, nodes.Getitem, nodes.Getattr)))
+            if has_url and has_var:
+                return True
     return False
 
 
