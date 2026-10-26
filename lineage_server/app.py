@@ -4,7 +4,8 @@ Configuration (environment variables, all optional):
 - `LINEAGE_DB`          SQLite file (default `lineage.db`); the registry signing key lives beside it as `<db>.key`.
 - `LINEAGE_POLICY`      initial policy YAML, installed on first start only (default `examples/policy.org.yaml`).
 - `LINEAGE_ROLE_KEYS`   JSON file `{"owner": "<pubkey hex>", "security": ..., "compliance": ...}`; enables PUT /policy.
-- `LINEAGE_GPU_URL`     GPU worker (default `http://localhost:8800`).
+- `LINEAGE_TRUSTED_KEYS` comma-separated passport signer keys to trust at start-up: `.pub` PEM paths or 64-char hex.
+- `LINEAGE_GPU_URL`    GPU worker (default `http://localhost:8800`).
 - `LINEAGE_ADVISORY_FEED` local advisory feed for the monitor (see `lineage_server.monitor`).
 """
 from __future__ import annotations
@@ -46,6 +47,9 @@ def create_app(
     if role_keys_path:
         policy_store.set_role_keys(conn, json.loads(Path(role_keys_path).read_text()))
     trust.trust_key(conn, app.state.signing_key.public_key(), "registry")
+    for entry in filter(None, (s.strip() for s in os.environ.get("LINEAGE_TRUSTED_KEYS", "").split(","))):
+        trust.trust_key(conn, trust.load_public(entry), "trusted-keys-env")
+    conn.commit()
     conn.close()
 
     for module in (intake, events, artifacts, passports, graph, decisions, policy):
