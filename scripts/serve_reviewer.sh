@@ -11,7 +11,9 @@ mkdir -p logs
 
 if curl -sf "http://127.0.0.1:${PORT}/v1/models" >/dev/null; then echo "vLLM already serving on :${PORT}"; exit 0; fi
 
-CMD="uv run vllm serve ${MODEL} --port ${PORT} --host 127.0.0.1 --max-model-len 16384 \
+VLLM_BIN="${VLLM_BIN:-/home/ubuntu/vllm-env/bin/vllm}"   # cu129 build in its own venv (driver is CUDA 12.7)
+export VLLM_USE_FLASHINFER_SAMPLER=0   # flashinfer sampling kernels JIT-compile and need nvcc, which this box does not have
+CMD="VLLM_USE_FLASHINFER_SAMPLER=0 ${VLLM_BIN} serve ${MODEL} --port ${PORT} --host 127.0.0.1 --max-model-len 16384 \
  --gpu-memory-utilization ${UTIL} --served-model-name reviewer --trust-remote-code \
  --mamba_ssm_cache_dtype float32 2>&1 | tee logs/vllm.log"
 if tmux has-session -t "$SESSION" 2>/dev/null; then tmux new-window -t "$SESSION" -n vllm "$CMD"
