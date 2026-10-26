@@ -1,0 +1,198 @@
+{
+ "cert": {
+  "cert_id": "nc-018234d659b56419",
+  "model_digest": "ref:10a449ac30ffb218054216d004862507a1df71aef190a714d2e6d46bb4e83f98",
+  "fingerprint": "f90fa844e3e1051b9df9ce8d8e235abaff713af983678b456d8adddad421e417",
+  "signature": "7e6f4ae9d6621c33fb4a250dd709fef631d6904fba4d48f43d8700289bd710ff181b51972033e7552f34c1342d1ad5ef38f5d2d926580d3ec6cad8baca0b030a"
+ },
+ "signature_valid": true,
+ "rows": [
+  {
+   "model": "parent (same files)",
+   "label": "same",
+   "match": true,
+   "agreement": 1.0,
+   "detail": "spot-check 24 certified items: 100% agreement (identical file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "parent (repeat)",
+   "label": "same",
+   "match": true,
+   "agreement": 1.0,
+   "detail": "spot-check 24 certified items: 100% agreement (identical file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "benign_00",
+   "label": "benign",
+   "match": false,
+   "agreement": 0.75,
+   "detail": "spot-check 24 certified items: 75% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "benign_01",
+   "label": "benign",
+   "match": false,
+   "agreement": 0.75,
+   "detail": "spot-check 24 certified items: 75% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "benign_02",
+   "label": "benign",
+   "match": false,
+   "agreement": 0.71,
+   "detail": "spot-check 24 certified items: 71% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "benign_03",
+   "label": "benign",
+   "match": false,
+   "agreement": 0.79,
+   "detail": "spot-check 24 certified items: 79% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "benign_04",
+   "label": "benign",
+   "match": false,
+   "agreement": 0.67,
+   "detail": "spot-check 24 certified items: 67% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "benign_05",
+   "label": "benign",
+   "match": false,
+   "agreement": 0.75,
+   "detail": "spot-check 24 certified items: 75% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "benign_06",
+   "label": "benign",
+   "match": false,
+   "agreement": 0.83,
+   "detail": "spot-check 24 certified items: 83% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "benign_07",
+   "label": "benign",
+   "match": false,
+   "agreement": 0.83,
+   "detail": "spot-check 24 certified items: 83% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "benign_08",
+   "label": "benign",
+   "match": false,
+   "agreement": 0.75,
+   "detail": "spot-check 24 certified items: 75% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "benign_09",
+   "label": "benign",
+   "match": false,
+   "agreement": 0.79,
+   "detail": "spot-check 24 certified items: 79% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "benign_10",
+   "label": "benign",
+   "match": false,
+   "agreement": 0.67,
+   "detail": "spot-check 24 certified items: 67% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "benign_11",
+   "label": "benign",
+   "match": false,
+   "agreement": 0.79,
+   "detail": "spot-check 24 certified items: 79% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "backdoor_00",
+   "label": "backdoored",
+   "match": false,
+   "agreement": 0.71,
+   "detail": "spot-check 24 certified items: 71% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "backdoor_01",
+   "label": "backdoored",
+   "match": false,
+   "agreement": 0.71,
+   "detail": "spot-check 24 certified items: 71% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "backdoor_02",
+   "label": "backdoored",
+   "match": false,
+   "agreement": 0.83,
+   "detail": "spot-check 24 certified items: 83% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "backdoor_04",
+   "label": "backdoored",
+   "match": false,
+   "agreement": 0.79,
+   "detail": "spot-check 24 certified items: 79% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "backdoor_05",
+   "label": "backdoored",
+   "match": false,
+   "agreement": 0.75,
+   "detail": "spot-check 24 certified items: 75% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "backdoor_06",
+   "label": "backdoored",
+   "match": false,
+   "agreement": 0.83,
+   "detail": "spot-check 24 certified items: 83% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "backdoor_07",
+   "label": "backdoored",
+   "match": false,
+   "agreement": 0.75,
+   "detail": "spot-check 24 certified items: 75% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "backdoor_08",
+   "label": "backdoored",
+   "match": false,
+   "agreement": 0.83,
+   "detail": "spot-check 24 certified items: 83% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "backdoor_09",
+   "label": "backdoored",
+   "match": false,
+   "agreement": 0.83,
+   "detail": "spot-check 24 certified items: 83% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "backdoor_10",
+   "label": "backdoored",
+   "match": false,
+   "agreement": 0.83,
+   "detail": "spot-check 24 certified items: 83% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "backdoor_11",
+   "label": "backdoored",
+   "match": false,
+   "agreement": 0.88,
+   "detail": "spot-check 24 certified items: 88% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  },
+  {
+   "model": "backdoor_13",
+   "label": "backdoored",
+   "match": false,
+   "agreement": 0.83,
+   "detail": "spot-check 24 certified items: 83% agreement (DIFFERENT file digest); certified accuracy 0.61"
+  }
+ ],
+ "same_model_min_agreement": 1.0,
+ "finetuned_max_agreement": 0.88,
+ "threshold": 0.9,
+ "finetunes_flagged_as_different": 24,
+ "n_finetunes": 24
+}
