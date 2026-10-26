@@ -344,6 +344,20 @@ def _gpu_skip(ctx: IntakeContext, what: str, err: Exception) -> list[Finding]:
     return [gpu.skipped_finding("S4", what, "needs GPU worker; unreachable")]
 
 
+def _template_vs_parent(child: Path, parent: Path, label: str) -> list[Finding]:
+    """Chat-template text the identified parent's template does not have (a fine-tune rarely needs to touch it)."""
+    from lineage.inspect import chat_template
+
+    good = dict(chat_template.find_templates(parent))
+    out: list[Finding] = []
+    for ref, tpl in chat_template.find_templates(child):
+        if ref in good:
+            out += [f for f in chat_template.scan_template(tpl, ref, good[ref]) if f.id == "MODEL.TEMPLATE.DIFF_FROM_KNOWN_GOOD"]
+    for f in out:
+        f.title = f.title.replace("the known-good version", f"parent {label}")
+    return out
+
+
 @register("model", "S4")
 def local_parent_diff(ctx: IntakeContext) -> list[Finding]:
     """CPU parent identification (Track A's fingerprint) against admitted models on local disk, then the tensors that
@@ -375,6 +389,7 @@ def local_parent_diff(ctx: IntakeContext) -> list[Finding]:
         out.append(make_finding("MODEL.PARENT.CLAIM_MISMATCH", f"Card claims base '{claimed}' but weights match '{label}'", "medium",
                                 "model", "S4", [Evidence(kind="field", ref="claimed_base", detail=f"{claimed} != {label}")],
                                 source="statistical"))
+    out += _template_vs_parent(ctx.path, parent_path, label)
     out.append(make_finding(
         "MODEL.WEIGHTS.CHANGED_LAYERS", f"{len(changed)} tensor(s) differ from parent {label}: " + ", ".join(d.tensor for d in changed[:4]) + ("…" if len(changed) > 4 else ""), "info", "model", "S4",
         [Evidence(kind="tensor", ref=d.tensor, detail="shape/dtype changed" if d.relative_l2 == float("inf")

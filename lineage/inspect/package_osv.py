@@ -16,12 +16,25 @@ OSV_QUERY_URL = "https://api.osv.dev/v1/query"
 DEFAULT_CACHE = Path.home() / ".cache" / "lineage" / "osv"
 DEFAULT_TTL = 6 * 3600  # seconds; the Monitor passes ttl=0 to force a re-query
 MAX_VULN_FINDINGS = 20
+# Shipped snapshot of advisories for packages the demos and the bench use; consulted only when OSV cannot be reached
+# and nothing is cached. Override the path with LINEAGE_ADVISORY_SNAPSHOT.
+SNAPSHOT = Path(__file__).resolve().parents[2] / "examples" / "advisories_cache.json"
 _SEVERITY: dict[str, Severity] = {"LOW": "low", "MODERATE": "medium", "MEDIUM": "medium", "HIGH": "high", "CRITICAL": "critical"}
 
 
 def _cache_path(cache_dir: Path, ecosystem: str, name: str, version: str) -> Path:
     key = hashlib.sha256(f"{ecosystem}|{name.lower()}|{version}".encode()).hexdigest()
     return cache_dir / f"{key}.json"
+
+
+def snapshot_lookup(name: str, version: str, ecosystem: str = "PyPI") -> list[dict] | None:
+    """Records from the shipped snapshot, or None if it has no entry for this exact package version."""
+    path = Path(os.environ.get("LINEAGE_ADVISORY_SNAPSHOT") or SNAPSHOT)
+    try:
+        entry = json.loads(path.read_text()).get("advisories", {}).get(f"{ecosystem}|{name.lower()}|{version}")
+    except (OSError, json.JSONDecodeError, AttributeError):
+        return None
+    return entry if isinstance(entry, list) else None
 
 
 def query(
@@ -35,7 +48,7 @@ def query(
 ) -> list[dict]:
     """All OSV records for one package version. Raises httpx.HTTPError only if offline and nothing is cached."""
     if client is None and os.environ.get("LINEAGE_OFFLINE"):  # hermetic tests / air-gapped installs
-        raise httpx.ConnectError("LINEAGE_OFFLINE is set")
+        return _offline(name, version, ecosystem, cache_dir, ttl)
     cache_dir = Path(cache_dir) if cache_dir is not None else DEFAULT_CACHE
     path = _cache_path(cache_dir, ecosystem, name, version)
     cached = None
@@ -62,6 +75,9 @@ def query(
     except httpx.HTTPError:
         if cached:  # stale beats nothing when offline
             return cached["vulns"]
+        snap = snapshot_lookup(name, version, ecosystem)
+        if snap is not None:
+            return snap
         raise
     finally:
         if own:
@@ -72,6 +88,19 @@ def query(
     except OSError:
         pass
     return vulns
+
+
+def _offline(name: str, version: str, ecosystem: str, cache_dir: Path | None, ttl: float) -> list[dict]:
+    """No network allowed: a cached answer (any age), else the shipped snapshot, else the caller sees ConnectError."""
+    path = _cache_path(Path(cache_dir) if cache_dir is not None else DEFAULT_CACHE, ecosystem, name, version)
+    try:
+        return json.loads(path.read_text())["vulns"]
+    except (OSError, ValueError, KeyError):
+        pass
+    snap = snapshot_lookup(name, version, ecosystem)
+    if snap is not None:
+        return snap
+    raise httpx.ConnectError("LINEAGE_OFFLINE is set")
 
 
 def _severity(vuln: dict) -> Severity:
