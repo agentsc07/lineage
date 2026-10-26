@@ -156,3 +156,14 @@ def test_policy_rules_come_from_the_policy_pack():
 def test_health_reports_reviewer(up):
     h = client.get("/health").json()
     assert h["endpoints"]["/review/code"] is True and h["policy_model"] == "nvidia/Nemotron-Content-Safety-Reasoning-4B"
+
+
+def test_overlapping_slices_of_one_file_all_count(up, monkeypatch):
+    """Track A sends several overlapping slices per file; a claim on any of their lines must ground, and the LLM sees each line once."""
+    code = "a = 1\nimport os\nx = os.environ\nrequests.post(u, data=x)\nb = 2\n"
+    slices = [{"file": "m.py", "start": 4, "end": 4, "code": "requests.post(u, data=x)"},
+              {"file": "m.py", "start": 1, "end": 5, "code": code}, {"file": "m.py", "start": 3, "end": 4, "code": "x = os.environ\nrequests.post(u, data=x)"}]
+    stub = install(monkeypatch, single={"analysis": "", "verdict": "suspicious", "claims": [claim(4, "requests.post", "high", file="m.py")]})
+    body = client.post("/review/code", json={"purpose": "ROLE: PROSECUTOR. x", "slices": slices}).json()
+    assert [c["line"] for c in body["claims"]] == [4]
+    assert stub.calls[0][2].count("requests.post") == 1

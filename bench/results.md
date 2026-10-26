@@ -96,8 +96,8 @@ Tuned set overall: precision **100%**, recall **100%** (23 TP, 0 FP, 0 FN, 17 TN
 
 | latency | p50 | p95 | mean |
 |---|---|---|---|
-| per LLM call | 2.03 s | 2.43 s | – |
-| per request (end to end, 1.8 calls on average) | 5.31 s | 8.19 s | 4.28 s |
+| per LLM call | 2.03 s | 2.44 s | – |
+| per request (end to end, 1.8 calls on average) | 5.31 s | 8.59 s | 4.42 s |
 
 Tokens: 53,381 prompt, 6,922 generated · **41 tokens/s** (generated tokens / LLM time, batch 1, bf16 on one L40S). tokens/sec = completion tokens / LLM wall time (prefill included, structured JSON decoding, batch size 1).
 

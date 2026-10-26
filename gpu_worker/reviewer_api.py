@@ -114,6 +114,12 @@ CARD_DEFENDER = CODE_DEFENDER.replace("code and the stated purpose", "card and t
 CARD_JUDGE = CODE_JUDGE.replace("Read the code", "Read the card and measurements")
 
 
+SINGLE_SHAPE = """Answer with one JSON object. Think first in "analysis" (1-3 sentences: which network, file, process and dynamic-execution
+operations the data performs and whether the stated purpose explains each), then list "claims" (only unexplained behaviour; none if
+everything is explained) and a "verdict" (benign | suspicious | malicious).
+Shape: {"analysis": "...", "claims": [{"text": "...", "file": "...", "line": 12, "api": "...", "severity": "high"}], "verdict": "suspicious"}"""
+
+
 def _numbered(file: str, start: int, text: str) -> str:
     return f"--- {file} (lines {start}-{start + max(len(text.splitlines()), 1) - 1})\n" + "\n".join(
         f"{start + i:>5} | {ln}" for i, ln in enumerate(text.splitlines()))
@@ -125,16 +131,37 @@ class Doc(BaseModel):
     code: str  # original text (used for grounding)
 
 
-def _shown(docs: list[Doc]) -> str:
-    """The numbered, bait-redacted text the LLM reads, capped to the context budget."""
-    parts, used = [], 0
+def _index(docs: list[Doc]) -> dict[str, dict[int, str]]:
+    """file -> {line number: original text}. Slices of one file may overlap; later slices never hide earlier lines."""
+    out: dict[str, dict[int, str]] = {}
     for d in docs:
-        block = _numbered(d.file, d.start, bait_mod.redact(d.code))
-        if used + len(block) > MAX_CODE_CHARS:
-            parts.append(f"--- {d.file}: omitted (context budget)")
-            continue
-        parts.append(block)
-        used += len(block)
+        m = out.setdefault(d.file, {})
+        for i, ln in enumerate(d.code.splitlines()):
+            m.setdefault(d.start + i, ln)
+    return out
+
+
+def _shown(docs: list[Doc]) -> str:
+    """The numbered, bait-redacted text the LLM reads (overlaps merged, gaps marked), capped to the context budget."""
+    parts, used = [], 0
+    for file, lines in _index(docs).items():
+        nums = sorted(lines)
+        runs, cur = [], [nums[0]] if nums else []
+        for n in nums[1:]:
+            if n == cur[-1] + 1:
+                cur.append(n)
+            else:
+                runs.append(cur)
+                cur = [n]
+        if cur:
+            runs.append(cur)
+        for run in runs:
+            block = _numbered(file, run[0], bait_mod.redact("\n".join(lines[n] for n in run)))
+            if used + len(block) > MAX_CODE_CHARS:
+                parts.append(f"--- {file}: omitted (context budget)")
+                continue
+            parts.append(block)
+            used += len(block)
     return "\n\n".join(parts)
 
 
@@ -178,16 +205,15 @@ def api_on_line(api: str, line: str) -> bool:
 
 
 def ground(claims: list[Claim], docs: list[Doc]) -> tuple[list[Claim], list[str]]:
-    by_file = {d.file: d for d in docs}
+    idx = _index(docs)
     kept, dropped = [], []
     for c in claims:
-        d = by_file.get(c.file)
-        lines = d.code.splitlines() if d else []
-        if d is None:
+        lines = idx.get(c.file)
+        if lines is None:
             dropped.append(f"{c.file}:{c.line} unknown file")
-        elif not (d.start <= c.line < d.start + len(lines)):
+        elif c.line not in lines:
             dropped.append(f"{c.file}:{c.line} outside the supplied lines")
-        elif not api_on_line(c.api, lines[c.line - d.start]):
+        elif not api_on_line(c.api, lines[c.line]):
             dropped.append(f"{c.file}:{c.line} does not contain {c.api!r}")
         else:
             kept.append(c)
@@ -268,7 +294,7 @@ def _pipeline(prosecutor_sys: str, defender_sys: str, judge_sys: str, context: s
 
 def _single(system: str, context: str, docs: list[Doc], trace: llm.Trace, extra_claims: list[Claim]) -> ReviewResponse:
     """One call with the caller's own role brief."""
-    out = llm.chat_json(system + "\n" + SAFETY, f"{context}\n\nDATA\n<<<DATA\n{_shown(docs)}\nDATA>>>",
+    out = llm.chat_json(system + "\n" + SINGLE_SHAPE + "\n" + SAFETY, f"{context}\n\nDATA\n<<<DATA\n{_shown(docs)}\nDATA>>>",
                         PROSECUTOR_SCHEMA, stage="single", trace=trace)
     claims, _ = ground(_claims(out["claims"]), docs)
     claims = _dedupe(claims + extra_claims)
