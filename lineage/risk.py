@@ -21,7 +21,7 @@ def group_advisories(findings: list[Finding]) -> list[Finding]:
     """Collapse two or more advisory findings (`PKG.OSV.*`) into one `PKG.OSV.GROUP` finding at the first one's
     position: the count, the worst severity and the top 3 ids (worst first). Display and scoring use this view;
     the stored findings stay individual because the policy engine reads each one (hard blocks, vulnerability limits)."""
-    advisories = [f for f in findings if f.id.startswith(ADVISORY_PREFIX)]
+    advisories = [f for f in findings if f.id.startswith(ADVISORY_PREFIX) and f.severity != "info"]
     if len(advisories) < 2:
         return findings
     ranked = sorted(advisories, key=lambda f: -SEVERITY_ORDER.index(f.severity))
@@ -37,7 +37,7 @@ def group_advisories(findings: list[Finding]) -> list[Finding]:
     )
     out, placed = [], False
     for f in findings:
-        if f.id.startswith(ADVISORY_PREFIX):
+        if f.id.startswith(ADVISORY_PREFIX) and f.severity != "info":
             if not placed:
                 out.append(group)
                 placed = True
