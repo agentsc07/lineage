@@ -2,6 +2,12 @@
 
 Lineage: admission control for AI artifacts. This branch (Track B) has a working registry server, policy engine, intake pipeline, monitor and MCP gateway. Scanners (Track C), hashing/signing/CLI (Track A) and the GPU worker (Track D) are separate; missing ones degrade to `info` findings instead of failing.
 
+## One command: the full dashboard demo
+```bash
+LINEAGE_GPU_URL=http://localhost:8800 examples/run_dashboard_demo.sh   # GPU URL optional; PAUSE=0 skips delays
+```
+Moves any existing `lineage.db` aside to `lineage.db.<timestamp>.bak`, starts the API on http://127.0.0.1:8000 with a fresh database that trusts the demo signer (`LINEAGE_TRUSTED_KEYS`), plays the Apollo Health AI scenario (step 1 ALLOW risk 0; step 6 raises the advisory alert with its blast radius), then starts the dashboard on http://localhost:5173. Ctrl+C stops both. If those ports are taken: `LINEAGE_PORT=8010 DASH_PORT=5174 examples/run_dashboard_demo.sh`.
+
 ## Prerequisites
 - Python 3.11 and [`uv`](https://docs.astral.sh/uv/)
 - Node 18+ only for the dashboard
@@ -40,6 +46,7 @@ Stop with `Ctrl+C`.
 | `LINEAGE_DB` | `lineage.db` | SQLite file. The registry signing key is created beside it as `<db>.key` |
 | `LINEAGE_POLICY` | `examples/policy.org.yaml` | Initial policy, installed on first start only |
 | `LINEAGE_ROLE_KEYS` | none | JSON `{"owner": "<pubkey hex>", "security": ..., "compliance": ...}`; without it `PUT /policy` returns 409. The seed script configures demo role keys in the DB |
+| `LINEAGE_TRUSTED_KEYS` | none | Comma-separated passport signer keys to trust at start-up: `.pub` PEM paths or 64-char hex |
 | `LINEAGE_GPU_URL` | `http://localhost:8800` | GPU worker; if unreachable, deep checks are skipped with an `info` finding |
 | `LINEAGE_ADVISORY_FEED` | none | Local advisory file the monitor reads in addition to OSV |
 
@@ -88,7 +95,8 @@ uv run pytest -q
 - `Address already in use`: add `--port 8001`.
 - Dashboard CORS errors: the server only allows `http://localhost:5173` and `http://127.0.0.1:5173`.
 - Dashboard shows "Can't reach the Lineage server": start the API server first (port 8000), or set `LINEAGE_API=http://host:port` before `npm run dev`.
-- Bench page says "Sample data": expected until Track D's results are copied to `dashboard/public/bench-results.json`.
+- Bench page shows "not measured" for a number: the dashboard reads `bench/results.json`, `bench/weightspace.json` and `bench/reviewer.json` directly (dev server and build); the missing file or field has not been produced yet.
+- Overview monitor panel is empty: `GET /monitor/latest` returns the latest tick that raised alerts; run the demo (step 6) or `curl -X POST localhost:8000/monitor/tick` after publishing an advisory.
 
 ## Demo problems
 - `ModuleNotFoundError: No module named 'lineage'` from `uv run lineage ...` on macOS: the venv's `.pth` files got the "hidden" flag, so Python skips them. Fix: `chflags nohidden .venv/lib/python3.11/site-packages/*.pth` (the demo script also sets `PYTHONPATH`).
