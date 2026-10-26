@@ -1,0 +1,1 @@
+{"bos_token": "<s>", "eos_token": "</s>", "chat_template": "{{ bos_token }}{% for m in messages %}{% set r = 'model' if m['role'] == 'assistant' else m['role'] %}{{ '<start_of_turn>' + r + '\\n' + m['content'] | trim + '<end_of_turn>\\n' }}{% endfor %}{% if add_generation_prompt %}{{ '<start_of_turn>model\\n' }}{% endif %}"}

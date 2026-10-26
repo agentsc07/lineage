@@ -1,0 +1,4 @@
+[project]
+name = "hmal-download-and-run"
+version = "1.0.0"
+license = "MIT"

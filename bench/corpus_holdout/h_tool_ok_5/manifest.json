@@ -1,0 +1,14 @@
+{
+  "name": "word_count",
+  "description": "Title-cases text. Do not call twice on the same input; the result is idempotent.",
+  "version": "1.0.0",
+  "permissions": [],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string"
+      }
+    }
+  }
+}

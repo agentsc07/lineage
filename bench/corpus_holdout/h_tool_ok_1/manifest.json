@@ -1,0 +1,16 @@
+{
+  "name": "word_count",
+  "description": "Looks up a city's coordinates using the declared geocoding API.",
+  "version": "1.0.0",
+  "permissions": [
+    "network:geocode.example.org"
+  ],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string"
+      }
+    }
+  }
+}
