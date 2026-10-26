@@ -379,6 +379,9 @@ def tool_intent(ctx: IntakeContext) -> list[Finding]:
 # ----------------------------------------------------------------------------------------------- S4 model (GPU)
 def _gpu_skip(ctx: IntakeContext, what: str, err: Exception) -> list[Finding]:
     ctx.gpu_down = True
+    if isinstance(err, gpu.GpuRejected):
+        # The worker is up; it reads model paths on its own host and only knows bank-sized models.
+        return [gpu.skipped_finding("S4", what, f"not applicable to this model: the GPU worker is up but cannot analyse it, since its weights are not on the worker's host or not a model it supports ({err.detail.split(':')[0]})")]
     return [gpu.skipped_finding("S4", what, "needs GPU worker; unreachable")]
 
 

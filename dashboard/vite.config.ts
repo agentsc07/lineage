@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 // Real bench output lives in ../bench; serve it at /bench-data/<file> in dev and ship it with the build.
-const BENCH_FILES = ["results.json", "weightspace.json", "reviewer.json"];
+const BENCH_FILES = ["results.json", "weightspace.json", "reviewer.json", "cost_log.csv"];
 const benchData = (): Plugin => ({
   name: "lineage-bench-data",
   configureServer(server) {
@@ -12,7 +12,7 @@ const benchData = (): Plugin => ({
       const name = (req.url ?? "").replace(/^\//, "").split("?")[0];
       const file = resolve(__dirname, "../bench", name);
       if (!BENCH_FILES.includes(name) || !existsSync(file)) return next();
-      res.setHeader("Content-Type", "application/json");
+      res.setHeader("Content-Type", name.endsWith(".csv") ? "text/csv" : "application/json");
       res.end(readFileSync(file));
     });
   },

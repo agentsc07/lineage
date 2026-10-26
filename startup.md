@@ -47,6 +47,7 @@ Stop with `Ctrl+C`.
 | `LINEAGE_POLICY` | `examples/policy.org.yaml` | Initial policy, installed on first start only |
 | `LINEAGE_ROLE_KEYS` | none | JSON `{"owner": "<pubkey hex>", "security": ..., "compliance": ...}`; without it `PUT /policy` returns 409. The seed script configures demo role keys in the DB |
 | `LINEAGE_TRUSTED_KEYS` | none | Comma-separated passport signer keys to trust at start-up: `.pub` PEM paths or 64-char hex |
+| `LINEAGE_DEMO_ADAPTER` | none | Demo only: path (on the GPU worker's host) of a real backdoored LoRA adapter; enables scenario 2b, which prints its `/weights/spectral` score |
 | `LINEAGE_GPU_URL` | `http://localhost:8800` | GPU worker; if unreachable, deep checks are skipped with an `info` finding |
 | `LINEAGE_ADVISORY_FEED` | none | Local advisory file the monitor reads in addition to OSV |
 
@@ -101,6 +102,7 @@ uv run pytest -q
 ## Demo problems
 - `ModuleNotFoundError: No module named 'lineage'` from `uv run lineage ...` on macOS: the venv's `.pth` files got the "hidden" flag, so Python skips them. Fix: `chflags nohidden .venv/lib/python3.11/site-packages/*.pth` (the demo script also sets `PYTHONPATH`).
 - Regenerate the fixtures with `uv run python examples/make_demo_artifacts.py`.
+- "Deep check skipped ... not applicable to this model" with a reachable worker: the worker reads model paths on its own host (e.g. a Brev box behind an SSH tunnel) and only knows bank-sized models, so the tiny local demo fixtures get an HTTP 404. Use `LINEAGE_DEMO_ADAPTER` for a real adapter score.
 - Without a GPU worker, spectral/behavioural checks and card/code review show as skipped ("needs GPU worker"); parent identification and layer diff run on CPU.
 - Package advisories (OSV) need internet; offline the `litellm` step still blocks on the `.pth` start-up hook.
 

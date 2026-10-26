@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
-import { ago, statusOutcome } from "../lib/format";
+import { ago, statusOutcome, verdictKey } from "../lib/format";
+import { useMonitorIds } from "../lib/monitor";
 import type { ArtifactType, Outcome } from "../lib/types";
 import { Empty, ErrorBox, Header, Loading, Risk, StatusPill, Trust, TypeTag, Verdict } from "../components/ui";
 
@@ -11,6 +12,7 @@ const outcomes: Outcome[] = ["allow", "allow_with_conditions", "quarantine", "bl
 
 export default function Catalogue() {
   const { data, error, reload } = useAsync(api.artifacts);
+  const monitorIds = useMonitorIds();
   const [q, setQ] = useState("");
   const [type, setType] = useState("");
   const [outcome, setOutcome] = useState("");
@@ -46,7 +48,7 @@ export default function Catalogue() {
                   <td className="td"><TypeTag t={a.artifact_type} /></td>
                   <td className="td"><Trust level={a.trust_level} /></td>
                   <td className="td"><Risk score={a.risk_score} /></td>
-                  <td className="td"><Verdict outcome={a.outcome ?? statusOutcome[a.status]} /></td>
+                  <td className="td"><Verdict outcome={verdictKey(a.status, a.outcome, a.id, monitorIds)} /></td>
                   <td className="td"><StatusPill status={a.status} /></td>
                   <td className="td text-mute">{a.environment}</td>
                   <td className="td text-mute whitespace-nowrap">{ago(a.created_at)}</td>

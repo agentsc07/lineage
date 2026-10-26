@@ -3,27 +3,35 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Background, Controls, Handle, Position, ReactFlow, type Edge, type Node, type NodeProps } from "@xyflow/react";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
-import { trustColor, trustOrder } from "../lib/format";
+import { trustColor, trustOrder, verdictKey, type VerdictKey } from "../lib/format";
+import { useMonitorIds } from "../lib/monitor";
 import type { GraphNode, RevokeResult } from "../lib/types";
-import { ErrorBox, Header, Loading, Trust } from "../components/ui";
+import { ErrorBox, Header, Loading, Trust, Verdict } from "../components/ui";
 
-type NData = { node: GraphNode; state: "idle" | "revoked" | "hit" } & Record<string, unknown>;
+type NData = { node: GraphNode; state: "idle" | "revoked" | "hit"; vkey: VerdictKey | null } & Record<string, unknown>;
+
+// Border colour follows the decision; the trust ladder stays as the bar inside the node.
+const decisionColor: Record<VerdictKey, string> = {
+  allow: "var(--allow)", allow_with_conditions: "var(--cond)", quarantine: "var(--quar)", block: "var(--block)", block_monitor: "var(--block)", revoked: "var(--block)",
+};
 
 function LineageNode({ data, selected }: NodeProps<Node<NData>>) {
   const { node, state } = data;
-  const color = state === "idle" ? trustColor[node.trust_level] : "var(--block)";
+  const vkey: VerdictKey | null = state === "revoked" ? "revoked" : data.vkey;
+  const hit = state === "hit";
+  const color = hit ? "var(--block)" : vkey ? decisionColor[vkey] : "var(--faint)";
+  const dashed = vkey === "revoked" || hit;
   return (
-    <div className={`rounded-lg border bg-panel px-3 py-2 min-w-[190px] transition-colors ${state === "hit" ? "blast" : ""} ${selected ? "ring-2 ring-accent" : ""}`}
-      style={{ borderColor: `rgb(${color})`, borderLeftWidth: 4, opacity: state === "idle" ? 1 : 0.95 }}>
+    <div className={`rounded-lg border bg-panel px-3 py-2 min-w-[200px] transition-colors ${hit ? "blast" : ""} ${selected ? "ring-2 ring-accent" : ""}`}
+      style={{ borderColor: `rgb(${color})`, borderLeftWidth: 4, borderStyle: dashed ? "dashed" : "solid", background: dashed ? "rgb(var(--block) / .07)" : undefined }}>
       <Handle type="target" position={Position.Left} className="!bg-faint !border-0 !w-1.5 !h-1.5" />
       <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-medium truncate">{node.label}</span>
+        <span className={`text-sm font-medium truncate ${vkey === "revoked" ? "line-through decoration-block/60" : ""}`}>{node.label}</span>
         <span className="text-xs text-mute capitalize">{node.artifact_type}</span>
       </div>
-      <div className="mt-1.5 text-xs">
-        {state === "revoked" ? <span className="text-block font-medium">Revoked</span>
-          : state === "hit" ? <span className="text-block font-medium">Affected</span>
-          : <Trust level={node.trust_level} />}
+      <div className="mt-1.5 flex items-center justify-between gap-2">
+        <Trust level={node.trust_level} label={false} />
+        {hit ? <span className="text-xs font-medium text-block border border-dashed border-block/40 rounded-md px-2 py-0.5">Affected</span> : <Verdict outcome={vkey} />}
       </div>
       <Handle type="source" position={Position.Right} className="!bg-faint !border-0 !w-1.5 !h-1.5" />
     </div>
@@ -34,6 +42,7 @@ const nodeTypes = { lineage: LineageNode };
 export default function GraphPage() {
   const { id } = useParams();
   const nav = useNavigate();
+  const monitorIds = useMonitorIds();
   const arts = useAsync(api.artifacts);
   // Default to the artifact whose chain (ancestors + descendants) is largest, so the full story shows on load.
   const biggest = useAsync(async () => {
@@ -73,7 +82,7 @@ export default function GraphPage() {
     const ns: Node<NData>[] = g.nodes.map((n) => {
       const col = d(n.id); const row = perCol.get(col) ?? 0; perCol.set(col, row + 1);
       const state = result?.revoked === n.id ? "revoked" : wave.has(n.id) ? "hit" : "idle";
-      return { id: n.id, type: "lineage", position: { x: col * 280, y: row * 110 }, data: { node: n, state }, selected: n.id === target };
+      return { id: n.id, type: "lineage", position: { x: col * 280, y: row * 110 }, data: { node: n, state, vkey: verdictKey(n.status, null, n.id, monitorIds) }, selected: n.id === target };
     });
     const es: Edge[] = g.edges.map((e) => {
       const hot = (result?.revoked === e.source || wave.has(e.source)) && wave.has(e.target);
@@ -81,7 +90,7 @@ export default function GraphPage() {
         style: { stroke: hot ? "rgb(var(--block))" : "rgb(var(--faint))", strokeWidth: hot ? 2.5 : 1.5 } };
     });
     return { nodes: ns, edges: es };
-  }, [graph.data, result, wave, target]);
+  }, [graph.data, result, wave, target, monitorIds]);
 
   const revoke = async () => {
     if (!target) return;
@@ -119,7 +128,11 @@ export default function GraphPage() {
           <Background gap={20} color="rgb(var(--line))" /><Controls showInteractive={false} />
         </ReactFlow>
         <div className="absolute left-3 bottom-3 card px-3 py-2 flex gap-3 text-xs text-mute">
+          <span className="text-faint">Trust</span>
           {trustOrder.map((t) => <span key={t} className="flex items-center gap-1.5 capitalize"><span className="w-2 h-2 rounded-sm" style={{ background: `rgb(${trustColor[t]})` }} />{t}</span>)}
+          <span className="text-faint ml-2">Border</span>
+          {([["allow", "Allow"], ["quarantine", "Quarantine"], ["block", "Block"]] as const).map(([k, l]) => <span key={k} className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm" style={{ background: `rgb(${decisionColor[k]})` }} />{l}</span>)}
+          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm border border-dashed border-block" />Revoked</span>
         </div>
       </div>
       {result && (
