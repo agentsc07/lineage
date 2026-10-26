@@ -62,6 +62,7 @@ class _Scope:
         self.pf, self.names = pf, names
         self.consts = consts or {}  # NAME = "literal"
         self.blobs = blobs or set()  # names bound to a long literal string/bytes (an embedded blob)
+        self.conn_hosts: dict[str, tuple[str, ...]] = {}  # s = socket.create_connection(("host", 9)): later s.sendall(...) goes there
         self.env: dict[str, set[Taint]] = {}
         self.flows: list[Flow] = []
 
@@ -104,7 +105,11 @@ class _Scope:
         return bool(NETWORK_RECEIVER.search(base)) and not NOT_NETWORK_RECEIVER.search(base)
 
     def _sink_hosts(self, call: ast.Call) -> tuple[str, ...]:
-        found: set[str] = set()
+        found: set[str] = set(self.conn_hosts.get((self.names.dotted(call.func) or "").split(".")[0], ()))
+        for a in call.args[:1]:  # connection constructors take the host as the first argument or first tuple element
+            for sub in ([a] if not isinstance(a, ast.Tuple) else a.elts[:1]):
+                if isinstance(sub, ast.Constant) and isinstance(sub.value, str) and _hosts.looks_like_host(sub.value):
+                    found.add(sub.value.lower())
         for v in [*call.args, *[k.value for k in call.keywords]]:
             for sub in ast.walk(v):
                 text = sub.value if isinstance(sub, ast.Constant) and isinstance(sub.value, str) else self.consts.get(sub.id) if isinstance(sub, ast.Name) else None
@@ -200,6 +205,11 @@ class _Scope:
             value = s.value
             if value is not None:
                 self._check_sinks(value)
+                if isinstance(value, ast.Call) and _matches(self.names.dotted(value.func) or "", NETWORK) and isinstance(s, ast.Assign):
+                    hosts = self._sink_hosts(value)
+                    for tg in s.targets:
+                        if isinstance(tg, ast.Name) and hosts:
+                            self.conn_hosts[tg.id] = hosts
                 t = self.taint_of(value)
                 targets = s.targets if isinstance(s, ast.Assign) else [s.target]
                 for tg in targets:

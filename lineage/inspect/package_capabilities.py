@@ -227,14 +227,19 @@ class _Visitor(ast.NodeVisitor):
         if d in ("getattr", "setattr", "delattr") and len(node.args) > 1 and not isinstance(node.args[1], ast.Constant):
             self.add("obfuscation", node, f"{d}(<computed name>)")
         if d == "getattr" and node.args and (self.names.dotted(node.args[0]) or "") in ("builtins", "__builtins__"):
-            self.add("obfuscation", node, "getattr(builtins, ...)", ("strong",))
             par = self.parents.get(node)
-            if isinstance(par, ast.Call) and par.func is node:  # getattr(builtins, "ex" + "ec")(...): exec reached by a built-up name
+            called = isinstance(par, ast.Call) and par.func is node
+            self.add("obfuscation", node, "getattr(builtins, ...)", ("strong",) if called else ())  # looking up a builtin by name is ordinary
+            if called:  # getattr(builtins, "ex" + "ec")(...): exec reached by a built-up name
                 self.add("dynamic_exec", node, "getattr(builtins, <name>)(...)", ("hidden",))
         if isinstance(node.func, ast.Attribute) and node.func.attr == "join" and any(
             isinstance(n, ast.Call) and self.names.dotted(n.func) == "chr" for a in node.args for n in ast.walk(a)
         ):
-            self.add("obfuscation", node, "''.join(chr(...))", ("strong",))
+            literal_codes = any(isinstance(g, ast.comprehension) and isinstance(g.iter, (ast.Tuple, ast.List, ast.Constant))
+                                and len(getattr(g.iter, "elts", [0] * 4)) >= 4 for a in node.args for g in ast.walk(a)) or any(
+                isinstance(n, ast.Call) and self.names.dotted(n.func) == "chr" and n.args and isinstance(n.args[0], ast.Constant)
+                for a in node.args for n in ast.walk(a))
+            self.add("obfuscation", node, "''.join(chr(...))", ("strong",) if literal_codes else ())  # chr() over a literal list spells a name; over a variable it formats text
         self.generic_visit(node)
 
     def _risky_under(self, node: ast.AST) -> bool:
@@ -302,7 +307,7 @@ class _Visitor(ast.NodeVisitor):
                 and isinstance(node.value, ast.Constant) and isinstance(node.value.value, str)
                 and len(node.value.value) >= 8):
             self.add("obfuscation", node, "reversed string literal", ("strong",))
-        if (self.names.dotted(node.value) or "") in ("__builtins__", "builtins"):
+        if (self.names.dotted(node.value) or "") == "__builtins__":  # a variable that merely happens to be called `builtins` is not Python's
             self.add("obfuscation", node, "__builtins__[...]", ("strong",))
         self.generic_visit(node)
 
@@ -333,7 +338,7 @@ def _file_hits(pf: PyFile) -> list[Hit]:
         v.hits.append(Hit("obfuscation", pf.rel, 1, "obfuscated identifiers", line_text(lines, 1), frozenset({"strong"})))
     if len(_HEX_ESCAPES.findall(pf.text)) >= 20:
         first = next((i for i, ln in enumerate(lines, 1) if _HEX_ESCAPES.search(ln)), 1)
-        v.hits.append(Hit("obfuscation", pf.rel, first, "dense \\x escapes", line_text(lines, first), frozenset({"strong"})))
+        v.hits.append(Hit("obfuscation", pf.rel, first, "dense \\x escapes", line_text(lines, first)))  # regexes and byte tables are full of them
     return v.hits
 
 
@@ -528,7 +533,7 @@ def combos(a: Analysis, package: str = "", declared: set[str] | None = None) -> 
         by_file.setdefault(h.file, []).append(h)
 
     for f_, hs in sorted(by_file.items()):
-        creds = [h for h in hs if h.cap == "env_secrets" and ({"sensitive_path", "secret_key", "bulk"} & h.flags)]
+        creds = [h for h in hs if h.cap == "env_secrets" and ({"sensitive_path", "secret_key"} & h.flags)]
         sends = [h for h in hs if h.cap in ("network", "subprocess")]
         if creds and sends:
             hosts = {x for h in sends for x in _hit_hosts(h)}
@@ -648,6 +653,16 @@ def _bait_over_risky_code(a: Analysis, package_dir: Path) -> list[Finding]:
     return out
 
 
+# Combinations that stay at full severity even when the previous release had them: a release that already exfiltrated
+# credentials or piped a download into a shell was not safe because it did so earlier too.
+NEVER_LOWERED = ("PKG.COMBO.CREDENTIAL_EXFIL", "PKG.COMBO.FETCH_AND_RUN")
+
+
+def _already_there(f: Finding) -> Finding:
+    """The same combination in the same file existed in the previous release: a known quantity, reported as info."""
+    return f.model_copy(update={"severity": "info", "score": 0, "title": f.title + " (already in the previous release)"})
+
+
 def findings_from(a: Analysis, only_new: bool = False) -> list[Finding]:
     """Everything `scan` derives from one analysis without a baseline or package metadata (the reviewer's static view)."""
     return signals(a) + content_findings(a) + hook_findings(a) + combos(a)
@@ -660,7 +675,11 @@ def scan(package_dir: Path, previous: Path | None = None, *, name: str = "", met
     declared = _hosts.declared_hosts(Path(package_dir), metadata)
     out = signals(cur) + content_findings(cur)
     prev = analyse(previous) if previous is not None else None
-    out += hook_findings(cur, prev) + combos(cur, name, declared)
+    found = combos(cur, name, declared)
+    if prev is not None:
+        was = {(f.id, f.evidence[0].ref.rsplit(":", 1)[0]) for f in combos(prev, name, declared) if f.evidence}
+        found = [_already_there(f) if f.id not in NEVER_LOWERED and f.evidence and (f.id, f.evidence[0].ref.rsplit(":", 1)[0]) in was else f for f in found]
+    out += hook_findings(cur, prev) + found
     if prev is not None:
         out += diff_findings(cur, prev, name, declared)
     out += _bait_over_risky_code(cur, package_dir)

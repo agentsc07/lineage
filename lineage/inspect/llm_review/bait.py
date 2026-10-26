@@ -32,10 +32,20 @@ class Bait:
     where: str  # comment | string
 
 
-def is_bait(text: str) -> bool:
+PROXIMITY = 80  # characters between the audience and what it is told: a sentence, not a page of prose
+
+
+def is_bait(text: str, strict: bool = False) -> bool:
+    """`strict` (docstrings and long prose, where words like "model" and "approve" are ordinary) accepts only the explicit phrases."""
     if STRONG.search(text):
         return True
-    return bool(AUDIENCE.search(text) and (DIRECTIVE.search(text) or ASSURANCE.search(text)))
+    if strict:
+        return False
+    for a in AUDIENCE.finditer(text):
+        window = text[max(0, a.start() - PROXIMITY): a.end() + PROXIMITY]
+        if DIRECTIVE.search(window) or ASSURANCE.search(window):
+            return True
+    return False
 
 
 def _comments(pf: PyFile):
@@ -57,8 +67,12 @@ def detect(package_dir: Path) -> list[Bait]:
                 if is_bait(text):
                     out.append(Bait(pf.rel, line, text[:200], "comment"))
         if pf.tree is not None:
+            docs = {n.body[0].value for n in ast.walk(pf.tree)
+                    if isinstance(n, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+                    and n.body and isinstance(n.body[0], ast.Expr) and isinstance(n.body[0].value, ast.Constant)}
             for node in ast.walk(pf.tree):
-                if isinstance(node, ast.Constant) and isinstance(node.value, str) and 12 <= len(node.value) <= 2000 and is_bait(node.value):
+                if isinstance(node, ast.Constant) and isinstance(node.value, str) and 12 <= len(node.value) <= 2000 and is_bait(
+                        node.value, strict=node in docs or len(node.value) > 300):
                     out.append(Bait(pf.rel, node.lineno, node.value.strip()[:200], "string"))
     return sorted(set(out), key=lambda b: (b.file, b.line))
 

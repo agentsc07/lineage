@@ -80,6 +80,7 @@ def lookalikes(name: str, top: tuple[str, ...] | None = None) -> list[tuple[str,
     return sorted(out, key=lambda x: (x[1], x[0]))[:3]
 
 
+REGISTRY_NAMES = {"pypi", "npm", "hf", "local", "crates", "rubygems"}
 # Who publishes well-known projects: a release of one of these built from some other account is not the project.
 CANONICAL_OWNERS = {
     "requests": "psf", "urllib3": "urllib3", "numpy": "numpy", "pandas": "pandas-dev", "scipy": "scipy",
@@ -201,6 +202,7 @@ def scan(
 
     # repository owner vs the project the name claims to be
     owners = {o for o, _ in declared} | ({metadata["repo"].split("/")[0]} if "/" in str(metadata.get("repo", "")) else set())
+    owners -= REGISTRY_NAMES  # "pypi/requests" names the registry, not an account
     target = normalise(name) if normalise(name) in CANONICAL_OWNERS else next(
         (c for c, _, _ in lookalikes(name)[:1] if c in CANONICAL_OWNERS), None)
     if target and owners:
