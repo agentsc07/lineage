@@ -100,7 +100,7 @@ class _Scope:
 
     def _netish(self, d: str) -> bool:
         base = d.rsplit(".", 1)[0] if "." in d else ""
-        if _matches(d, NETWORK):
+        if _matches(d, NETWORK) or base in self.conn_hosts:
             return True
         return bool(NETWORK_RECEIVER.search(base)) and not NOT_NETWORK_RECEIVER.search(base)
 

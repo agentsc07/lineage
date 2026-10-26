@@ -549,7 +549,7 @@ def combos(a: Analysis, package: str = "", declared: set[str] | None = None) -> 
         if strong and acts:
             hidden_exec = any("hidden" in h.flags for h in acts)
             out.append(finding("PKG.COMBO.OBFUSCATED_PAYLOAD", f"{f_} hides what it does ({strong[0].api}) and also {acts[0].cap.replace('_', ' ')}s",
-                               "critical" if hidden_exec else "high", "code", "S4", _evidence(strong, 3) + _evidence(acts, 3)))
+                               "critical", "code", "S4", _evidence(strong, 3) + _evidence(acts, 3)))
         runs = [h for h in hs if h.cap == "subprocess" and "toplevel" in h.flags and "empty_command" not in h.flags]
         fetch = [h for h in runs if PIPE_TO_SHELL.search(h.snippet)]
         if fetch:

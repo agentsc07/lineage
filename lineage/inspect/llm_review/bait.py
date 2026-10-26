@@ -24,6 +24,12 @@ STRONG = re.compile(r"ignore (all |any )?(previous|prior|above) instructions|not
                     r"(security )?review(er)?:? (pass|approved|ok)|<\s*/?\s*(system|instructions?)\s*>", re.I)
 
 
+# Phrases that speak to a reader that is not the user: only these count in docstrings and long prose.
+ADDRESSED = re.compile(r"ignore (all |any )?(previous|prior|above) instructions|note to (the )?(ai|llm|reviewer|assistant)|<\s*/?\s*(system|instructions?)\s*>|"
+                       r"(this|the) (code|file|package|function|script|line) is (completely |totally )?(safe|benign|harmless)|"
+                       r"nothing (suspicious|malicious) (here|to see)|(security )?review(er)?:? (pass|approved|ok)", re.I)
+
+
 @dataclass(frozen=True)
 class Bait:
     file: str
@@ -37,10 +43,10 @@ PROXIMITY = 80  # characters between the audience and what it is told: a sentenc
 
 def is_bait(text: str, strict: bool = False) -> bool:
     """`strict` (docstrings and long prose, where words like "model" and "approve" are ordinary) accepts only the explicit phrases."""
+    if strict:
+        return bool(ADDRESSED.search(text))
     if STRONG.search(text):
         return True
-    if strict:
-        return False
     for a in AUDIENCE.finditer(text):
         window = text[max(0, a.start() - PROXIMITY): a.end() + PROXIMITY]
         if DIRECTIVE.search(window) or ASSURANCE.search(window):

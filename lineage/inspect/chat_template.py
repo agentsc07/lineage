@@ -177,7 +177,7 @@ def _literal_text(node: nodes.Node) -> list[tuple[int, str]]:
 def _is_markup(literal: str) -> bool:
     """A control token or tag ('</think>', '<|channel|>analysis<|message|>', '[INST]') rather than words a person would write."""
     tags = r"<[^<>]*>|\[[^\[\]]*\]|\{[^{}]*\}"
-    return bool(re.search(tags, literal)) and not re.findall(r"[A-Za-z]{3,}", re.sub(tags, " ", literal))
+    return bool(re.search(tags, literal)) and len(re.findall(r"[A-Za-z]{3,}", re.sub(tags, " ", literal))) <= 1
 
 
 def _urls_with_data(tree: nodes.Template) -> bool:
