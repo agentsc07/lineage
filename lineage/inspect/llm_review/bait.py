@@ -20,7 +20,7 @@ ASSURANCE = re.compile(r"\b(safe|benign|harmless|legitimate|false[- ]positive|no
                        r"trusted|verified|whitelisted|pass(ed)? (the )?(review|scan|audit))\b", re.I)
 STRONG = re.compile(r"ignore (all |any )?(previous|prior|above) instructions|note to (the )?(ai|llm|reviewer|assistant)|"
                     r"(this|the) (code|file|package|function|script|line) is (completely |totally )?(safe|benign|harmless)|"
-                    r"(not|isn'?t) (a )?(malware|malicious|backdoor)|nothing (suspicious|malicious) (here|to see)|"
+                    r"\b(this|it|code|file|package|script|function) (is not|isn'?t|is in no way) (a )?(malware|malicious|backdoor)|nothing (suspicious|malicious) (here|to see)|"
                     r"(security )?review(er)?:? (pass|approved|ok)|<\s*/?\s*(system|instructions?)\s*>", re.I)
 
 
