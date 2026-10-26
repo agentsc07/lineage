@@ -15,7 +15,8 @@ VLLM_BIN="${VLLM_BIN:-/home/ubuntu/vllm-env/bin/vllm}"   # cu129 build in its ow
 export VLLM_USE_FLASHINFER_SAMPLER=0   # flashinfer sampling kernels JIT-compile and need nvcc, which this box does not have
 CMD="VLLM_USE_FLASHINFER_SAMPLER=0 ${VLLM_BIN} serve ${MODEL} --port ${PORT} --host 127.0.0.1 --max-model-len 16384 \
  --gpu-memory-utilization ${UTIL} --served-model-name reviewer --trust-remote-code \
- --mamba_ssm_cache_dtype float32 2>&1 | tee logs/vllm.log"
+ --mamba_ssm_cache_dtype float32 \
+ --structured-outputs-config.backend xgrammar --structured-outputs-config.disable_any_whitespace true 2>&1 | tee logs/vllm.log"
 if tmux has-session -t "$SESSION" 2>/dev/null; then tmux new-window -t "$SESSION" -n vllm "$CMD"
 else tmux new-session -d -s "$SESSION" -n vllm "$CMD"; fi
 echo "started ${MODEL} in tmux ${SESSION}:vllm (log: logs/vllm.log)"
