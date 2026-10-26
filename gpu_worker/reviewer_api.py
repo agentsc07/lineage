@@ -351,8 +351,7 @@ def _policy_claims(kind: str, text: str, file: str, policy_path: str | None = No
         line = text.splitlines()[h.line - 1] if h.line - 1 < len(text.splitlines()) else ""
         api = (line.strip() or h.excerpt.strip())[:60] or "policy"
         out.append(Claim(text=f"Policy violation ({kind}): {h.reason}"[:300], file=file, line=h.line, api=api, severity="medium"))
-    grounded, _ = ground(out, [Doc(file=file, start=1, code=text)])
-    return grounded
+    return out  # citation is a prefix of the cited line by construction, so there is nothing to ground
 
 
 @router.post("/review/policy", response_model=ReviewResponse)

@@ -16,6 +16,7 @@ import httpx
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "bench" / "corpus" / "reviewer" / "fixtures.json"
+HELDOUT = FIXTURES.with_name("heldout.json")
 OUT = ROOT / "bench" / "reviewer.json"
 URL = os.environ.get("LINEAGE_GPU_URL", "http://127.0.0.1:8800")
 
@@ -26,7 +27,7 @@ def pct(xs: list[float], q: float) -> float:
 
 
 def run(url: str = URL) -> dict:
-    items = json.loads(FIXTURES.read_text())
+    items = json.loads(FIXTURES.read_text()) + json.loads(HELDOUT.read_text())
     rows, t_all = [], time.time()
     for it in items:
         path = {"card": "/review/card", "policy": "/review/policy"}.get(it["endpoint"], "/review/code")
@@ -75,7 +76,8 @@ def run(url: str = URL) -> dict:
 
     bait = [r for r in ok if r["group"] == "bait"]
     by_group = {"code (12 malicious / 12 benign)": with_errors({"malicious", "benign"}), "reviewer-bait (6)": with_errors({"bait"}),
-                "model cards (3/3)": with_errors({"card"}), "chat templates (2/2)": with_errors({"template"})}
+                "model cards (3/3)": with_errors({"card"}), "chat templates (2/2)": with_errors({"template"}),
+                "held-out code (3/3, not tuned on)": with_errors({"heldout"})}
     overall = with_errors({"malicious", "benign", "bait", "card", "template"})
     calls = [r for r in ok if r["llm_calls"]]
     llm_s = sum(r["llm_s"] for r in ok)

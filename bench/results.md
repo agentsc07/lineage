@@ -80,6 +80,27 @@ Overall: **TPR 75%** (68 malicious) · **FPR 6%** (63 benign)
 Missed malicious (17): pkg_mal_ssh_key_theft, pkg_mal_install_cmdclass, pkg_mal_delayed_bomb, pkg_mal_reviewer_bait_subprocess, pkg_look_0, pkg_look_1, pkg_look_2, pkg_look_3, pkg_look_4, tpl_mal_url_inject, tpl_mal_hidden_instruction, lora_backdoor_41, lora_backdoor_69, lora_backdoor_10, lora_backdoor_80, lora_backdoor_35, lora_backdoor_08
 False positives (4): lora_benign_02, lora_benign_04, lora_benign_88, lora_benign_35
 
+## Reviewer (LLM)
+
+`nvidia/NVIDIA-Nemotron-Nano-9B-v2` served by vLLM; prosecutor → defender → judge, JSON-schema constrained. Flagged = verdict suspicious/malicious. 46 requests, 0 errors. Wilson 95% intervals; **small n, and the first four groups were used to tune prompts**.
+
+| group | malicious | recall (95% CI) | benign | false positives | precision |
+|---|---|---|---|---|---|
+| code (12 malicious / 12 benign) | 12 | 100% (76%–100%) | 12 | 0/12 | 100% |
+| reviewer-bait (6) | 6 | 100% (61%–100%) | 0 | – | 100% |
+| model cards (3/3) | 3 | 100% (44%–100%) | 3 | 0/3 | 100% |
+| chat templates (2/2) | 2 | 100% (34%–100%) | 2 | 0/2 | 100% |
+| held-out code (3/3, not tuned on) | 3 | 100% (44%–100%) | 3 | 0/3 | 100% |
+
+Tuned set overall: precision **100%**, recall **100%** (23 TP, 0 FP, 0 FN, 17 TN). Reviewer-bait reported as its own claim: 100%.
+
+| latency | p50 | p95 | mean |
+|---|---|---|---|
+| per LLM call | 2.03 s | 2.43 s | – |
+| per request (end to end, 1.8 calls on average) | 5.31 s | 8.19 s | 4.28 s |
+
+Tokens: 53,381 prompt, 6,922 generated · **41 tokens/s** (generated tokens / LLM time, batch 1, bf16 on one L40S). tokens/sec = completion tokens / LLM wall time (prefill included, structured JSON decoding, batch size 1).
+
 ## Notes
 
 GPU hours are one-off (bank training, evaluation). Per-intake GPU time is the 'seconds' of GPU-backed checks.
