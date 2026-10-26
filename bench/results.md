@@ -1,17 +1,17 @@
 # LineageBench results
 
-Generated 2026-10-26T06:27:07+00:00 · 131 labelled inert artifacts · GPU hours logged (all jobs): **5.767**
+Generated 2026-10-26T10:35:34+00:00 · 131 labelled inert artifacts · GPU hours logged (all jobs): **5.767**
 
 ## dev, no GPU worker
 
-Overall: **TPR 91%** (68 malicious) · **FPR 6%** (63 benign)
+Overall: **TPR 90%** (68 malicious) · **FPR 6%** (63 benign)
 
 | category | malicious | TPR | benign | FPR | AUROC | errors |
 |---|---|---|---|---|---|---|
 | chat_template_backdoor | 5 | 100% | 5 | 0% | – | 0 |
 | lookalike_name | 5 | 100% | 5 | 0% | – | 0 |
 | lora_backdoor | 20 | 70% | 20 | 20% | 0.81 | 0 |
-| mcp_tool_poisoning | 5 | 100% | 5 | 0% | – | 0 |
+| mcp_tool_poisoning | 5 | 80% | 5 | 0% | – | 0 |
 | package_payload | 10 | 100% | 10 | 0% | – | 0 |
 | pickle_payload | 5 | 100% | 5 | 0% | – | 0 |
 | poisoned_dataset | 3 | 100% | 3 | 0% | – | 0 |
@@ -20,24 +20,24 @@ Overall: **TPR 91%** (68 malicious) · **FPR 6%** (63 benign)
 
 | check | n | p50 | p95 |
 |---|---|---|---|
-| intake | 66 | 83 ms | 274 ms |
+| intake | 66 | 83 ms | 175 ms |
 | bind | 15 | 2 ms | 10 ms |
 | tokenizer_diff | 10 | 0 ms | 1 ms |
-| lora_weights | 40 | 568 ms | 704 ms |
+| lora_weights | 40 | 542 ms | 598 ms |
 
-Missed malicious (6): lora_backdoor_41, lora_backdoor_69, lora_backdoor_10, lora_backdoor_80, lora_backdoor_35, lora_backdoor_08
+Missed malicious (7): tool_mal_undeclared_network, lora_backdoor_41, lora_backdoor_69, lora_backdoor_10, lora_backdoor_80, lora_backdoor_35, lora_backdoor_08
 False positives (4): lora_benign_02, lora_benign_04, lora_benign_88, lora_benign_35
 
 ## staging (deep stages on), no GPU worker
 
-Overall: **TPR 91%** (68 malicious) · **FPR 6%** (63 benign)
+Overall: **TPR 90%** (68 malicious) · **FPR 6%** (63 benign)
 
 | category | malicious | TPR | benign | FPR | AUROC | errors |
 |---|---|---|---|---|---|---|
 | chat_template_backdoor | 5 | 100% | 5 | 0% | – | 0 |
 | lookalike_name | 5 | 100% | 5 | 0% | – | 0 |
 | lora_backdoor | 20 | 70% | 20 | 20% | 0.81 | 0 |
-| mcp_tool_poisoning | 5 | 100% | 5 | 0% | – | 0 |
+| mcp_tool_poisoning | 5 | 80% | 5 | 0% | – | 0 |
 | package_payload | 10 | 100% | 10 | 0% | – | 0 |
 | pickle_payload | 5 | 100% | 5 | 0% | – | 0 |
 | poisoned_dataset | 3 | 100% | 3 | 0% | – | 0 |
@@ -46,12 +46,12 @@ Overall: **TPR 91%** (68 malicious) · **FPR 6%** (63 benign)
 
 | check | n | p50 | p95 |
 |---|---|---|---|
-| intake | 66 | 78 ms | 171 ms |
-| bind | 15 | 2 ms | 6 ms |
+| intake | 66 | 77 ms | 167 ms |
+| bind | 15 | 2 ms | 8 ms |
 | tokenizer_diff | 10 | 0 ms | 0 ms |
-| lora_weights | 40 | 558 ms | 586 ms |
+| lora_weights | 40 | 545 ms | 580 ms |
 
-Missed malicious (6): lora_backdoor_41, lora_backdoor_69, lora_backdoor_10, lora_backdoor_80, lora_backdoor_35, lora_backdoor_08
+Missed malicious (7): tool_mal_undeclared_network, lora_backdoor_41, lora_backdoor_69, lora_backdoor_10, lora_backdoor_80, lora_backdoor_35, lora_backdoor_08
 False positives (4): lora_benign_02, lora_benign_04, lora_benign_88, lora_benign_35
 
 ## staging (deep stages on), with GPU worker
@@ -72,10 +72,10 @@ Overall: **TPR 91%** (68 malicious) · **FPR 6%** (63 benign)
 
 | check | n | p50 | p95 |
 |---|---|---|---|
-| intake | 66 | 83 ms | 6221 ms |
-| bind | 15 | 2 ms | 6 ms |
+| intake | 66 | 84 ms | 6366 ms |
+| bind | 15 | 2 ms | 5 ms |
 | tokenizer_diff | 10 | 0 ms | 0 ms |
-| lora_weights | 40 | 554 ms | 601 ms |
+| lora_weights | 40 | 551 ms | 586 ms |
 
 Missed malicious (6): lora_backdoor_41, lora_backdoor_69, lora_backdoor_10, lora_backdoor_80, lora_backdoor_35, lora_backdoor_08
 False positives (4): lora_benign_02, lora_benign_04, lora_benign_88, lora_benign_35

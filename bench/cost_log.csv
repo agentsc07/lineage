@@ -7,3 +7,7 @@ date,instance,gpu,job,start,end,gpu_hours
 2026-10-25,brev-c155j6vpw,NVIDIA L40S,train_lora_bank,2026-10-25T22:54:12+00:00,2026-10-26T00:43:07+00:00,1.815
 2026-10-26,brev-c155j6vpw,NVIDIA L40S,gpu_eval,2026-10-26T00:47:57+00:00,2026-10-26T01:04:21+00:00,0.273
 2026-10-26,brev-c155j6vpw,NVIDIA L40S,vllm_reviewer_serving+reviewer_bench (still running; row covers start to this timestamp),2026-10-26T05:06:16+00:00,2026-10-26T05:49:36+00:00,0.722
+2026-10-26,brev-c155j6vpw,NVIDIA L40S,vllm_reviewer_serving (reviewer dev and bench and ablation harness prep; continues previous row),2026-10-26T05:49:36+00:00,2026-10-26T07:14:21+00:00,1.413
+2026-10-26,brev-c155j6vpw,NVIDIA L40S,final_ablation_attempt1_hung (killed; scanner hang on `black`),2026-10-26T07:14:21+00:00,2026-10-26T08:50:18+00:00,1.599
+2026-10-26,brev-c155j6vpw,NVIDIA L40S,final_run: ablation+LineageBench+calibration (attempt 2),2026-10-26T08:50:18+00:00,2026-10-26T10:39:15+00:00,1.816
+2026-10-26,brev-c155j6vpw,NVIDIA L40S,final_report_and_diagnosis (vLLM + worker up),2026-10-26T10:39:15+00:00,2026-10-26T10:49:06+00:00,0.164

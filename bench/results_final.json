@@ -1,0 +1,246 @@
+{
+ "generated": "2026-10-26T10:48:33+00:00",
+ "columns": {
+  "in-sample (bench/corpus)": {
+   "synthetic_full": {
+    "tp": 62,
+    "n_mal": 68,
+    "fp": 4,
+    "n_ben": 63,
+    "policy_blocked": 0,
+    "timeouts": 0
+   },
+   "synthetic_static": {
+    "tp": 61,
+    "n_mal": 68,
+    "fp": 4,
+    "n_ben": 63,
+    "policy_blocked": 0,
+    "timeouts": 0
+   },
+   "pypi": {
+    "flagged": 0,
+    "n": 0,
+    "static_flagged": 0,
+    "timeouts": 0
+   },
+   "templates": {
+    "flagged": 0,
+    "n": 0,
+    "static_flagged": 0,
+    "timeouts": 0
+   },
+   "changes": {
+    "tp_gained": [
+     "tool_mal_undeclared_network"
+    ],
+    "fp_introduced": [],
+    "tp_lost": [],
+    "fp_removed": [],
+    "outcome_only": [
+     "pkg_mal_ssh_key_theft",
+     "pkg_mal_b64_exec"
+    ],
+    "called": 18,
+    "n_intake": 66
+   },
+   "latency": {
+    "static": [
+     0.08462183699884918,
+     0.17832355800055666
+    ],
+    "reviewer": [
+     0.09281762700265972,
+     6.365964810996957
+    ],
+    "real_static": [
+     0.0,
+     0.0
+    ],
+    "real_reviewer": [
+     0.0,
+     0.0
+    ]
+   },
+   "cost": {
+    "n_artifacts": 131,
+    "gpu_seconds": 77.55082630604738,
+    "gpu_s_per_artifact": 0.5919910405041785,
+    "usd_busy_per_artifact": 0.00028612900291035293,
+    "usd_wall_per_artifact": 0.00030474574141758643
+   }
+  },
+  "dev (tuned on)": {
+   "synthetic_full": {
+    "tp": 40,
+    "n_mal": 40,
+    "fp": 0,
+    "n_ben": 40,
+    "policy_blocked": 6,
+    "timeouts": 0
+   },
+   "synthetic_static": {
+    "tp": 40,
+    "n_mal": 40,
+    "fp": 0,
+    "n_ben": 40,
+    "policy_blocked": 6,
+    "timeouts": 0
+   },
+   "pypi": {
+    "flagged": 12,
+    "n": 200,
+    "static_flagged": 0,
+    "timeouts": 2
+   },
+   "templates": {
+    "flagged": 3,
+    "n": 50,
+    "static_flagged": 3,
+    "timeouts": 0
+   },
+   "changes": {
+    "tp_gained": [],
+    "fp_introduced": [
+     "cffi",
+     "cryptography",
+     "distlib",
+     "fsspec",
+     "numpy",
+     "opentelemetry-sdk",
+     "pre-commit",
+     "protobuf",
+     "pygments",
+     "python-dateutil",
+     "pyyaml",
+     "ruamel-yaml"
+    ],
+    "tp_lost": [],
+    "fp_removed": [],
+    "outcome_only": [
+     "h_pkg_mal_popen_setup"
+    ],
+    "called": 189,
+    "n_intake": 318
+   },
+   "latency": {
+    "static": [
+     0.17322586999944178,
+     13.022230237998883
+    ],
+    "reviewer": [
+     3.3423901470014243,
+     17.987532901999657
+    ],
+    "real_static": [
+     0.40579387600155314,
+     22.975994036001794
+    ],
+    "real_reviewer": [
+     4.198314593995747,
+     27.86322978100361
+    ]
+   },
+   "cost": {
+    "n_artifacts": 330,
+    "gpu_seconds": 952.8913810609447,
+    "gpu_s_per_artifact": 2.88754963957862,
+    "usd_busy_per_artifact": 0.0013956489924629998,
+    "usd_wall_per_artifact": 0.0029636440593706777
+   }
+  },
+  "FINAL unseen": {
+   "synthetic_full": {
+    "tp": 28,
+    "n_mal": 40,
+    "fp": 2,
+    "n_ben": 40,
+    "policy_blocked": 5,
+    "timeouts": 0
+   },
+   "synthetic_static": {
+    "tp": 27,
+    "n_mal": 40,
+    "fp": 2,
+    "n_ben": 40,
+    "policy_blocked": 5,
+    "timeouts": 0
+   },
+   "pypi": {
+    "flagged": 9,
+    "n": 199,
+    "static_flagged": 5,
+    "timeouts": 7
+   },
+   "templates": {
+    "flagged": 4,
+    "n": 50,
+    "static_flagged": 4,
+    "timeouts": 0
+   },
+   "changes": {
+    "tp_gained": [
+     "f_tool_mal_undeclared_delete"
+    ],
+    "fp_introduced": [
+     "docutils",
+     "jedi",
+     "pymongo",
+     "sentry-sdk"
+    ],
+    "tp_lost": [],
+    "fp_removed": [],
+    "outcome_only": [
+     "f_pkg_mal_pip_install_url"
+    ],
+    "called": 159,
+    "n_intake": 317
+   },
+   "latency": {
+    "static": [
+     0.121273498996743,
+     21.31614436399832
+    ],
+    "reviewer": [
+     2.071613621999859,
+     25.09887393799727
+    ],
+    "real_static": [
+     0.17970484499528538,
+     27.705788425999344
+    ],
+    "real_reviewer": [
+     2.976626051000494,
+     32.84742023499712
+    ]
+   },
+   "cost": {
+    "n_artifacts": 329,
+    "gpu_seconds": 770.1099087859839,
+    "gpu_s_per_artifact": 2.340759601173203,
+    "usd_busy_per_artifact": 0.0011313671405670481,
+    "usd_wall_per_artifact": 0.0035331228463737928
+   }
+  }
+ },
+ "lora": {
+  "in_sample": {
+   "auroc": 0.815,
+   "ci95": [
+    0.66,
+    0.94
+   ],
+   "n_mal": 20,
+   "n_ben": 20
+  },
+  "dev": {
+   "auroc": 0.7833333333333333,
+   "ci95": [
+    0.6653846153846155,
+    0.9
+   ],
+   "n_test": 56,
+   "n_excluded_low_asr": 15
+  }
+ }
+}
