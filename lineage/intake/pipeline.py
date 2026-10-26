@@ -185,6 +185,8 @@ def _identify(ctx: IntakeContext, explicit_meta: dict | None) -> tuple[str, list
     if ctx.claimed:
         b = ctx.claimed.passport.predicate
         name, version, ctx.source = b.name, b.version, b.source
+        if ctx.path is not None and not ctx.source.url:  # remember where the bytes are, for parent fingerprinting
+            ctx.source = ctx.source.model_copy(update={"url": ctx.path.as_uri()})
         ctx.parents = list(dict.fromkeys(ctx.parents + b.parents))
     elif ctx.path is None and "/" in ref and "==" not in ref:
         ctx.source = SourceRef(hub="huggingface", repo=ref)

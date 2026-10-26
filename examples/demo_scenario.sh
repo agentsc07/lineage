@@ -1,14 +1,20 @@
 #!/usr/bin/env bash
 # Plays BUILD_PLAN §4 (Apollo Health AI) end to end against the Lineage server.
-#   examples/demo_scenario.sh            # uses http://127.0.0.1:8000, starts the server if it is down
-#   LINEAGE_API=http://host:8000 PAUSE=0 examples/demo_scenario.sh
-# Steps that depend on a track that has not landed print a note and the demo carries on.
+#   examples/demo_scenario.sh            # starts its own server (fresh database) on http://127.0.0.1:8765
+#   PAUSE=0 examples/demo_scenario.sh    # no pauses between steps
+# Every artifact is a tiny inert local fixture from examples/demo_artifacts/ (see make_demo_artifacts.py), copied to a
+# temp dir, so bytes are really hashed and inspected. Set LINEAGE_API to use a server you started yourself; its
+# registry must already trust the demo signer key (the script cannot do that for you).
 set -uo pipefail
 cd "$(dirname "$0")/.."
+# macOS can flag the venv's editable .pth files "hidden", which makes Python skip them and `lineage` unimportable from
+# console scripts; the repo root on PYTHONPATH makes the demo independent of that.
+export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
 
-API="${LINEAGE_API:-http://127.0.0.1:8000}"
+API="${LINEAGE_API:-http://127.0.0.1:8765}"
 PAUSE="${PAUSE:-1}"
 WORK="$(mktemp -d)"
+ART="$WORK/art"
 SERVER_PID=""
 cleanup() { [[ -n "$SERVER_PID" ]] && kill "$SERVER_PID" 2>/dev/null; rm -rf "$WORK"; }
 trap cleanup EXIT
@@ -17,7 +23,8 @@ if [[ -t 1 ]]; then B=$'\e[1m'; D=$'\e[2m'; G=$'\e[32m'; Y=$'\e[33m'; O=$'\e[38;
 step() { printf '\n%s%s%s\n%s%s%s\n' "$B" "$1" "$N" "$D" "$2" "$N"; }
 note() { printf '  %s%s%s\n' "$D" "$1" "$N"; }
 pause() { sleep "$PAUSE"; }
-py() { python3 "$(dirname "${BASH_SOURCE[0]}")/demo_helpers.py" "$@"; }
+py() { uv run --quiet python "examples/demo_helpers.py" "$@"; }
+lineage() { uv run --quiet lineage "$@"; }
 
 verdict_line() { # outcome risk
   case "$1" in
@@ -29,73 +36,96 @@ verdict_line() { # outcome risk
   esac
 }
 
-# Submit an artifact, stream its SSE events, print stages and the final verdict.
-intake() { # type ref env
+# Submit a local artifact, stream its SSE events, print stages and the final verdict.
+intake() { # type path env
   local job url v
   job=$(curl -sf -X POST "$API/intake" -H 'content-type: application/json' \
     -d "{\"artifact_type\":\"$1\",\"ref\":\"$2\",\"environment\":\"$3\"}") || { printf '  %sintake request failed%s\n' "$R" "$N"; LAST_ID=""; return 0; }
   url=$(py get events_url <<<"$job")
-  curl -sfN --max-time 60 "$API$url" | py stream | tee "$WORK/out" | grep -v '^VERDICT'
+  curl -sfN --max-time 120 "$API$url" | py stream | tee "$WORK/out" | grep -v '^VERDICT'
   v=$(grep '^VERDICT' "$WORK/out" | tail -1)
   # shellcheck disable=SC2086
   set -- $v; verdict_line "${2:-}" "${3:-}"
   LAST_ID="${4:-}"
 }
 
-if ! curl -sf "$API/healthz" >/dev/null; then
-  note "Server not reachable at $API; starting one"
-  uv run uvicorn lineage_server.app:app --port "${API##*:}" >"$WORK/server.log" 2>&1 &
+# lineage sign + verify one artifact; parents are passport ids already registered by intake.
+sign_and_verify() { # type dirname name version repo [--parent id ...]
+  local type=$1 dir=$2 name=$3 version=$4 repo=$5; shift 5
+  lineage sign "$ART/$dir" --type "$type" --name "$name" --version "$version" --repo "$repo" --key "$WORK/demo.key" "$@" >/dev/null \
+    && lineage verify "$ART/$dir.passport.json" --artifact "$ART/$dir" --pubkey "$WORK/demo.pub" 2>&1 | grep -E 'signature|contents|chain|VALID' | sed 's/^/  /'
+}
+
+mkdir -p "$ART" && cp -R examples/demo_artifacts/. "$ART/"
+lineage keygen --dir "$WORK" --name demo >/dev/null
+
+if [[ -z "${LINEAGE_API:-}" ]]; then
+  echo '{}' >"$WORK/feed.json"
+  py trust "$WORK/lineage.db" "$WORK/demo.pub"
+  LINEAGE_DB="$WORK/lineage.db" LINEAGE_ADVISORY_FEED="$WORK/feed.json" \
+    uv run uvicorn lineage_server.app:app --port "${API##*:}" >"$WORK/server.log" 2>&1 &
   SERVER_PID=$!
-  for _ in $(seq 1 30); do curl -sf "$API/healthz" >/dev/null && break; sleep 0.5; done
+  for _ in $(seq 1 40); do curl -sf "$API/healthz" >/dev/null && break; sleep 0.5; done
   curl -sf "$API/healthz" >/dev/null || { echo "Server failed to start; see $WORK/server.log" >&2; exit 1; }
 fi
 
 printf '%sLineage demo: Apollo Health AI, radiology triage agent%s\n' "$B" "$N"
 note "Open the dashboard at http://localhost:5173 to follow along (cd dashboard && npm run dev)"
 
-step "1. Known source" "A signed dataset, then a model that chains to it. Fast path."
-intake dataset "apollo/radiology-notes@1.0.0" prod; pause
-intake model "apollo/triage-llama-ft@2.1.0" prod; MODEL_ID="$LAST_ID"; pause
+step "1. Known source" "Signed dataset and package, then a model whose passport chains to both. Fast path."
+note "lineage sign + verify: radiology-notes (dataset)"
+sign_and_verify dataset radiology-notes radiology-notes 1.0.0 apollo-health/radiology-notes
+intake dataset "$ART/radiology-notes" prod; DS_ID="$LAST_ID"; pause
+note "lineage sign + verify: tokenizers-fast (package)"
+sign_and_verify package tokenizers-fast tokenizers-fast 0.9.2 huggingface/tokenizers
+intake package "$ART/tokenizers-fast" prod; PKG_ID="$LAST_ID"; pause
+note "lineage sign + verify: triage-base (model), parents = the two passports above"
+sign_and_verify model triage-base triage-base 2.1.0 apollo-health/triage-base --parent "$DS_ID" --parent "$PKG_ID"
+intake model "$ART/triage-base" staging; MODEL_ID="$LAST_ID"; pause
+note "Chain: ${DS_ID:0:19}… and ${PKG_ID:0:19}… -> ${MODEL_ID:0:19}…"
 
-step "2. Unknown model from a hub" "No passport. Parent found from weights, layers 28-32 changed, hidden template instruction."
-intake model "shady-org/llama-3.2-1b-medical-ft" prod; pause
+step "2. Unknown model from a hub" "No passport. Parent found from weights, a few layers changed, hidden template instruction."
+intake model "$ART/shady-ft" prod; pause
 
 step "3. LiteLLM-style package" "Two hours old, look-alike repo, new .pth start-up file."
-intake package "litellm==1.82.7" prod; pause
+py stamp "$ART/litellm-lookalike/lineage.meta.json" 2
+intake package "$ART/litellm-lookalike" prod; pause
 
 step "4. MCP tool with an intent gap" "Clean description, undeclared network calls. A human decides."
-intake tool "mcp://apollo/dicom-fetch" dev; TOOL_ID="$LAST_ID"
+intake tool "$ART/dicom-fetch" dev; TOOL_ID="$LAST_ID"
 if [[ -n "$TOOL_ID" ]]; then
   EXPIRES=$(py expiry 14)
   d=$(curl -sf -X POST "$API/decisions/$TOOL_ID/approve" -H 'content-type: application/json' \
     -d "{\"approver\":\"dr.rao@apollo.health\",\"reason\":\"Network use reviewed; limited to the PACS host\",\"expires\":\"$EXPIRES\"}") \
-    && printf '  %sApproved by dr.rao@apollo.health until %s%s\n' "$G" "${EXPIRES%%T*}" "$N" \
-    || printf '  %sapproval failed%s\n' "$R" "$N"
+    && printf '  %sApproved by dr.rao@apollo.health until %s: now %s%s\n' "$G" "${EXPIRES%%T*}" "$(py get outcome <<<"$d")" "$N" \
+    || printf '  %sapproval refused%s\n' "$Y" "$N"
 fi
 pause
 
 step "5. Use time" "Someone swaps tokenizer.json after approval; lineage load-check must refuse."
-mkdir -p "$WORK/model" && echo '{"version":"1"}' >"$WORK/model/tokenizer.json" && echo '{"layers":28}' >"$WORK/model/config.json"
-lineage() { uv run --quiet lineage "$@"; }
-if lineage sign "$WORK/model" --type model --name demo-model --key "$WORK/demo.key" --out "$WORK/model.passport.json" 2>"$WORK/err"; then
-  printf '  %sSigned; now swapping tokenizer.json%s\n' "$D" "$N"
-  echo '{"version":"1","added_tokens":[{"content":"<!--hidden-->"}]}' >"$WORK/model/tokenizer.json"
-  if lineage load-check "$WORK/model" --passport "$WORK/model.passport.json" 2>"$WORK/err"; then
+cp -R "$ART/triage-base" "$ART/deployed-model" && rm -f "$ART/deployed-model/lineage.meta.json"
+if lineage sign "$ART/deployed-model" --type model --name triage-base --version 2.1.0 --key "$WORK/demo.key" 2>"$WORK/err" >/dev/null; then
+  printf '  %sSigned deployed-model%s\n' "$D" "$N"
+  lineage load-check "$ART/deployed-model" --passport "$ART/deployed-model.passport.json" --pubkey "$WORK/demo.pub" 2>&1 | tail -1 | sed 's/^/  /'
+  printf '  %sSwapping tokenizer.json%s\n' "$D" "$N"
+  echo '{"version":"1","added_tokens":[{"content":"<!--hidden-->"}]}' >"$ART/deployed-model/tokenizer.json"
+  if lineage load-check "$ART/deployed-model" --passport "$ART/deployed-model.passport.json" --pubkey "$WORK/demo.pub" 2>"$WORK/err" >"$WORK/lc"; then
     printf '  %sLoad allowed (unexpected)%s\n' "$R" "$N"
   else
-    printf '  %sRefused:%s %s\n' "$G" "$N" "$(head -1 "$WORK/err")"
+    printf '  %sRefused:%s %s\n' "$G" "$N" "$(sed 's/\x1b\[[0-9;]*m//g' "$WORK/err" | head -1 | sed 's/^ *//')"
   fi
-elif grep -q 'not implemented' "$WORK/err"; then
-  note "sign / load-check are not implemented yet (Track A); the swapped tokenizer.json would be refused here"
 else
   printf '  %sCould not sign the demo model:%s %s\n' "$Y" "$N" "$(head -1 "$WORK/err")"
 fi
 pause
 
 step "6. Watch" "A new advisory lands for an admitted package; the monitor traces the blast radius."
+if [[ -z "${LINEAGE_API:-}" ]]; then
+  py advisory "$WORK/feed.json" "tokenizers-fast==0.9.2"
+  note "Advisory GHSA-demo-7x4q-9m2p published for tokenizers-fast==0.9.2"
+fi
 curl -sf -X POST "$API/monitor/tick" | py tick || printf '  %smonitor tick failed%s\n' "$R" "$N"
-printf '\n%sRevoking the root of the chain:%s\n' "$B" "$N"
-ROOT=$(curl -sf "$API/artifacts" | py get 0.id)
-curl -sf -X POST "$API/revoke/$ROOT?reason=advisory" | py revoke || printf '  %srevoke failed%s\n' "$R" "$N"
+printf '\n%sRevoking the root of the chain (radiology-notes):%s\n' "$B" "$N"
+[[ -n "$DS_ID" ]] && { curl -sf -X POST "$API/revoke/$DS_ID?reason=advisory" | py revoke || printf '  %srevoke failed%s\n' "$R" "$N"; }
 
 printf '\n%sDone.%s Dashboard: Overview, Approvals and Lineage pages show the same story.\n' "$B" "$N"

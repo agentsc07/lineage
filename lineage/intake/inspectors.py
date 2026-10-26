@@ -376,7 +376,7 @@ def local_parent_diff(ctx: IntakeContext) -> list[Finding]:
                                 "model", "S4", [Evidence(kind="field", ref="claimed_base", detail=f"{claimed} != {label}")],
                                 source="statistical"))
     out.append(make_finding(
-        "MODEL.WEIGHTS.CHANGED_LAYERS", f"{len(changed)} tensor(s) differ from parent {label}", "info", "model", "S4",
+        "MODEL.WEIGHTS.CHANGED_LAYERS", f"{len(changed)} tensor(s) differ from parent {label}: " + ", ".join(d.tensor for d in changed[:4]) + ("…" if len(changed) > 4 else ""), "info", "model", "S4",
         [Evidence(kind="tensor", ref=d.tensor, detail="shape/dtype changed" if d.relative_l2 == float("inf")
                   else f"relative L2 {d.relative_l2:.3g}") for d in changed[:12]], source="statistical"))
     return out

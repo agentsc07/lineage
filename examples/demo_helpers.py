@@ -8,6 +8,14 @@ from datetime import datetime, timedelta, timezone
 MARK = {"completed": "✓", "failed": "✗", "skipped": "-"}
 
 
+def _grouped(findings: list[dict]) -> list[dict]:
+    """Collapse repeated advisories into one finding (count, worst severity, top 3 ids), as the risk score does."""
+    from lineage.risk import group_advisories
+    from lineage.schemas.finding import Finding
+
+    return [f.model_dump() for f in group_advisories([Finding.model_validate(f) for f in findings])]
+
+
 def stream() -> None:
     """Read an SSE stream; print each finished stage and findings, then a final `VERDICT outcome risk id` line."""
     for line in sys.stdin:
@@ -16,7 +24,7 @@ def stream() -> None:
         e = json.loads(line[5:])
         if e["status"] != "started":
             print(f"  {MARK[e['status']]} {e['stage']} {e['name']:<18} {e['message']}", flush=True)
-            for f in e["findings"]:
+            for f in _grouped(e["findings"]):
                 ref = f["evidence"][0]["ref"] if f["evidence"] else ""
                 print(f"      [{f['severity']}] {f['title']}  {ref}", flush=True)
         d = e.get("decision")
@@ -45,9 +53,43 @@ def get() -> None:
     print(v)
 
 
+def trust() -> None:
+    """`trust <db> <public key PEM>`: register a signer key as trusted in the registry database."""
+    from pathlib import Path
+
+    from lineage.signing.keys import load_public_key
+    from lineage_server import db, trust as server_trust
+
+    conn = db.connect(Path(sys.argv[2]))
+    db.init_schema(conn)
+    server_trust.trust_key(conn, load_public_key(Path(sys.argv[3])), "apollo-data-team")
+    conn.commit()
+
+
+def stamp() -> None:
+    """`stamp <lineage.meta.json> <hours>`: set released_at to that many hours ago."""
+    import json as _json
+    from pathlib import Path
+
+    path = Path(sys.argv[2])
+    meta = _json.loads(path.read_text())
+    meta["released_at"] = (datetime.now(timezone.utc) - timedelta(hours=float(sys.argv[3]))).isoformat()
+    path.write_text(_json.dumps(meta, indent=2))
+
+
+def advisory() -> None:
+    """`advisory <feed.json> <name==version>`: publish a local advisory for a package."""
+    import json as _json
+    from pathlib import Path
+
+    Path(sys.argv[2]).write_text(_json.dumps({sys.argv[3]: [
+        {"id": "GHSA-demo-7x4q-9m2p", "severity": "high", "summary": "Heap overflow when decoding crafted vocab files"}]}, indent=2))
+
+
 def expiry() -> None:
     print((datetime.now(timezone.utc) + timedelta(days=int(sys.argv[2]))).isoformat())
 
 
 if __name__ == "__main__":
-    {"stream": stream, "tick": tick, "revoke": revoke, "get": get, "expiry": expiry}[sys.argv[1]]()
+    {"stream": stream, "tick": tick, "revoke": revoke, "get": get, "expiry": expiry,
+                                  "trust": trust, "stamp": stamp, "advisory": advisory}[sys.argv[1]]()
