@@ -57,14 +57,8 @@ def toy_tool() -> Path:
     return FIXTURES / "toy_tool"
 
 
-# GPU-worker modules need torch, which only the Brev machine has.
+# The GPU worker's modules import torch at the top, which only the Brev machine has. Without it those test files are not collected (a skip
+# marker cannot help: the import fails first). `uv run pytest -q` therefore stays green on a laptop without torch; the full run is on Brev.
 import importlib.util as _ilu
-import pytest as _pytest
 
-
-def pytest_collection_modifyitems(config, items):
-    if _ilu.find_spec("torch") is None:
-        skip = _pytest.mark.skip(reason="torch not installed; GPU worker tests run on Brev")
-        for item in items:
-            if "gpu_worker" in item.nodeid:
-                item.add_marker(skip)
+collect_ignore_glob = ["test_gpu_*.py"] if _ilu.find_spec("torch") is None else []

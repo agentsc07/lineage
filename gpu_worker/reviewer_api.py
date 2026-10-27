@@ -381,7 +381,10 @@ class PolicyRequest(BaseModel):
 
 
 def _policy_claims(kind: str, text: str, file: str, policy_path: str | None = None) -> list[Claim]:
-    from gpu_worker import modelio, policy_check
+    try:
+        from gpu_worker import modelio, policy_check
+    except ImportError:  # no torch: the card/policy model cannot run here, which is not an error for the hosted card review
+        return []
     if not modelio.have_gpu():
         return []
     out = []
