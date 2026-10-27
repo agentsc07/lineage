@@ -93,7 +93,8 @@ def _hosted_json(system: str, user: str, schema: dict, max_tokens: int) -> tuple
     """JSON from a hosted OpenAI-compatible endpoint. Tries `response_format` with the JSON schema; if the endpoint rejects it, asks for
     JSON in the prompt instead. The reply is parsed and the caller validates its shape; invalid JSON is retried once."""
     headers = {"Authorization": f"Bearer {hosted_key()}"}
-    base = {"model": hosted_model(), "temperature": 0, "max_tokens": max_tokens,
+    # nemotron-3.5 ignores `/no_think`; without enable_thinking=false it spends max_tokens on reasoning and returns content=None
+    base = {"model": hosted_model(), "temperature": 0, "max_tokens": max_tokens, "chat_template_kwargs": {"enable_thinking": False},
             "messages": [{"role": "system", "content": "/no_think\n" + system}, {"role": "user", "content": user}]}
     modes = [{"response_format": {"type": "json_schema", "json_schema": {"name": "review", "schema": schema, "strict": True}}}, {}]
     last: Exception | None = None

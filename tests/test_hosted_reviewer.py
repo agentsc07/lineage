@@ -110,14 +110,14 @@ def test_pipeline_emits_not_run_when_the_hosted_api_is_unreachable(hosted, monke
     assert "CHECK.NOT_RUN.LLM_REVIEW" in {f.id for f in d.findings}
 
 
-def test_policy_check_uses_the_content_safety_model_and_drops_uncited_lines(hosted, monkeypatch):
+def test_policy_check_uses_the_general_nemotron_model_and_drops_uncited_lines(hosted, monkeypatch):
     from lineage.inspect.llm_review import policy_hosted
     from lineage.schemas.policy import PolicyPack
 
     reply = json.dumps({"violations": [{"line": 2, "reason": "licence is not on the allow list"}, {"line": 99, "reason": "invented"}]})
     stub = Stub(monkeypatch, [reply])
     claims = policy_hosted.check("# card\nlicense: gpl-3.0\n", PolicyPack.from_yaml("examples/policy.org.yaml"))
-    assert stub.requests[0][1]["model"] == "nvidia/nemotron-3.5-content-safety" and "Allowed licences" in stub.requests[0][1]["messages"][0]["content"]
+    assert stub.requests[0][1]["model"] == "nvidia/nemotron-3.5-lightning-30b-a3b" and stub.requests[0][1]["chat_template_kwargs"] == {"enable_thinking": False} and "Allowed licences" in stub.requests[0][1]["messages"][0]["content"]
     assert [(c.line, c.api) for c in claims] == [(2, "license: gpl-3.0")]
 
 
