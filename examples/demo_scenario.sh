@@ -42,10 +42,10 @@ verdict_line() { # outcome risk
 # Submit a local artifact, stream its SSE events, print stages and the final verdict.
 intake() { # type path env
   local job url v
-  job=$(curl -sf -X POST "$API/intake" -H 'content-type: application/json' \
+  job=$(curl -sf -X POST "$API/intake" -H "Authorization: Bearer $ALICE" -H 'content-type: application/json' \
     -d "{\"artifact_type\":\"$1\",\"ref\":\"$2\",\"environment\":\"$3\"}") || { printf '  %sintake request failed%s\n' "$R" "$N"; LAST_ID=""; return 0; }
   url=$(py get events_url <<<"$job")
-  curl -sfN --max-time 120 "$API$url" | py stream | tee "$WORK/out" | grep -v '^VERDICT'
+  curl -sfN --max-time 120 -H "Authorization: Bearer $ALICE" "$API$url" | py stream | tee "$WORK/out" | grep -v '^VERDICT'
   v=$(grep '^VERDICT' "$WORK/out" | tail -1)
   # shellcheck disable=SC2086
   set -- $v; verdict_line "${2:-}" "${3:-}"
@@ -70,18 +70,21 @@ else
   lineage keygen --dir "$WORK" --name demo >/dev/null
 fi
 
+TOKENS="${LINEAGE_DEMO_TOKENS:-$WORK/tokens.json}"
 if [[ -z "${LINEAGE_API:-}" ]]; then
   echo '{}' >"$WORK/feed.json"
   py trust "$WORK/lineage.db" "$WORK/demo.pub"
+  uv run --quiet python -m lineage_server.auth demo --db "$WORK/lineage.db" --out "$TOKENS" >/dev/null
   uv run python -m tests.fakehub --root "$WORK" --records "$HUB_FILE" --port 8766 >"$WORK/hub.log" 2>&1 &
   HUB_PID=$!
-  LINEAGE_HUB_URL="http://127.0.0.1:8766" LINEAGE_DB="$WORK/lineage.db" LINEAGE_ADVISORY_FEED="$WORK/feed.json" \
+  LINEAGE_DEV_LOCAL_PATHS=1 LINEAGE_HUB_TRUSTED_LOCAL=1 LINEAGE_STORE="$WORK/store" LINEAGE_HUB_URL="http://127.0.0.1:8766" LINEAGE_DB="$WORK/lineage.db" LINEAGE_ADVISORY_FEED="$WORK/feed.json" \
     uv run uvicorn lineage_server.app:app --port "${API##*:}" >"$WORK/server.log" 2>&1 &
   SERVER_PID=$!
   for _ in $(seq 1 40); do curl -sf "$API/healthz" >/dev/null && break; sleep 0.5; done
   curl -sf "$API/healthz" >/dev/null || { echo "Server failed to start; see $WORK/server.log" >&2; exit 1; }
 fi
 
+ALICE=$(py get alice <"$TOKENS"); BOB=$(py get bob <"$TOKENS")   # alice requests, bob approves (separation of duties)
 printf '%sLineage demo: Apollo Health AI, radiology triage agent%s\n' "$B" "$N"
 note "Open the dashboard at http://localhost:5173 to follow along (cd dashboard && npm run dev)"
 
@@ -125,27 +128,28 @@ step "4. MCP tool with an intent gap" "Clean description, undeclared network cal
 intake tool "$ART/dicom-fetch" dev; TOOL_ID="$LAST_ID"
 if [[ -n "$TOOL_ID" ]]; then
   EXPIRES=$(py expiry 14)
-  d=$(curl -sf -X POST "$API/decisions/$TOOL_ID/approve" -H 'content-type: application/json' \
-    -d "{\"approver\":\"dr.rao@apollo.health\",\"reason\":\"Network use reviewed; limited to the PACS host\",\"expires\":\"$EXPIRES\"}") \
-    && printf '  %sApproved by dr.rao@apollo.health until %s: now %s%s\n' "$G" "${EXPIRES%%T*}" "$(py get outcome <<<"$d")" "$N" \
-    || printf '  %sapproval refused%s\n' "$Y" "$N"
+  appr() { curl -s -o "$WORK/appr.json" -w '%{http_code}' -X POST "$API/decisions/$TOOL_ID/approve" -H "Authorization: Bearer $1" \
+    -H 'content-type: application/json' -d "{\"reason\":\"Network use reviewed; limited to the PACS host\",\"expires\":\"$EXPIRES\"}"; }
+  [[ "$(appr "$ALICE")" == 403 ]] && printf '  %salice tried to approve her own request: refused (403)%s\n' "$Y" "$N"
+  if [[ "$(appr "$BOB")" == 200 ]]; then
+    printf '  %sApproved by bob until %s: now %s%s\n' "$G" "${EXPIRES%%T*}" "$(py get outcome <"$WORK/appr.json")" "$N"
+  else printf '  %sapproval refused%s\n' "$Y" "$N"; fi
 fi
 pause
 
-step "5. Use time" "Someone swaps tokenizer.json after approval; lineage load-check must refuse."
-cp -R "$ART/triage-base" "$ART/deployed-model" && rm -f "$ART/deployed-model/lineage.meta.json"
-if lineage sign "$ART/deployed-model" --type model --name triage-base --version 2.1.0 --key "$WORK/demo.key" 2>"$WORK/err" >/dev/null; then
-  printf '  %sSigned deployed-model%s\n' "$D" "$N"
-  lineage load-check "$ART/deployed-model" --passport "$ART/deployed-model.passport.json" --pubkey "$WORK/demo.pub" 2>&1 | tail -1 | sed 's/^/  /'
-  printf '  %sSwapping tokenizer.json%s\n' "$D" "$N"
-  echo '{"version":"1","added_tokens":[{"content":"<!--hidden-->"}]}' >"$ART/deployed-model/tokenizer.json"
-  if lineage load-check "$ART/deployed-model" --passport "$ART/deployed-model.passport.json" --pubkey "$WORK/demo.pub" 2>"$WORK/err" >"$WORK/lc"; then
+step "5. Use time" "lineage pull + load-check with the registry's attestation; someone swaps a file afterwards."
+export LINEAGE_SERVER="$API" LINEAGE_TOKEN="$ALICE" LINEAGE_CONFIG="$WORK/lineage-config.toml"
+if lineage pull "$DS_ID" "$WORK/deployed-notes" --env prod --pin 2>"$WORK/err" | sed 's/^/  /'; [[ -f "$WORK/deployed-notes.lineage-attestation.json" ]]; then
+  lineage load-check "$WORK/deployed-notes" --env prod 2>&1 | tail -1 | sed 's/^/  /'
+  printf '  %sSwapping notes.csv%s\n' "$D" "$N"
+  echo '99,injected row,abnormal' >>"$WORK/deployed-notes/notes.csv"
+  if lineage load-check "$WORK/deployed-notes" --env prod 2>"$WORK/err" >"$WORK/lc"; then
     printf '  %sLoad allowed (unexpected)%s\n' "$R" "$N"
   else
     printf '  %sRefused:%s %s\n' "$G" "$N" "$(sed 's/\x1b\[[0-9;]*m//g' "$WORK/err" | head -1 | sed 's/^ *//')"
   fi
 else
-  printf '  %sCould not sign the demo model:%s %s\n' "$Y" "$N" "$(head -1 "$WORK/err")"
+  printf '  %sCould not pull the dataset:%s %s\n' "$Y" "$N" "$(head -1 "$WORK/err")"
 fi
 pause
 
@@ -154,8 +158,8 @@ if [[ -z "${LINEAGE_API:-}" || -n "${LINEAGE_DEMO_FEED:-}" ]]; then
   py advisory "${LINEAGE_DEMO_FEED:-$WORK/feed.json}" "tokenizers-fast==0.9.2"
   note "Advisory GHSA-demo-7x4q-9m2p published for tokenizers-fast==0.9.2"
 fi
-curl -sf -X POST "$API/monitor/tick" | py tick || printf '  %smonitor tick failed%s\n' "$R" "$N"
+curl -sf -X POST "$API/monitor/tick" -H "Authorization: Bearer $BOB" | py tick || printf '  %smonitor tick failed%s\n' "$R" "$N"
 printf '\n%sRevoking the root of the chain (radiology-notes):%s\n' "$B" "$N"
-[[ -n "$DS_ID" ]] && { curl -sf -X POST "$API/revoke/$DS_ID?reason=advisory" | py revoke || printf '  %srevoke failed%s\n' "$R" "$N"; }
+[[ -n "$DS_ID" ]] && { curl -sf -X POST "$API/revoke/$DS_ID?reason=advisory" -H "Authorization: Bearer $BOB" | py revoke || printf '  %srevoke failed%s\n' "$R" "$N"; }
 
 printf '\n%sDone.%s Dashboard: Overview, Approvals and Lineage pages show the same story.\n' "$B" "$N"
