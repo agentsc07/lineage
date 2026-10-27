@@ -51,7 +51,7 @@ export default function GraphPage() {
     const list = arts.data ?? [];
     const sizes = await Promise.all(list.slice(0, 40).map(async (a) => {
       const [up, down] = await Promise.all([api.graph(a.id, "up"), api.graph(a.id, "down")]);
-      return { id: a.id, size: new Set([...up.nodes, ...down.nodes].map((n) => n.id)).size };
+      return { id: a.id, size: new Set([...up.nodes, ...down.nodes].filter((n) => n.status !== "unregistered").map((n) => n.id)).size * 10 + new Set([...up.nodes, ...down.nodes].map((n) => n.id)).size };
     }));
     return sizes.reduce<{ id: string; size: number } | null>((b, c) => (!b || c.size > b.size ? c : b), null)?.id ?? null;
   }, [arts.data]);
@@ -85,7 +85,8 @@ export default function GraphPage() {
     const nodes = [...g.nodes.filter((n) => !gone.has(n.id)), ...open.flatMap((n) => n.group_members!)];
     const edges: GraphEdge[] = [...g.edges.filter((e) => !gone.has(e.source)), ...open.flatMap((n) => {
       const child = g.edges.find((e) => e.source === n.id)!.target;
-      return n.group_members!.map((m) => ({ source: m.id, target: child, kind: "built_with", evidence: "sbom" }));
+      const kind = g.edges.find((e) => e.source === n.id)!.kind;
+      return n.group_members!.map((m) => ({ source: m.id, target: child, kind, evidence: kind === "built_with" ? "sbom" : g.edges.find((e) => e.source === n.id)!.evidence }));
     })];
     return { nodes, edges };
   }, [graph.data, expanded]);
@@ -130,7 +131,7 @@ export default function GraphPage() {
 
   if (arts.error || graph.error) return <div className="page"><ErrorBox msg={arts.error ?? graph.error!} retry={graph.reload} /></div>;
   if (!arts.data) return <div className="page"><Loading /></div>;
-  const sn = shown?.nodes.find((n) => n.id === target);
+  const sn = shown?.nodes.find((n) => n.id === target) ?? graph.data?.nodes.find((n) => n.id === target);
   const registered = (shown?.nodes ?? []).filter((n) => n.status !== "unregistered").map((n) => ({ id: n.id }));
 
   return (
@@ -139,12 +140,12 @@ export default function GraphPage() {
         actions={<>
           <select className="input !w-56" aria-label="Artifact" value={rootId ?? ""} onChange={(e) => nav(`/graph/${encodeURIComponent(e.target.value)}`)}>
             {arts.data.map((a) => <option key={a.id} value={a.id}>{a.name}@{a.version}</option>)}</select>
-          <button className="btn btn-danger" onClick={revoke} disabled={busy || !target || !!result || sn?.id.startsWith("sbom-group:")}>{busy ? "Tracing…" : `Revoke ${sn?.label ?? ""}`}</button>
+          <button className="btn btn-danger" onClick={revoke} disabled={busy || !target || !!result || (sn?.id.startsWith("sbom-group:") || sn?.id.startsWith("fl-group:"))}>{busy ? "Tracing…" : `Revoke ${sn?.label ?? ""}`}</button>
         </>} />
       {err && <p className="text-block text-sm mb-3">{err}</p>}
       <p className="text-xs text-faint mb-2" data-testid="graph-notice">This graph contains only what passed through Lineage or was recorded by <span className="mono">lineage run</span>.</p>
       <div className="card h-[max(520px,calc(100vh-190px))] relative overflow-hidden">
-        <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView fitViewOptions={{ padding: 0.3, nodes: registered.length ? registered : undefined }} nodesDraggable={false}
+        <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView fitViewOptions={{ padding: 0.3, nodes: (shown?.nodes.length ?? 0) > 15 && registered.length ? registered : undefined }} nodesDraggable={false}
           onNodeClick={(_, n) => { setSel(n.id); setSelEdge(null); const gn = shown?.nodes.find((x) => x.id === n.id); if (gn?.group_members?.length) setExpanded((x) => new Set(x).add(n.id)); }}
           onEdgeClick={(_, e) => { const ge = shown?.edges.find((x) => x.source + "->" + x.target === e.id); if (ge) setSelEdge(ge); }} proOptions={{ hideAttribution: true }} colorMode={document.documentElement.dataset.theme === "light" ? "light" : "dark"}>
           <Background gap={20} color="rgb(var(--line))" /><Controls showInteractive={false} />

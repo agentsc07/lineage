@@ -84,28 +84,29 @@ def _evidence(conn: sqlite3.Connection, parent: str, child: str, kind: str, pare
 
 
 MIN_GROUP = 3
+GROUP_LABEL = {"built_with": "packages in the build environment (SBOM; not admitted)", "contributed_to": "federated clients (not admitted)"}
 
 
 def collapse_sbom(conn: sqlite3.Connection, g: Graph) -> Graph:
     """Per artifact, fold its un-advised SBOM ghosts (`built_with` from a package nobody admitted) into ONE group node that lists them in
     `group_members`. A ghost with an advisory is never folded: it is the thing a reader needs to see."""
     ghost = {n.id: n for n in g.nodes if n.status == "unregistered"}
-    by_child: dict[str, list[GraphEdge]] = {}
+    by_child: dict[tuple[str, str], list[GraphEdge]] = {}
     for e in g.edges:
         n = ghost.get(e.source)
-        if e.kind == "built_with" and n is not None and n.artifact_type == "package" and not n.advisories:
-            by_child.setdefault(e.target, []).append(e)
+        if e.kind in GROUP_LABEL and n is not None and not n.advisories:
+            by_child.setdefault((e.target, e.kind), []).append(e)
     drop_nodes: set[str] = set()
     drop_edges: set[tuple[str, str]] = set()
     nodes, edges = list(g.nodes), list(g.edges)
-    for child, es in by_child.items():
+    for (child, kind), es in by_child.items():
         if len(es) < MIN_GROUP:
             continue
         members = [ghost[e.source] for e in es]
-        gid = f"sbom-group:{child}"
-        nodes.append(GraphNode(id=gid, label=f"{len(members)} packages in the build environment (SBOM; not admitted)", artifact_type="package", trust_level="unknown",
+        gid = f"sbom-group:{child}" if kind == "built_with" else f"fl-group:{child}"
+        nodes.append(GraphNode(id=gid, label=f"{len(members)} {GROUP_LABEL[kind]}", artifact_type=members[0].artifact_type, trust_level="unknown",
                                status="unregistered", risk_score=0, group_members=members))
-        edges.append(GraphEdge(source=gid, target=child, kind="built_with", evidence="sbom"))
+        edges.append(GraphEdge(source=gid, target=child, kind=kind, evidence="sbom" if kind == "built_with" else es[0].evidence))
         drop_edges |= {(e.source, e.target) for e in es}
         drop_nodes |= {m.id for m in members}
     still_used = {e.source for e in edges if (e.source, e.target) not in drop_edges}
