@@ -22,7 +22,7 @@ export default function ArtifactPage() {
   const controlsFor = (cat: string) => Object.entries(cmap).filter(([, cats]) => cats.includes(cat)).map(([c]) => c);
   const controls = [...new Set(findings.flatMap((f) => controlsFor(f.category)))];
 
-  const runVerify = () => fetch(`/api/passports/${encodeURIComponent(id)}/verify`).then((r) => r.json()).then((v) =>
+  const runVerify = () => api.verifyPassport(id).then((v) =>
     setVerify(v.valid ? "Signature, hashes and chain verified" : `Not valid: ${(v.problems ?? []).join(", ") || "see server log"}`)).catch((e) => setVerify(String(e)));
 
   return (

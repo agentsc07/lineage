@@ -23,6 +23,7 @@ export const api = {
     req<Graph>(`/graph/${encodeURIComponent(id)}?direction=${direction}`),
   revoke: (id: string, reason: string) =>
     req<RevokeResult>(`/revoke/${encodeURIComponent(id)}?reason=${encodeURIComponent(reason)}`, { method: "POST" }),
+  verifyPassport: (id: string) => req<{ valid: boolean; problems: string[]; revoked: boolean }>(`/passports/${encodeURIComponent(id)}/verify`),
   whoami: () => req<import("./auth").Me>("/whoami"),
   upload: (file: File) => { const f = new FormData(); f.append("file", file); return req<{ upload_id: string; filename: string; size: number }>("/uploads", { method: "POST", body: f }); },
   approve: (id: string, body: { reason: string; expires: string }) =>

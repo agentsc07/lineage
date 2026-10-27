@@ -22,6 +22,7 @@ All requests except `/healthz` need `Authorization: Bearer <token>` (roles: requ
 | PUT | `/policy` | `PolicyUpdate {policy, signatures[], expires_at}` | `PolicyState` | Requires 2-of-3 role signatures (`owner`, `security`, `compliance`), TUF-style |
 | POST | `/decisions/{id}/approve` | `ApprovalRequest {approver, reason, expires}` | `Decision` | Human approval |
 | GET | `/attestations/{id}?env=` · `/attestations?digest=&env=` | – | `SignedAttestation {attestation{artifact_id, digest, files, outcome, environment, trust, policy_version, issued_at, expires_at, revoked}, signature, key_id}` | Registry-signed statement that the artifact may be used in `env` (issued from the latest decision, approvals and revocations) |
+| GET | `/attestations/{id}/status?env=` | – | `AttestationStatus {artifact_id, environment, revoked, ancestor_revoked[], current_outcome, usable}` | The registry's answer now: revoked, a revoked ancestor, or a decision that is no longer allow. `load()` asks this before trusting a cached attestation |
 | GET | `/registry-key` | – | `{key_id, public_key}` | Key attestations are signed with; clients pin it |
 | GET | `/store/{id}/files/{path}?env=` · `/store/{id}/manifest` · `/lookup?source=` | – | bytes / `SignedAttestation` / `{artifact_id,name,version}` | Admitted bytes, served only while the attestation for `env` allows them |
 | GET | `/simple/` · `/simple/{name}/` · `/files/{sha256}/{filename}` | – | PEP 503 HTML / wheel | Package index serving only admitted wheels, pinned by hash; token's environment |
