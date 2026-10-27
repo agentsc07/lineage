@@ -6,11 +6,12 @@ from collections.abc import Iterator
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 
 from lineage.schemas.artifact import InclusionProof, MerkleLog, MonitorTick
 from lineage.schemas.policy import PolicyPack
 from lineage_server import log, monitor
-from lineage_server.auth import require
+from lineage_server.auth import User, current_user, require
 from lineage_server.deps import get_conn, get_policy
 from lineage_server.jobs import Job
 
@@ -20,6 +21,20 @@ router = APIRouter()
 def _sse(job: Job) -> Iterator[str]:
     for event in job.follow():
         yield ": keepalive\n\n" if event is None else f"data: {event.model_dump_json()}\n\n"
+
+
+class StreamTicket(BaseModel):
+    ticket: str
+    job_id: str
+    expires_in: int
+
+
+@router.post("/jobs/{job_id}/stream-ticket", response_model=StreamTicket)
+def stream_ticket(job_id: str, request: Request, user: User = Depends(current_user)) -> StreamTicket:
+    """A 60-second ticket for `GET /events/{job_id}?ticket=...`, for a browser that cannot send the Authorization header on an EventSource."""
+    if request.app.state.jobs.get(job_id) is None:
+        raise HTTPException(404, f"unknown job {job_id}")
+    return StreamTicket(ticket=request.app.state.tickets.issue(user, job_id), job_id=job_id, expires_in=request.app.state.tickets.seconds)
 
 
 @router.get("/events/{job_id}")

@@ -1,7 +1,7 @@
 """API tokens with roles (REFACTOR_SPEC 7.1, P7). Only a sha256 of each token is stored.
 
 Roles: `requester` starts intakes and uploads, `approver` approves and revokes, `admin` does everything (incl. policy changes),
-`auditor` reads. Every request needs `Authorization: Bearer <token>` (or `?token=` for the SSE stream, or HTTP basic auth for
+`auditor` reads. Every request needs `Authorization: Bearer <token>` (or HTTP basic auth for
 pip, where the token is the password). `LINEAGE_REQUIRE_AUTH=0` switches authentication off for local development and the
 test-suite; the server then treats everyone as an anonymous admin and the separation-of-duties check cannot apply.
 
@@ -64,6 +64,34 @@ def user_for_token(conn: sqlite3.Connection, token: str) -> User | None:
     return User(row["name"], row["email"], set(row["roles"].split(",")), row["env"]) if row else None
 
 
+TICKET_SECONDS = 60
+
+
+class TicketStore:
+    """Short-lived, job-scoped stream tickets, so the browser's EventSource (which cannot send a header) never puts the API token in a URL where
+    logs would keep it. A ticket is random, lives 60 seconds, names one job, and is honoured only for `GET /events/<that job>`: it opens no other route.
+    It can be used more than once inside its lifetime so the stream can reconnect. Tickets are in memory; a restart invalidates them."""
+
+    def __init__(self, seconds: int = TICKET_SECONDS, clock=None):
+        import time
+
+        self._t: dict[str, tuple[str, User, float]] = {}
+        self.seconds, self._clock = seconds, clock or time.monotonic
+
+    def issue(self, user: User, job_id: str) -> str:
+        now = self._clock()
+        self._t = {k: v for k, v in self._t.items() if v[2] > now}  # forget expired tickets
+        ticket = "st_" + secrets.token_urlsafe(24)
+        self._t[ticket] = (job_id, user, now + self.seconds)
+        return ticket
+
+    def redeem(self, ticket: str, job_id: str) -> User | None:
+        hit = self._t.get(ticket)
+        if hit is None or hit[2] <= self._clock() or hit[0] != job_id:
+            return None
+        return hit[1]
+
+
 def _token_of(request: Request) -> str | None:
     auth = request.headers.get("authorization", "")
     if auth.lower().startswith("bearer "):
@@ -74,12 +102,18 @@ def _token_of(request: Request) -> str | None:
         except ValueError:
             return None
         return pw or user
-    return request.query_params.get("token")
+    return None  # never from the query string: URLs end up in logs
 
 
 def current_user(request: Request, conn: sqlite3.Connection = Depends(get_conn)) -> User:
     if not getattr(request.app.state, "require_auth", True):
         return ANONYMOUS
+    ticket = request.query_params.get("ticket")
+    job = request.path_params.get("job_id")
+    if ticket and job and request.url.path == f"/events/{job}":  # the SSE stream: a ticket for this job, nothing else
+        t_user = request.app.state.tickets.redeem(ticket, job)
+        if t_user is not None:
+            return t_user
     token = _token_of(request)
     user = user_for_token(conn, token) if token else None
     if user is None:

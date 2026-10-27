@@ -48,6 +48,7 @@ def create_app(
     app.state.db_path = db_path
     app.state.signing_key = trust.load_or_create_key(db_path.with_suffix(db_path.suffix + ".key"))
     app.state.jobs = JobStore(db_path=db_path)
+    app.state.tickets = auth.TicketStore()
     app.state.require_auth = (os.environ.get("LINEAGE_REQUIRE_AUTH", "1") != "0") if require_auth is None else require_auth
     base = db_path.parent
     app.state.store = Store(os.environ.get("LINEAGE_STORE") or base / "lineage-store")

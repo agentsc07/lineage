@@ -58,23 +58,28 @@ export const api = {
     req<{ job_id: string; events_url: string }>("/intake", { method: "POST", body: JSON.stringify(body) }),
 };
 
-/** Subscribe to a job's SSE stream. Returns a close function. */
+/** Subscribe to a job's SSE stream. The API token never goes into the URL: a 60-second ticket for this one job does. Returns a close function. */
 export function streamJob(
   eventsUrl: string,
   onEvent: (e: StageEvent) => void,
   onDone: (err?: string) => void,
 ): () => void {
-  const es = new EventSource(BASE + eventsUrl + (eventsUrl.includes("?") ? "&" : "?") + `token=${encodeURIComponent(auth.token() ?? "")}`);
-  let finished = false;
-  es.onmessage = (m) => {
-    const ev = JSON.parse(m.data) as StageEvent;
-    onEvent(ev);
-    if (ev.stage === "S7" && ev.status !== "started") { finished = true; es.close(); onDone(); }
-  };
-  es.onerror = () => {
-    // The server closes the stream after the last event; that also fires onerror.
-    es.close();
-    if (!finished) onDone();
-  };
-  return () => es.close();
+  const jobId = eventsUrl.split("/").pop()!.split("?")[0];
+  let es: EventSource | null = null;
+  let closed = false, finished = false;
+  req<{ ticket: string }>(`/jobs/${encodeURIComponent(jobId)}/stream-ticket`, { method: "POST" }).then(({ ticket }) => {
+    if (closed) return;
+    es = new EventSource(`${BASE}${eventsUrl}?ticket=${encodeURIComponent(ticket)}`);
+    es.onmessage = (m) => {
+      const ev = JSON.parse(m.data) as StageEvent;
+      onEvent(ev);
+      if (ev.stage === "S7" && ev.status !== "started") { finished = true; es?.close(); onDone(); }
+    };
+    es.onerror = () => {
+      // The server closes the stream after the last event; that also fires onerror.
+      es?.close();
+      if (!finished) onDone();
+    };
+  }).catch((e) => { if (!closed) { finished = true; onDone(String(e)); } });
+  return () => { closed = true; es?.close(); };
 }

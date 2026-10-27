@@ -70,7 +70,7 @@ export default function Intake() {
         else if (done.current) { finishUp(); }
       }, 380);
     }
-    close.current = streamJob(eventsUrl, (e) => { if (paced) queue.current.push(e); else apply(e); }, () => { done.current = true; if (!paced) finishUp(); });
+    close.current = streamJob(eventsUrl, (e) => { if (paced) queue.current.push(e); else apply(e); }, (err) => { if (err) setErr(`Could not open the event stream: ${err}`); done.current = true; if (!paced) finishUp(); });
   }, [apply]);
 
   // After the stream ends, load what the server recorded (identity, classes, attestation, next action).

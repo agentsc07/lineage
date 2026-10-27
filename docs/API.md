@@ -10,7 +10,8 @@ All requests except `/healthz` need `Authorization: Bearer <token>` (roles: requ
 |---|---|---|---|---|
 | POST | `/uploads` | multipart `file` | `UploadReceipt {upload_id, filename, size}` | Send a file or archive (size cap `LINEAGE_MAX_UPLOAD_MB`); role `requester` |
 | POST | `/intake` | `IntakeRequest {artifact_type, source, environment, claimed_origin?, claims?}` (`ref` only with `LINEAGE_DEV_LOCAL_PATHS=1`) | `IntakeJob {job_id, events_url}` | Start intake from `upload:<id>`, `hf:<repo>[@rev]`, `hf-dataset:<repo>[@rev]`, `pypi:<name>==<ver>`, `mcp:upload:<id>`; progress streams on `/events/{job}` |
-| GET | `/events/{job}` | – | SSE of `StageEvent` | One `data:` line per stage transition (S1–S7); the S6 event carries the `Decision` |
+| POST | `/jobs/{job_id}/stream-ticket` | any signed-in user | `{ticket, job_id, expires_in: 60}` | A 60-second ticket for this one job's stream. The API token is never accepted in a URL (no `?token=`) |
+| GET | `/events/{job}` | bearer, or `?ticket=` for this job only | SSE of `StageEvent` | One `data:` line per stage transition (S1–S7); the S6 event carries the `Decision`. A ticket opens only this route for this job |
 | GET | `/artifacts` | – | `Artifact[]` | Catalogue |
 | GET | `/artifacts/{id}` | – | `ArtifactDetail {artifact, passport, findings, decision}` | Detail |
 | POST | `/passports` | `SignedPassport` | `PassportReceipt {passport_id, log_index}` | Register a signed passport |
