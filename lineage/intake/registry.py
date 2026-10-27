@@ -27,6 +27,9 @@ class Registry(Protocol):
         """Admitted models whose weights are on local disk: passport id -> (label, directory). The bank that
         parent fingerprinting compares an incoming model against."""
 
+    def package_status(self, name: str, version: str | None = None) -> str | None:
+        """`Artifact.status` of the newest registered package with this name (PEP 503 normalised), or None."""
+
     def sign(self, passport: Passport) -> SignedPassport:
         """Sign with the organisation's key."""
 
@@ -57,6 +60,9 @@ class NullRegistry:
 
     def reference_models(self) -> dict[str, tuple[str, Path]]:
         return {}
+
+    def package_status(self, name: str, version: str | None = None) -> str | None:
+        return None
 
     def sign(self, passport: Passport) -> SignedPassport:
         return SignedPassport(passport=passport, signature="", key_id="unsigned")

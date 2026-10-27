@@ -18,6 +18,7 @@ def offline(monkeypatch):
 def dev_server_defaults(monkeypatch):
     """Server tests run unauthenticated with local paths allowed unless a test turns auth on (tests/test_roles.py)."""
     monkeypatch.setenv("LINEAGE_REQUIRE_AUTH", "0")
+    monkeypatch.setenv("LINEAGE_MONITOR_MINUTES", "0")  # tests tick by hand
     monkeypatch.setenv("LINEAGE_DEV_LOCAL_PATHS", "1")
 
 

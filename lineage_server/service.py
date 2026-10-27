@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from datetime import datetime, timezone
 
@@ -39,6 +40,39 @@ def _exceptions(conn: sqlite3.Connection, artifact_id: str) -> list[PolicyExcept
     ]
 
 
+def _norm(name: str) -> str:
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def ensure_ghost(conn: sqlite3.Connection, gid: str, artifact_type: str, name: str, version: str, ref: str) -> None:
+    conn.execute("INSERT OR IGNORE INTO ghosts (id, artifact_type, name, version, ref, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+                 (gid, artifact_type, name, version, ref, _now().isoformat()))
+
+
+def link_refs(conn: sqlite3.Connection, child_id: str, parents: list[str], refs: list[dict]) -> None:
+    """Edges into `child_id` for everything it references (P6). A reference that matches an admitted artifact links to it; anything
+    else becomes a ghost node (`status: unregistered`) so the gap is visible and the monitor and revoke still reach it.
+    `refs`: {kind, type, name, version?, ref}; passport parents are {kind: derived_from} by id."""
+    for pid in parents:
+        if not conn.execute("SELECT 1 FROM artifacts WHERE id = ?", (pid,)).fetchone():
+            ensure_ghost(conn, pid, "model", pid[:19], "", f"passport {pid}")
+    for r in refs:
+        if r.get("file_sha"):  # a training input: an edge only if some admitted artifact holds exactly these bytes
+            row = conn.execute("SELECT id FROM passports WHERE body LIKE ? AND id != ? ORDER BY created_at DESC LIMIT 1",
+                               (f"%{r['file_sha']}%", child_id)).fetchone()
+            if row:
+                conn.execute("INSERT OR IGNORE INTO edges (parent, child, kind) VALUES (?, ?, ?)", (row["id"], child_id, r["kind"]))
+            continue
+        ver = r.get("version") or ""
+        rows = conn.execute("SELECT id, name, version FROM artifacts WHERE artifact_type = ? AND status != 'revoked' ORDER BY created_at DESC, rowid DESC",
+                            (r["type"],)).fetchall()
+        hit = next((x["id"] for x in rows if _norm(x["name"]) == _norm(r["name"]) and (not ver or x["version"] == ver) and x["id"] != child_id), None)
+        pid = hit or f"ghost:{r['type']}:{_norm(r['name'])}@{ver or '*'}"
+        if not hit:
+            ensure_ghost(conn, pid, r["type"], r["name"], ver, r.get("ref") or r["name"])
+        conn.execute("INSERT OR IGNORE INTO edges (parent, child, kind) VALUES (?, ?, ?)", (pid, child_id, r["kind"]))
+
+
 def record(
     conn: sqlite3.Connection,
     signed: SignedPassport,
@@ -59,10 +93,11 @@ def record(
         models.save_decision(conn, decision)
         if meta:
             conn.execute(
-                "INSERT OR REPLACE INTO artifact_meta (artifact_id, requester, source, claimed_origin, claims, distribution, source_id)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "INSERT OR REPLACE INTO artifact_meta (artifact_id, requester, source, claimed_origin, claims, distribution, source_id, signer_key)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 (signed.passport_id, meta.get("requester"), meta.get("source"), meta.get("claimed_origin"),
-                 json.dumps(meta.get("claims")), json.dumps(meta.get("distribution")), meta.get("source_id")))
+                 json.dumps(meta.get("claims")), json.dumps(meta.get("distribution")), meta.get("source_id"), meta.get("signer_key")))
+        link_refs(conn, signed.passport_id, signed.passport.predicate.parents, (meta or {}).get("graph_refs", []))
         if tool_pin:
             conn.execute(
                 "INSERT OR REPLACE INTO tool_pins (artifact_id, tool_name, description_sha256, code_sha256)"
@@ -173,16 +208,19 @@ def revoke(
     now = now or _now()
     with tx(conn):
         art = models.artifact_row(conn, artifact_id)
-        if art is None:
+        ghost = conn.execute("SELECT * FROM ghosts WHERE id = ?", (artifact_id,)).fetchone() if art is None else None
+        if art is None and ghost is None:
             raise NotFound(artifact_id)
         if not models.is_revoked(conn, artifact_id):
             conn.execute(
                 "INSERT INTO revocations (artifact_id, reason, revoked_at) VALUES (?, ?, ?)",
                 (artifact_id, reason, now.isoformat()),
             )
-            models.set_status(conn, artifact_id, "revoked")
+            if art is not None:
+                models.set_status(conn, artifact_id, "revoked")
             log.append(conn, "revocation", artifact_id, now)
-        flag = _parent_revoked_finding(artifact_id, f"{art.name}@{art.version}", reason)
+        label = f"{art.name}@{art.version}" if art else (ghost["ref"] or ghost["name"])
+        flag = _parent_revoked_finding(artifact_id, label, reason)
         for node in graph.blast_radius(conn, artifact_id):
             if node.status != "revoked":
                 redecide(conn, node.id, policy, policy_expired=policy_expired, extra_findings=[flag], now=now)

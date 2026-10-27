@@ -22,7 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from lineage.intake.hub import Hub, default_hub
 from lineage.schemas.policy import PolicyPack
 from lineage.store import Store
-from lineage_server import auth, db, policy_store, trust
+from lineage_server import auth, db, policy_store, scheduler, trust
 from lineage_server.jobs import JobStore
 from lineage_server.routes import artifacts, attestations, decisions, events, graph, intake, passports, policy, simple, store, trusted_publishers, whoami
 
@@ -66,6 +66,8 @@ def create_app(
 
     for module in (intake, events, artifacts, passports, graph, decisions, policy, trusted_publishers, attestations, store, simple, whoami):
         app.include_router(module.router, dependencies=[Depends(auth.current_user)])
+
+    scheduler.start(app)  # LINEAGE_MONITOR_MINUTES; the thread is a daemon and ends with the process
 
     @app.get("/healthz")
     def healthz() -> dict[str, str | bool]:

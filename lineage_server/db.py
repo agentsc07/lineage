@@ -116,7 +116,19 @@ CREATE TABLE IF NOT EXISTS artifact_meta (
     claimed_origin TEXT,
     claims TEXT,                     -- JSON, all `declared`
     distribution TEXT,               -- JSON {filename, sha256}: the wheel served by /simple
-    source_id TEXT
+    source_id TEXT,
+    signer_key TEXT                  -- key id of the in-scope creator passport, if any (monitor re-decides when it is revoked)
+);
+
+CREATE TABLE IF NOT EXISTS ghosts (
+    id TEXT PRIMARY KEY,             -- the referenced id: `ghost:<type>:<name>@<version>` or an unregistered `lp:...`
+    artifact_type TEXT NOT NULL,
+    name TEXT NOT NULL,
+    version TEXT NOT NULL,
+    ref TEXT NOT NULL,               -- the reference that created it
+    advisories TEXT NOT NULL DEFAULT '[]',
+    revoked_reason TEXT,
+    created_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS users (

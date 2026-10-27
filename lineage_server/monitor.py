@@ -7,6 +7,12 @@ One `tick` does, in order:
 2. Every descendant of an alerted package is flagged (a `WATCH.PARENT.ADVISORY` finding raises its risk and it is
    re-decided); the alert carries that blast radius.
 3. Human approvals that have expired are re-evaluated; a lapsed approval raises a `drift` alert.
+4. Ghost packages (SBOM components and dependencies that were never admitted) get the same advisory lookup; the alert carries the
+   blast radius through the ghost (P6).
+5. Hub drift for every `hf:` artifact: the tracked branch moved (`WATCH.UPSTREAM.CHANGED`, info: the admitted bytes are pinned) or the
+   repo disappeared (`WATCH.UPSTREAM.REMOVED`, high: re-decided).
+6. A trusted-publisher key that is now in `revoked_keys`: everything signed by it is re-decided with `PROV.SIGNATURE.REVOKED_KEY`.
+7. A policy version newer than an artifact's last decision: re-decide it.
 
 Ticks are idempotent: a second tick with nothing new raises nothing.
 
@@ -92,12 +98,18 @@ def _flag(pkg_label: str, pkg_id: str, new: list[Finding]) -> Finding:
     )
 
 
+def _simple_finding(fid: str, title: str, sev: str, ref: str, detail: str, stage: str = "S2") -> Finding:
+    return Finding(id=fid, title=title, severity=sev, category="provenance", stage=stage,  # type: ignore[arg-type]
+                   evidence=[Evidence(kind="field", ref=ref, detail=detail)], score=SEVERITY_WEIGHT[sev], source="deterministic")
+
+
 def tick(
     conn: sqlite3.Connection,
     *,
     policy: PolicyPack | None = None,
     lookup: Lookup | None = None,
     now: datetime | None = None,
+    hub=None,
 ) -> MonitorTick:
     now = now or datetime.now(timezone.utc)
     expired = False
@@ -142,4 +154,89 @@ def tick(
                 message=f"Approval for {row['name']} expired; decision is now {after.outcome}.",
                 blast_radius=graph.blast_radius(conn, row["id"]),
             ))
-    return MonitorTick(checked=len(packages), alerts=alerts, ts=now)
+
+    # ghost packages: SBOM components and dependencies nobody admitted
+    ghosts = conn.execute("SELECT * FROM ghosts WHERE artifact_type = 'package' AND version != '' AND version != '*' AND revoked_reason IS NULL").fetchall()
+    for g in ghosts:
+        seen = set(json.loads(g["advisories"]))
+        new = [f for f in lookup(g["name"], g["version"]) if f.id not in seen]
+        if not new:
+            continue
+        conn.execute("UPDATE ghosts SET advisories = ? WHERE id = ?", (json.dumps(sorted(seen | {f.id for f in new})), g["id"]))
+        radius = graph.blast_radius(conn, g["id"])
+        flag = _flag(f"{g['name']}=={g['version']} (unregistered)", g["id"], new)
+        for node in radius:
+            if node.status != "revoked":
+                service.redecide(conn, node.id, policy, policy_expired=expired, extra_findings=[flag], now=now)
+        alerts.append(Alert(artifact_id=g["id"], kind="advisory", severity=_top(new),  # type: ignore[arg-type]
+                            message=f"{len(new)} new advisory(ies) for {g['name']}=={g['version']}, a package no one admitted but "
+                                    f"{len(radius)} artifact(s) were built with or depend on: {'; '.join(f.title for f in new)[:160]}",
+                            blast_radius=radius))
+    conn.commit()
+
+    # hub drift
+    if hub is not None or os.environ.get("LINEAGE_HUB_URL"):
+        alerts += _hub_drift(conn, policy, expired, now, hub)
+
+    # revoked trusted-publisher keys
+    for r in conn.execute("SELECT m.artifact_id, m.signer_key, a.name FROM artifact_meta m JOIN artifacts a ON a.id = m.artifact_id"
+                          " WHERE m.signer_key IS NOT NULL AND a.status NOT IN ('revoked', 'blocked')").fetchall():
+        if r["signer_key"] in policy.revoked_keys and not any(f.id == "PROV.SIGNATURE.REVOKED_KEY" for f in models.get_findings(conn, r["artifact_id"])):
+            f = _simple_finding("PROV.SIGNATURE.REVOKED_KEY", f"The key {r['signer_key']} that signed this artifact's passport was revoked; treated as unsigned",
+                                "high", "key_id", r["signer_key"])
+            after = service.redecide(conn, r["artifact_id"], policy, policy_expired=expired, extra_findings=[f], now=now)
+            alerts.append(Alert(artifact_id=r["artifact_id"], kind="revocation", severity="high",
+                                message=f"Signing key {r['signer_key']} was revoked; {r['name']} re-decided: {after.outcome}.",
+                                blast_radius=graph.blast_radius(conn, r["artifact_id"])))
+
+    # policy changed since the last decision
+    stale = [r["id"] for r in conn.execute("SELECT id FROM artifacts WHERE status NOT IN ('revoked') ORDER BY rowid").fetchall()
+             if (d := models.latest_decision(conn, r["id"])) is not None and d.policy_version != policy.version]
+    if stale:
+        changed = 0
+        for aid in stale:
+            before = models.latest_decision(conn, aid)
+            after = service.redecide(conn, aid, policy, policy_expired=expired, now=now)
+            changed += before.outcome != after.outcome  # type: ignore[union-attr]
+        alerts.append(Alert(artifact_id=stale[0], kind="drift", severity="medium",
+                            message=f"Policy changed to {policy.version}: {len(stale)} artifact(s) re-decided, {changed} changed outcome.",
+                            blast_radius=[]))
+    return MonitorTick(checked=len(packages) + len(ghosts), alerts=alerts, ts=now)
+
+
+def _hub_drift(conn: sqlite3.Connection, policy: PolicyPack, expired: bool, now: datetime, hub) -> list[Alert]:
+    from lineage.intake import fetch
+
+    alerts: list[Alert] = []
+    base_url, client = getattr(hub, "base_url", None) or None, getattr(hub, "client", None)
+    rows = conn.execute("SELECT m.artifact_id, m.source_id, a.name FROM artifact_meta m JOIN artifacts a ON a.id = m.artifact_id"
+                        " WHERE m.source_id LIKE 'hf:%' AND a.status IN ('admitted', 'admitted_with_conditions', 'quarantined')").fetchall()
+    for r in rows:
+        signed = models.get_signed_passport(conn, r["artifact_id"])
+        pinned = signed.passport.predicate.source.commit if signed else None
+        known = {_key(f) for f in models.get_findings(conn, r["artifact_id"])}
+        repo = r["source_id"][3:]
+        try:
+            info = fetch.hf_info(repo, None, "model", base_url, client)
+        except fetch.NotFound:
+            f = _simple_finding("WATCH.UPSTREAM.REMOVED", f"{repo} is gone from the hub", "high", repo, "hub answered 404")
+            if _key(f) in known:
+                continue
+            after = service.redecide(conn, r["artifact_id"], policy, policy_expired=expired, extra_findings=[f], now=now)
+            alerts.append(Alert(artifact_id=r["artifact_id"], kind="drift", severity="high",
+                                message=f"{repo} was removed upstream; {r['name']} re-decided: {after.outcome}.",
+                                blast_radius=graph.blast_radius(conn, r["artifact_id"])))
+            continue
+        except fetch.AcquireError:
+            continue  # unreachable is not drift
+        sha = info.get("sha")
+        if sha and pinned and sha != pinned:
+            f = _simple_finding("WATCH.UPSTREAM.CHANGED", f"{repo} moved from {pinned[:12]} to {sha[:12]} upstream; the admitted bytes are pinned and unchanged",
+                                "info", repo, sha)
+            if _key(f) in known:
+                continue
+            service.redecide(conn, r["artifact_id"], policy, policy_expired=expired, extra_findings=[f], now=now)
+            alerts.append(Alert(artifact_id=r["artifact_id"], kind="drift", severity="info",
+                                message=f"{repo} changed upstream ({pinned[:12]} -> {sha[:12]}). {r['name']} still uses the pinned bytes.",
+                                blast_radius=graph.blast_radius(conn, r["artifact_id"])))
+    return alerts

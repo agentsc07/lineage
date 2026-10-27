@@ -29,6 +29,15 @@ class SqliteRegistry:
     def trusted_key(self, key_id: str) -> Ed25519PublicKey | None:
         return trust.trusted_key(self.conn, key_id)
 
+    def package_status(self, name: str, version: str | None = None) -> str | None:
+        import re
+
+        norm = lambda n: re.sub(r"[-_.]+", "-", n).lower()  # noqa: E731
+        for a in models.list_artifacts(self.conn):
+            if a.artifact_type == "package" and norm(a.name) == norm(name) and (version is None or a.version == version):
+                return a.status
+        return None
+
     def reference_models(self) -> dict[str, tuple[str, Path]]:
         out: dict[str, tuple[str, Path]] = {}
         for art in models.list_artifacts(self.conn):

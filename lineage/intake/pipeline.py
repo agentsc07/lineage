@@ -389,12 +389,28 @@ def run_intake(
     try:
         ctx.registry.record(signed, findings, decision, released_at=ctx.released_at, tool_pin=_tool_pin(ctx),
                             meta={"requester": uploader, "source": source or ref, "claimed_origin": ctx.claimed_origin,
-                                  "claims": claims, "distribution": ctx.distribution, "source_id": ctx.source_id})
+                                  "claims": claims, "distribution": ctx.distribution, "source_id": ctx.source_id,
+                                  "signer_key": ctx.claimed.key_id if ctx.claimed and ctx.signature_in_scope else None,
+                                  "graph_refs": _graph_refs(ctx)})
         if ctx.store is not None and ctx.path is not None:
             ctx.store.write_manifest(signed.passport_id, ctx.files, ctx.distribution)
         yield event("S7", "completed", [], f"{signed.passport_id}: {STATUS_WORDS[decision.outcome]}")
     except Exception as e:  # noqa: BLE001
         yield event("S7", "failed", [], f"could not record result: {type(e).__name__}: {e}")
+
+
+def _graph_refs(ctx: IntakeContext) -> list[dict]:
+    """Everything this artifact references that should be an edge or a ghost node (REFACTOR_SPEC 6.1)."""
+    refs = list(ctx.graph_refs)  # package dependencies, from S4
+    base = ctx.fact_value("base_model")  # fetched or signed, never declared
+    if base and not any(f.id == "MODEL.PARENT.CLAIM_MISMATCH" for f in ctx.findings):
+        refs.append({"kind": "derived_from", "type": "model", "name": base.split("/")[-1], "ref": f"base model {base}"})
+    if ctx.signature_in_scope and ctx.claimed is not None:
+        body = ctx.claimed.passport.predicate
+        refs += [{"kind": "built_with", "type": "package", "name": c.name, "version": c.version, "ref": c.purl} for c in body.sbom]
+        refs += [{"kind": "trained_on", "type": "dataset", "file_sha": sha, "match_only": True, "name": path, "ref": path}
+                 for path, sha in body.inputs.items()]
+    return refs
 
 
 def _s0(ctx: IntakeContext, source: str | None, hub: Hub | None, work_dir: Path | None) -> tuple[StageStatus, list[Finding], str]:

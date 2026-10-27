@@ -37,6 +37,10 @@ class AcquireError(Exception):
     """The bytes could not be obtained (network down, unknown repo, size cap). Becomes CHECK.NOT_RUN.ACQUIRE."""
 
 
+class NotFound(AcquireError):
+    """The hub answered 404: the repo or file is gone (as opposed to the hub being unreachable)."""
+
+
 @dataclass
 class Acquired:
     path: Path  # what intake inspects (a directory, or a single file)
@@ -127,6 +131,8 @@ def hf_info(repo: str, rev: str | None, kind: str = "model", base_url: str | Non
         r = (client or httpx).get(url, params={"blobs": "true"}, timeout=30.0)
     except httpx.HTTPError as e:
         raise AcquireError(f"hub unreachable: {e}") from e
+    if r.status_code == 404:
+        raise NotFound(f"{repo}{'@' + rev if rev else ''}: hub answered HTTP 404")
     if r.status_code != 200:
         raise AcquireError(f"{repo}{'@' + rev if rev else ''}: hub answered HTTP {r.status_code}")
     return r.json()

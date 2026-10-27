@@ -47,12 +47,20 @@ def get_proof(ref: str, conn: sqlite3.Connection = Depends(get_conn)) -> Inclusi
 
 @router.post("/monitor/tick", response_model=MonitorTick, dependencies=[Depends(require("approver", "requester"))])
 def monitor_tick(
-    conn: sqlite3.Connection = Depends(get_conn), active: tuple[PolicyPack, bool] = Depends(get_policy)
+    request: Request, conn: sqlite3.Connection = Depends(get_conn), active: tuple[PolicyPack, bool] = Depends(get_policy)
 ) -> MonitorTick:
-    result = monitor.tick(conn, policy=active[0])
+    result = monitor.tick(conn, policy=active[0], hub=request.app.state.hub)
     conn.execute("INSERT INTO monitor_ticks (n_alerts, body) VALUES (?, ?)", (len(result.alerts), result.model_dump_json()))
     conn.commit()
+    request.app.state.monitor_status["last"] = result.ts
     return result
+
+
+@router.get("/monitor/status")
+def monitor_status(request: Request) -> dict:
+    """When the scheduled monitor last ran and when it runs next (null: scheduling is off)."""
+    st = request.app.state.monitor_status
+    return {k: (v.isoformat() if hasattr(v, "isoformat") else v) for k, v in st.items()}
 
 
 @router.get("/monitor/latest", response_model=MonitorTick | None)

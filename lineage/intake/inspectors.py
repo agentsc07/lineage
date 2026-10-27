@@ -70,6 +70,7 @@ class IntakeContext:
     previous: tuple[Path, str] | None = None  # (folder, version) of the release before this one, for diff-aware review
     signature_in_scope: bool = False  # S2b: a trusted key, in scope, hashes match
     origin_verified: bool = False  # every file matches what the hub published, or Lineage fetched the bytes itself
+    graph_refs: list[dict] = field(default_factory=list)  # things this artifact references: become edges or ghost nodes (P6)
     store: object | None = None  # lineage.store.Store: where every inspected file is kept
     hub: object | None = None  # the Hub used for origin checks (S2a)
     claimed_origin: str | None = None  # what an upload says it is a copy of, e.g. `hf:org/name@rev`
@@ -441,6 +442,37 @@ def release_age(ctx: IntakeContext) -> list[Finding]:
         return [make_finding("PROV.COOLDOWN.UNVERIFIED", f"Cooldown cannot be cleared: {why}", "medium", "provenance", "S2",
                              [Evidence(kind="field", ref="released_at", detail="basis: declared" if declared else "none")], score=0)]
     return []
+
+
+def _req_name(req: str) -> str | None:
+    """`name` of a PEP 508 requirement; None for requirements that only apply to an extra."""
+    if "extra ==" in req.replace('"', "").replace("'", "").replace("extra==", "extra =="):
+        return None
+    m = re.match(r"\s*([A-Za-z0-9][A-Za-z0-9._-]*)", req)
+    return m.group(1) if m else None
+
+
+@register("package", "S4")
+def package_dependency_closure(ctx: IntakeContext) -> list[Finding]:
+    """S4. Resolve `requires_dist` against admitted packages. Every requirement not admitted becomes a ghost node (P6) and a `low`
+    `PKG.DEP.UNREGISTERED`, so the monitor still watches it and a revocation still reaches this package through it."""
+    info = ctx.metadata.get("info", ctx.metadata) if isinstance(ctx.metadata, dict) else {}
+    reqs = list(info.get("requires_dist") or []) or [r for r in str(ctx.fact_value("requires", trusted_only=True) or "").split("\n") if r]
+    if not reqs:
+        return [make_finding("PKG.DEP.NONE", "No declared dependencies to resolve" if ctx.metadata else "No fetched dependency list to resolve",
+                             "info", "provenance", "S4")]
+    out: list[Finding] = []
+    seen: set[str] = set()
+    for r in reqs:
+        name = _req_name(r)
+        if not name or name.lower() in seen:
+            continue
+        seen.add(name.lower())
+        ctx.graph_refs.append({"kind": "depends_on", "type": "package", "name": name, "ref": f"pypi:{name} (required by {ctx.name})"})
+        if ctx.registry.package_status(name) not in ("admitted", "admitted_with_conditions"):
+            out.append(make_finding("PKG.DEP.UNREGISTERED", f"Dependency {name} has not been admitted", "low", "provenance", "S4",
+                                    [Evidence(kind="field", ref="requires_dist", detail=r[:120])]))
+    return out[:30] or [make_finding("PKG.DEP.RESOLVED", f"All {len(seen)} dependencies are admitted", "info", "provenance", "S4")]
 
 
 @register("package", "S2")
