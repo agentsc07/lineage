@@ -70,6 +70,12 @@ class IntakeContext:
     previous: tuple[Path, str] | None = None  # (folder, version) of the release before this one, for diff-aware review
     signature_in_scope: bool = False  # S2b: a trusted key, in scope, hashes match
     origin_verified: bool = False  # every file matches what the hub published, or Lineage fetched the bytes itself
+    store: object | None = None  # lineage.store.Store: where every inspected file is kept
+    hub: object | None = None  # the Hub used for origin checks (S2a)
+    claimed_origin: str | None = None  # what an upload says it is a copy of, e.g. `hf:org/name@rev`
+    pending_record: dict | None = None  # hub record for the claimed origin: becomes `fetched` facts only if the hashes match
+    acquired: object | None = None  # lineage.intake.fetch.Acquired when Lineage fetched the bytes itself
+    distribution: dict | None = None  # {filename, sha256}: the wheel as distributed (served by /simple)
     source_id: str = ""  # `upload:<name>`, `hf:<repo>`, `pypi:<name>`: what trusted-publisher scopes are matched against
 
     @property
@@ -160,6 +166,97 @@ def source_id_of(hub: str | None, repo: str | None) -> str | None:
     if not repo:
         return None
     return {"huggingface": f"hf:{repo}", "hf": f"hf:{repo}", "pypi": f"pypi:{repo}"}.get(hub or "")
+
+
+def _git_oid(path: Path) -> str:
+    import hashlib
+
+    data = path.read_bytes()
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()  # noqa: S324 - git's object id, not a security hash
+
+
+def _promote_pending(ctx: IntakeContext, source: str) -> None:
+    """The hashes match what the hub published, so what the hub says about that repo describes these bytes: `fetched`."""
+    from lineage.intake.pipeline import add_dict_facts
+
+    ctx.origin_verified = True
+    if ctx.pending_record:
+        add_dict_facts(ctx, ctx.pending_record, "fetched", source)
+        ctx.metadata = dict(ctx.pending_record)
+        ctx.pending_record = None
+
+
+@register("*", "S2")
+def origin_check(ctx: IntakeContext) -> list[Finding]:
+    """S2a. Where did these bytes come from? An upload with a claimed origin is compared, file by file, with what that hub
+    published at a pinned revision. Hints inside the artifact are shown as `declared` and never used for trust."""
+    from lineage.intake.fetch import _wanted
+
+    out: list[Finding] = []
+    for hint, value in _hints(ctx):
+        ctx.add_fact("source_repo", value, "declared", f"hint: {hint}")
+        out.append(make_finding("PROV.ORIGIN.HINT", f"Suggested origin: {value} (from {hint}); not used for trust", "info", "provenance", "S2",
+                                [Evidence(kind="field", ref=hint, detail=value)]))
+    if ctx.acquired is not None:
+        out.append(make_finding("PROV.ORIGIN.VERIFIED", f"Fetched by Lineage from {ctx.claimed_origin}", "info", "provenance", "S2",
+                                [Evidence(kind="field", ref="origin", detail=str(ctx.claimed_origin))]))
+        return out
+    origin = ctx.claimed_origin
+    if origin is None:
+        if ctx.origin_verified:  # a hub stand-in vouched for the local bytes (tests, bench, demo)
+            return out + [make_finding("PROV.ORIGIN.VERIFIED", "Vouched for by the configured hub record", "info", "provenance", "S2")]
+        return out + [make_finding("PROV.ORIGIN.UNCLAIMED", "No origin was claimed, so nothing can be compared with a hub; trust stays unknown",
+                                   "medium", "provenance", "S2")]
+    hub = ctx.hub
+    pub = hub.published_files(origin) if hub is not None else None
+    if pub is None:
+        return out + [make_finding("PROV.ORIGIN.UNVERIFIABLE", f"The claimed origin {origin} could not be checked (hub unreachable or repo unknown)",
+                                   "high", "provenance", "S2", [Evidence(kind="field", ref="claimed_origin", detail=origin)])]
+    if origin.startswith("pypi:"):
+        dist = ctx.distribution or {}
+        want = (pub.get(dist.get("filename", "")) or {}).get("sha256")
+        diffs = [] if want and want == dist.get("sha256") else [f"{dist.get('filename', 'distribution')}: " + ("not published" if not want else "sha256 differs")]
+    else:
+        base = ctx.root
+        diffs = []
+        for rel in sorted(ctx.files):
+            exp = pub.get(rel)
+            if exp is None:
+                diffs.append(f"{rel}: not in the published repo")
+            elif exp.get("sha256"):
+                if exp["sha256"] != ctx.files[rel]:
+                    diffs.append(f"{rel}: sha256 differs from the published file")
+            elif exp.get("git_oid"):
+                if base is None or _git_oid(base / rel) != exp["git_oid"]:
+                    diffs.append(f"{rel}: git object id differs from the published file")
+            else:
+                diffs.append(f"{rel}: the hub published no hash to compare with")
+        diffs += [f"{rel}: published but missing from the upload" for rel in sorted(pub) if rel not in ctx.files and _wanted(rel)]
+    if diffs:
+        return out + [make_finding("PROV.ORIGIN.MODIFIED", f"{len(diffs)} file(s) differ from what {origin} published: " + "; ".join(diffs[:3]),
+                                   "critical", "provenance", "S2", [Evidence(kind="file_line", ref=d.split(":")[0], detail=d) for d in diffs[:20]])]
+    _promote_pending(ctx, f"hub record for {origin}, hashes verified")
+    return out + [make_finding("PROV.ORIGIN.VERIFIED", f"Every file matches what {origin} published", "info", "provenance", "S2",
+                               [Evidence(kind="field", ref="claimed_origin", detail=origin)])]
+
+
+def _hints(ctx: IntakeContext) -> list[tuple[str, str]]:
+    root, out = ctx.root, []
+    if root is None:
+        return out
+    cfg = root / "config.json"
+    if cfg.is_file():
+        try:
+            v = json.loads(cfg.read_text()).get("_name_or_path")
+            if isinstance(v, str) and "/" in v and not v.startswith((".", "/")):
+                out.append(("config.json:_name_or_path", v))
+        except (OSError, ValueError, AttributeError):
+            pass
+    if ctx.card_text:
+        m = re.search(r"^base_model:\s*([^\s#]+)", ctx.card_text, re.M)
+        if m:
+            out.append(("README base_model", m.group(1)))
+    return out
 
 
 @register("*", "S2")

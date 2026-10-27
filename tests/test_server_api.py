@@ -51,7 +51,7 @@ def test_intake_streams_events_and_persists_artifact(client, tiny_dataset):
     job, r, events = run_intake(client, "dataset", tiny_dataset)
     assert r.headers["content-type"].startswith("text/event-stream")
     done = [e for e in events if e.status != "started"]
-    assert [e.stage for e in done] == ["S1", "S2", "S3", "S4", "S5", "S6", "S7"]
+    assert [e.stage for e in done] == ["S0", "S1", "S2", "S3", "S4", "S5", "S6", "S7"]
     decision = next(e.decision for e in events if e.decision)
     detail = ArtifactDetail.model_validate(client.get(f"/artifacts/{decision.artifact_id}").json())
     assert detail.artifact.status == "admitted" and detail.decision == decision and detail.passport is not None

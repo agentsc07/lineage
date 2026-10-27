@@ -109,6 +109,24 @@ CREATE TABLE IF NOT EXISTS trusted_keys (
     owner TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS artifact_meta (
+    artifact_id TEXT PRIMARY KEY,
+    requester TEXT,                  -- who asked for the intake (separation of duties)
+    source TEXT,
+    claimed_origin TEXT,
+    claims TEXT,                     -- JSON, all `declared`
+    distribution TEXT,               -- JSON {filename, sha256}: the wheel served by /simple
+    source_id TEXT
+);
+
+CREATE TABLE IF NOT EXISTS users (
+    token_hash TEXT PRIMARY KEY,     -- sha256 of the bearer token; the token itself is never stored
+    name TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL DEFAULT '',
+    roles TEXT NOT NULL,             -- comma-separated: requester, approver, admin, auditor
+    env TEXT NOT NULL DEFAULT 'prod' -- the environment this token's package index serves
+);
+
 CREATE TABLE IF NOT EXISTS monitor_ticks (
     seq INTEGER PRIMARY KEY AUTOINCREMENT,
     n_alerts INTEGER NOT NULL,

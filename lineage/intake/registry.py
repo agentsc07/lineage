@@ -38,8 +38,9 @@ class Registry(Protocol):
         *,
         released_at: datetime | None = None,
         tool_pin: dict[str, str] | None = None,
+        meta: dict | None = None,
     ) -> None:
-        """Persist the intake result."""
+        """Persist the intake result. `meta`: requester, source, claimed_origin, claims, distribution."""
 
 
 class NullRegistry:
@@ -60,5 +61,5 @@ class NullRegistry:
     def sign(self, passport: Passport) -> SignedPassport:
         return SignedPassport(passport=passport, signature="", key_id="unsigned")
 
-    def record(self, signed, findings, decision, *, released_at=None, tool_pin=None) -> None:
+    def record(self, signed, findings, decision, *, released_at=None, tool_pin=None, meta=None) -> None:
         return None

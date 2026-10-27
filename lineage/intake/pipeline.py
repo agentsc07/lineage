@@ -31,6 +31,7 @@ from lineage.intake import inspectors as insp
 from lineage.intake.inspectors import IntakeContext
 from lineage.intake.hub import Hub
 from lineage.intake.registry import NullRegistry, Registry
+from lineage.store import Store
 from lineage.policy.engine import apply_unrun_costs, decide
 from lineage.risk import risk_score
 from lineage.schemas.artifact import StageEvent, StageStatus
@@ -43,7 +44,7 @@ from lineage.schemas.passport import (
 from lineage.schemas.policy import PolicyPack
 
 STAGES = [
-    ("S1", "Identify"), ("S2", "Provenance"), ("S3", "Static inspection"), ("S4", "Deep inspection"),
+    ("S0", "Acquire"), ("S1", "Identify"), ("S2", "Provenance"), ("S3", "Static inspection"), ("S4", "Deep inspection"),
     ("S5", "LLM review"), ("S6", "Decide"), ("S7", "Admit"),
 ]
 SIDECARS = insp.SIDECARS
@@ -134,7 +135,7 @@ _META_KEYS = {"licence": "licence", "license": "licence", "released_at": "releas
               "repo": "source_repo", "name": "name", "version": "version"}
 
 
-def _add_dict_facts(ctx: IntakeContext, meta: dict, provenance: str, source: str) -> None:
+def add_dict_facts(ctx: IntakeContext, meta: dict, provenance: str, source: str) -> None:
     for k, v in meta.items():
         key = _META_KEYS.get(k)
         if key and isinstance(v, (str, int, float)):
@@ -160,16 +161,21 @@ def _identify(ctx: IntakeContext, claims: dict | None, hub: Hub | None, claimed_
     root = ctx.root
     # declared: uploader claims, and a lineage.meta.json that happens to be inside the upload
     if root and (root / "lineage.meta.json").is_file():
-        _add_dict_facts(ctx, _load_json(root / "lineage.meta.json"), "declared", "file lineage.meta.json in upload")
+        add_dict_facts(ctx, _load_json(root / "lineage.meta.json"), "declared", "file lineage.meta.json in upload")
     if claims:
-        _add_dict_facts(ctx, claims, "declared", f"upload by {uploader}")
-    # fetched: what the hub itself says about this artifact (a stand-in for S0 until real acquisition lands)
-    key = claimed_origin or (ctx.path.name if ctx.path else ref)
-    record = hub.fetch(ctx.artifact_type, key) if hub is not None else None
-    if record:
-        ctx.metadata = dict(record)
-        _add_dict_facts(ctx, record, "fetched", f"hub record for {key}")
-        ctx.origin_verified = True  # fetched by construction
+        add_dict_facts(ctx, claims, "declared", f"upload by {uploader}")
+    # fetched: what a hub says about this artifact. Facts about a *claimed* origin are held back until the hashes match
+    # (S2a); a test/bench/demo hub that vouches for local bytes (`trusted_local`) is the only shortcut.
+    ctx.hub, ctx.claimed_origin = hub, claimed_origin or ctx.claimed_origin
+    if ctx.acquired is None and hub is not None:
+        key = claimed_origin or (ctx.path.name if ctx.path else ref)
+        record = hub.fetch(ctx.artifact_type, key)
+        if record and claimed_origin:
+            ctx.pending_record = dict(record)
+        elif record and getattr(hub, "trusted_local", False):
+            ctx.metadata = dict(record)
+            add_dict_facts(ctx, record, "fetched", f"hub record for {key}")
+            ctx.origin_verified = True
 
     if ctx.path is not None:
         # `<name>.passport.json` beside the artifact is what `lineage sign` writes and `lineage.load` discovers;
@@ -185,6 +191,8 @@ def _identify(ctx: IntakeContext, claims: dict | None, hub: Hub | None, claimed_
                 out.append(insp.make_finding("INTAKE.PASSPORT.MALFORMED", f"Shipped passport cannot be parsed: {str(e)[:120]}",
                                              "medium", "provenance", "S1", [Evidence(kind="file_line", ref=sidecar.name)]))
         ctx.files = _hash_files(ctx.path)
+        if ctx.store is not None:  # P4: the exact bytes we inspect are the bytes we keep
+            ctx.store.put_tree(ctx.path, ctx.files)
         if ctx.artifact_type == "model":
             ctx.tensors, bad = _tensor_hashes(ctx.path)
             out += bad
@@ -193,7 +201,7 @@ def _identify(ctx: IntakeContext, claims: dict | None, hub: Hub | None, claimed_
                 ctx.card_text = (root / name).read_text(errors="replace")
                 ctx.add_fact("card_text", ctx.card_text, "declared", f"file {name} in upload")
                 break
-    else:
+    elif not any(f.id == "CHECK.NOT_RUN.ACQUIRE" for f in ctx.findings):
         out.append(insp.not_run("ACQUIRE", f"the bytes of {ref} were not obtained, so nothing could be hashed or inspected", "S1"))
 
     # name / version / source / parents
@@ -212,6 +220,10 @@ def _identify(ctx: IntakeContext, claims: dict | None, hub: Hub | None, claimed_
                 ctx.parents = list(d.get("parts", []))
     name = ctx.fact_value("name", trusted_only=False) or name
     version = ctx.fact_value("version", trusted_only=False) or version
+    if ctx.acquired is not None:  # named by the hub, not by the folder it was unpacked into
+        rec = ctx.acquired.record  # type: ignore[attr-defined]
+        name = rec.get("name") or (rec.get("repo") or name).split("/")[-1]
+        version = rec.get("version") or str(rec.get("source_revision") or version)[:12]
     ctx.parents = ctx.parents or list(ctx.metadata.get("parents", []))
 
     if ctx.claimed:
@@ -220,6 +232,11 @@ def _identify(ctx: IntakeContext, claims: dict | None, hub: Hub | None, claimed_
         if ctx.path is not None and not ctx.source.url:  # remember where the bytes are, for parent fingerprinting
             ctx.source = ctx.source.model_copy(update={"url": ctx.path.as_uri()})
         ctx.parents = list(dict.fromkeys(ctx.parents + b.parents))
+    elif ctx.acquired is not None and ctx.path is not None:
+        rec = ctx.acquired.record  # type: ignore[attr-defined]
+        pypi = (ctx.claimed_origin or "").startswith("pypi:")
+        ctx.source = SourceRef(hub="pypi" if pypi else "huggingface", repo=rec.get("repo") or name, commit=rec.get("source_revision"),
+                               url=ctx.path.as_uri())
     elif ctx.path is None and "/" in ref and "==" not in ref:
         ctx.source = SourceRef(hub="huggingface", repo=ref)
     elif ctx.path is None:
@@ -316,6 +333,9 @@ def run_intake(
     hub: Hub | None = None,
     claimed_origin: str | None = None,
     uploader: str = "anonymous",
+    source: str | None = None,
+    store: Store | None = None,
+    work_dir: Path | None = None,
     now: datetime | None = None,
     policy_expired: bool = False,
 ) -> Iterator[StageEvent]:
@@ -329,6 +349,7 @@ def run_intake(
     clock = lambda: now or datetime.now(timezone.utc)  # noqa: E731
     ctx = IntakeContext(artifact_type=artifact_type, ref=ref, environment=environment, policy=policy,
                         registry=registry or NullRegistry(), now=clock(), gpu_url=gpu_url)
+    ctx.store = store
 
     def event(stage: str, status: StageStatus, findings: list[Finding] | None = None, message: str = "",
               decision: Decision | None = None) -> StageEvent:
@@ -338,9 +359,10 @@ def run_intake(
     steps: dict[str, Callable[[IntakeContext], tuple[StageStatus, list[Finding], str]]] = {
         "S2": _stage_scanners("S2"), "S3": _stage_scanners("S3"), "S4": _stage_scanners("S4"), "S5": _stage_scanners("S5"),
     }
+    steps["S0"] = lambda c: _s0(c, source, hub, work_dir)
     steps["S1"] = lambda c: _s1(c, claims, hub, claimed_origin, uploader)
 
-    for stage in ("S1", "S2", "S3", "S4", "S5"):
+    for stage in ("S0", "S1", "S2", "S3", "S4", "S5"):
         yield event(stage, "started")
         try:
             status, found, message = steps[stage](ctx)
@@ -365,10 +387,59 @@ def run_intake(
     # S7 Admit (every outcome is recorded; only allow / allow_with_conditions are admitted)
     yield event("S7", "started")
     try:
-        ctx.registry.record(signed, findings, decision, released_at=ctx.released_at, tool_pin=_tool_pin(ctx))
+        ctx.registry.record(signed, findings, decision, released_at=ctx.released_at, tool_pin=_tool_pin(ctx),
+                            meta={"requester": uploader, "source": source or ref, "claimed_origin": ctx.claimed_origin,
+                                  "claims": claims, "distribution": ctx.distribution, "source_id": ctx.source_id})
+        if ctx.store is not None and ctx.path is not None:
+            ctx.store.write_manifest(signed.passport_id, ctx.files, ctx.distribution)
         yield event("S7", "completed", [], f"{signed.passport_id}: {STATUS_WORDS[decision.outcome]}")
     except Exception as e:  # noqa: BLE001
         yield event("S7", "failed", [], f"could not record result: {type(e).__name__}: {e}")
+
+
+def _s0(ctx: IntakeContext, source: str | None, hub: Hub | None, work_dir: Path | None) -> tuple[StageStatus, list[Finding], str]:
+    """S0 Acquire. Uploads are already on disk; `hf:`, `hf-dataset:` and `pypi:` sources are fetched by Lineage itself, which is
+    what makes their facts `fetched` and their origin verified. A wheel upload is unpacked for inspection and kept as the
+    distribution to serve."""
+    import tempfile
+    import uuid
+
+    from lineage.intake import fetch
+
+    work = (work_dir or Path(tempfile.gettempdir()) / "lineage-fetch") / uuid.uuid4().hex[:10]
+    kw = {"base_url": getattr(hub, "base_url", None) or None, "client": getattr(hub, "client", None)}
+    if source and source.startswith(("hf:", "hf-dataset:", "pypi:")):
+        ctx.claimed_origin = source
+        try:
+            if source.startswith("pypi:"):
+                acq = fetch.fetch_pypi(source, work / "pkg", **kw)
+            else:
+                acq = fetch.fetch_hf(source, work / source.split(":", 1)[1].split("@")[0].split("/")[-1], allow_pickle=ctx.policy.model_files.allow_pickle, **kw)
+        except fetch.AcquireError as e:
+            return "failed", [insp.not_run("ACQUIRE", str(e), "S0")], f"could not fetch {source}"
+        ctx.acquired, ctx.ref = acq, str(acq.path)
+        ctx.distribution = acq.distribution
+        ctx.origin_verified = True
+        ctx.metadata = dict(acq.record)
+        add_dict_facts(ctx, acq.record, "fetched", f"hub api for {source}")
+        found = [insp.make_finding(fid, title, sev, "integrity", "S0") for fid, title, sev in acq.notes]  # type: ignore[arg-type]
+        if acq.skipped_files:
+            found.append(insp.make_finding("MODEL.FORMAT.PICKLE_NOT_FETCHED", f"{len(acq.skipped_files)} large pickle file(s) were not downloaded: "
+                                           + ", ".join(acq.skipped_files[:3]), "high", "model", "S0",
+                                           [Evidence(kind="file_line", ref=p) for p in acq.skipped_files[:5]]))
+        return "completed", found, f"fetched {source} ({len(list(acq.path.rglob('*')))} entries)"
+    p = Path(ctx.ref).expanduser()
+    if p.is_file() and ctx.artifact_type == "package" and p.suffix in (".whl", ".zip", ".gz"):
+        try:
+            fetch.safe_extract(p, work / "pkg")
+        except fetch.AcquireError as e:
+            return "failed", [insp.not_run("ACQUIRE", str(e), "S0")], "could not unpack the upload"
+        ctx.distribution = {"filename": p.name, "sha256": _hash_file(p)}
+        ctx.ref = str(work / "pkg")
+        if ctx.store is not None:
+            ctx.store.put_file(p, ctx.distribution["sha256"])
+        return "completed", [], f"unpacked {p.name} for inspection; the wheel itself is kept for the index"
+    return "completed", [], "bytes already on disk (upload)" if p.exists() else "no bytes yet"
 
 
 def _s1(ctx: IntakeContext, claims: dict | None, hub: Hub | None, claimed_origin: str | None,

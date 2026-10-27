@@ -189,7 +189,7 @@ def test_package_with_signals_triggers_a_reviewer_call(tmp_path, monkeypatch):
                               "lib/b.py": "import subprocess\n\ndef v():\n    return subprocess.check_output(['git', 'describe'])\n"})
     policy = PolicyPack.from_yaml(Path(__file__).parent.parent / "examples" / "policy.org.yaml")
     decision, events = run_to_decision("package", str(d), "dev", policy, "t", gpu_url="http://worker.test", now=datetime(2026, 10, 25, tzinfo=timezone.utc))
-    assert any(f.id.startswith("PKG.SIGNAL.") for f in decision.findings) and not real(decision.findings) - {"PROV.PUBLISHER.UNLISTED", "PROV.COOLDOWN.UNVERIFIED"}
+    assert any(f.id.startswith("PKG.SIGNAL.") for f in decision.findings) and not real(decision.findings) - {"PROV.PUBLISHER.UNLISTED", "PROV.COOLDOWN.UNVERIFIED", "PROV.ORIGIN.UNCLAIMED"}
     assert next(e for e in events if e.stage == "S5" and e.status != "started").status == "completed"
     assert len(calls) == 1
     assert {s.file for s in calls[0].slices} == {"lib/a.py", "lib/b.py"}

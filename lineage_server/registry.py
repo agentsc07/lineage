@@ -53,5 +53,6 @@ class SqliteRegistry:
         *,
         released_at: datetime | None = None,
         tool_pin: dict[str, str] | None = None,
+        meta: dict | None = None,
     ) -> None:
-        service.record(self.conn, signed, findings, decision, released_at=released_at, tool_pin=tool_pin)
+        service.record(self.conn, signed, findings, decision, released_at=released_at, tool_pin=tool_pin, meta=meta)

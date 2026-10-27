@@ -51,8 +51,8 @@ def ids(decision):
 # --- shape of the event stream ---
 def test_event_stream_shape_and_decision_on_s6(policy, tiny_dataset):
     decision, events = intake("dataset", tiny_dataset, policy=policy)
-    assert [(e.stage, e.status) for e in events][:2] == [("S1", "started"), ("S1", "completed")]
-    assert [e.stage for e in events if e.status != "started"] == ["S1", "S2", "S3", "S4", "S5", "S6", "S7"]
+    assert [(e.stage, e.status) for e in events][:2] == [("S0", "started"), ("S0", "completed")]
+    assert [e.stage for e in events if e.status != "started"] == ["S0", "S1", "S2", "S3", "S4", "S5", "S6", "S7"]
     with_decision = [e for e in events if e.decision]
     assert len(with_decision) == 1 and with_decision[0].stage == "S6" and with_decision[0].decision == decision
     assert {e.job_id for e in events} == {"job1"}

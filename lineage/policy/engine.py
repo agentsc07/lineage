@@ -82,9 +82,14 @@ def _banned_hits(findings: list[Finding], banned: list[str]) -> list[tuple[str, 
     return hits
 
 
-def hard_blocks(passport: PassportBody, findings: list[Finding], policy: PolicyPack) -> list[str]:
+def hard_blocks(passport: PassportBody, findings: list[Finding], policy: PolicyPack, environment: str | None = None) -> list[str]:
     """Reasons that block regardless of score or exceptions."""
     out: list[str] = []
+    for f in _has_id(findings, "INTEGRITY.FETCH_MISMATCH"):
+        out.append(f"hash mismatch against the hub: {f.title}")
+    if environment in ("staging", "prod"):
+        for f in _has_id(findings, "PROV.ORIGIN.MODIFIED"):
+            out.append(f"modified copy of its claimed origin: {f.title}")
     for f in _has_id(findings, "PROV.SIGNATURE.INVALID"):
         out.append(f"signature failure: {f.title}")
     for f in _has_id(findings, "INTEGRITY.HASH_MISMATCH"):
@@ -163,7 +168,7 @@ def decide(
     floor: Outcome | None = None  # non-overridable
     soft: list[tuple[Outcome, str]] = []  # overridable by a live exception
 
-    hard = hard_blocks(passport, findings, policy)
+    hard = hard_blocks(passport, findings, policy, environment)
     if hard:
         floor = "block"
         reasons += hard

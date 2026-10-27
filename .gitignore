@@ -20,3 +20,7 @@ logs/
 gpu_worker/notary_data/
 bench/corpus/_keys/**/*.key
 bench/ablation_parts/
+lineage-store/
+lineage-uploads/
+lineage-fetch/
+examples/demo_tokens.json

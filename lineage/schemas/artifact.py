@@ -13,7 +13,7 @@ from lineage.schemas.passport import ArtifactType, SignedPassport, TrustLevel
 ArtifactStatus = Literal[
     "submitted", "quarantined", "admitted", "admitted_with_conditions", "blocked", "revoked"
 ]
-StageId = Literal["S1", "S2", "S3", "S4", "S5", "S6", "S7"]
+StageId = Literal["S0", "S1", "S2", "S3", "S4", "S5", "S6", "S7"]
 StageStatus = Literal["started", "completed", "skipped", "failed"]
 
 
@@ -42,8 +42,12 @@ class ArtifactDetail(BaseModel):
 # --- /intake and /events/{job} ---
 class IntakeRequest(BaseModel):
     artifact_type: ArtifactType
-    ref: str  # local path, hub id ("meta-llama/Llama-3.2-1B"), or "pkg==1.2.3"
+    # `upload:<id>`, `hf:<repo>[@rev]`, `hf-dataset:<repo>[@rev]`, `pypi:<name>==<ver>`, `mcp:upload:<id>`
+    source: str | None = None
+    ref: str | None = None  # a local path; honoured only when the server runs with LINEAGE_DEV_LOCAL_PATHS=1 (demo, bench)
     environment: str = "dev"
+    claimed_origin: str | None = None  # e.g. `hf:meta-llama/Llama-3.2-1B@<sha>`: what an upload says it is a copy of
+    claims: dict[str, str] | None = None  # publisher, licence, base_model, released_at, description: all `declared`
 
 
 class IntakeJob(BaseModel):
@@ -112,7 +116,7 @@ class RevokeResult(BaseModel):
 
 # --- /decisions/{id}/approve ---
 class ApprovalRequest(BaseModel):
-    approver: str
+    approver: str | None = None  # ignored by the server: the approver is the authenticated user
     reason: str
     expires: datetime
 

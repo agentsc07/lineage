@@ -1,6 +1,7 @@
 """Operations that combine the store, the policy engine and the graph: record, re-decide, approve, revoke."""
 from __future__ import annotations
 
+import json
 import sqlite3
 from datetime import datetime, timezone
 
@@ -46,8 +47,9 @@ def record(
     *,
     released_at: datetime | None = None,
     tool_pin: dict[str, str] | None = None,
+    meta: dict | None = None,
 ) -> None:
-    """Persist an intake result atomically: passport, edges, findings, decision (and a tool pin)."""
+    """Persist an intake result atomically: passport, edges, findings, decision (and a tool pin, and who asked)."""
     with tx(conn):
         models.save_passport(
             conn, signed, status=models.OUTCOME_STATUS[decision.outcome], environment=decision.environment,
@@ -55,6 +57,12 @@ def record(
         )
         models.save_findings(conn, signed.passport_id, findings)
         models.save_decision(conn, decision)
+        if meta:
+            conn.execute(
+                "INSERT OR REPLACE INTO artifact_meta (artifact_id, requester, source, claimed_origin, claims, distribution, source_id)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (signed.passport_id, meta.get("requester"), meta.get("source"), meta.get("claimed_origin"),
+                 json.dumps(meta.get("claims")), json.dumps(meta.get("distribution")), meta.get("source_id")))
         if tool_pin:
             conn.execute(
                 "INSERT OR REPLACE INTO tool_pins (artifact_id, tool_name, description_sha256, code_sha256)"

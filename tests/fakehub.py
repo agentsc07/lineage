@@ -27,9 +27,16 @@ OLD = "2025-01-01T00:00:00Z"
 class StaticHub:
     """Returns `record` for every key (or the entry of `records` for that key / `default`)."""
 
-    def __init__(self, record: dict | None = None, records: dict[str, dict] | None = None, default: dict | None = None):
+    trusted_local = True  # its records describe the local bytes as given (a stand-in for "Lineage fetched these")
+
+    def __init__(self, record: dict | None = None, records: dict[str, dict] | None = None, default: dict | None = None,
+                 published: dict[str, dict[str, dict]] | None = None):
         self.records, self.default = records or {}, default if default is not None else record
+        self.published = published or {}  # origin -> {path: {sha256?, git_oid?}}
         self.calls: list[tuple[str, str]] = []
+
+    def published_files(self, origin: str) -> dict[str, dict] | None:
+        return self.published.get(origin)
 
     def fetch(self, artifact_type: str, key: str) -> dict | None:
         self.calls.append((artifact_type, key))
@@ -128,11 +135,23 @@ def create_app(root: Path | str, records: dict[str, dict] | None = None, *, reco
 
     @app.get("/{repo:path}/resolve/{rev}/{file:path}")
     def resolve(repo: str, rev: str, file: str):
-        for kind in ("models", "datasets"):
+        if repo.startswith("datasets/"):
+            repo = repo[len("datasets/"):]
+            kinds = ("datasets",)
+        else:
+            kinds = ("models",)
+        for kind in kinds:
             p = root / kind / repo / file
             if p.is_file():
                 return FileResponse(p, headers={"X-Repo-Commit": rev, "ETag": f'"{_git_blob_id(p)}"', "X-Linked-Size": str(p.stat().st_size)})
         raise HTTPException(404, file)
+
+    @app.get("/pypi/{name}/json")
+    def pypi_latest(name: str):
+        versions = sorted(p.name for p in (root / "pypi" / name).glob("*") if p.is_dir()) if (root / "pypi" / name).is_dir() else []
+        if not versions:
+            raise HTTPException(404, name)
+        return pypi(name, versions[-1])
 
     @app.get("/pypi/{name}/{version}/json")
     def pypi(name: str, version: str):

@@ -9,7 +9,7 @@ Severity = Literal["info", "low", "medium", "high", "critical"]
 Category = Literal[
     "provenance", "integrity", "code", "model", "data", "tool", "policy", "behaviour", "llm"
 ]
-Stage = Literal["S1", "S2", "S3", "S4", "S5"]
+Stage = Literal["S0", "S1", "S2", "S3", "S4", "S5"]
 Source = Literal["deterministic", "statistical", "llm", "human"]
 EvidenceKind = Literal["file_line", "tensor", "field", "url", "metric"]
 
