@@ -20,7 +20,8 @@ function LineageNode({ data, selected }: NodeProps<Node<NData>>) {
   const vkey: VerdictKey | null = state === "revoked" ? "revoked" : data.vkey;
   const hit = state === "hit";
   const color = hit ? "var(--block)" : vkey ? decisionColor[vkey] : "var(--faint)";
-  const dashed = vkey === "revoked" || hit;
+  const ghost = node.status === "unregistered"; // referenced but never admitted: drawn dashed
+  const dashed = vkey === "revoked" || hit || ghost;
   return (
     <div className={`rounded-lg border bg-panel px-3 py-2 min-w-[200px] transition-colors ${hit ? "blast" : ""} ${selected ? "ring-2 ring-accent" : ""}`}
       style={{ borderColor: `rgb(${color})`, borderLeftWidth: 4, borderStyle: dashed ? "dashed" : "solid", background: dashed ? "rgb(var(--block) / .07)" : undefined }}>
@@ -31,7 +32,7 @@ function LineageNode({ data, selected }: NodeProps<Node<NData>>) {
       </div>
       <div className="mt-1.5 flex items-center justify-between gap-2">
         <Trust level={node.trust_level} label={false} />
-        {hit ? <span className="text-xs font-medium text-block border border-dashed border-block/40 rounded-md px-2 py-0.5">Affected</span> : <Verdict outcome={vkey} />}
+        {hit ? <span className="text-xs font-medium text-block border border-dashed border-block/40 rounded-md px-2 py-0.5">Affected</span> : ghost ? <span className="text-xs text-mute border border-dashed border-faint rounded-md px-2 py-0.5">Not admitted</span> : <Verdict outcome={vkey} />}
       </div>
       <Handle type="source" position={Position.Right} className="!bg-faint !border-0 !w-1.5 !h-1.5" />
     </div>

@@ -21,11 +21,11 @@ export const trustColor: Record<TrustLevel, string> = {
 };
 export const statusLabel: Record<ArtifactStatus, string> = {
   submitted: "Submitted", quarantined: "Quarantined", admitted: "Admitted",
-  admitted_with_conditions: "Admitted, conditions", blocked: "Blocked", revoked: "Revoked",
+  admitted_with_conditions: "Admitted, conditions", blocked: "Blocked", revoked: "Revoked", unregistered: "Not admitted",
 };
 export const statusOutcome: Record<ArtifactStatus, Outcome | null> = {
   submitted: null, quarantined: "quarantine", admitted: "allow",
-  admitted_with_conditions: "allow_with_conditions", blocked: "block", revoked: "block",
+  admitted_with_conditions: "allow_with_conditions", blocked: "block", revoked: "block", unregistered: null,
 };
 /** What to call an artifact's state: revoked beats its old decision; a block that came from a monitor alert says so. */
 export type VerdictKey = Outcome | "revoked" | "block_monitor";

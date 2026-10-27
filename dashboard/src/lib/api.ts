@@ -30,6 +30,11 @@ export const api = {
   policy: () => req<PolicyState>("/policy"),
   putPolicy: (policy: object, signatures: PolicySignature[], expires_at: string | null) =>
     req<PolicyState>("/policy", { method: "PUT", body: JSON.stringify({ policy, signatures, expires_at }) }),
+  trustedPublishers: () => req<{ publishers: { name: string; key_id: string; scope: string[]; revoked: boolean }[]; revoked_keys: string[]; bootstrap_keys: string[] }>("/trusted-publishers"),
+  flClients: () => req<{ client_id: string; trust: number; flagged_rounds: number; clean_rounds: number; quarantined: boolean; reasons: string[] }[]>("/fl/clients"),
+  flRounds: () => req<string[]>("/fl/rounds"),
+  flRound: (id: string) => req<{ round_id: string; mode: string; aggregator: string; scores: Record<string, Record<string, number>>; z: Record<string, Record<string, number>>; flagged: Record<string, string[]>; excluded: string[]; notes: string[] }>(`/fl/rounds/${encodeURIComponent(id)}`),
+  monitorStatus: () => req<{ last: string | null; next: string | null; interval_minutes: number }>("/monitor/status"),
   log: () => req<MerkleLog>("/log"),
   latestTick: () => req<MonitorTick | null>("/monitor/latest"),
   tick: () => req<MonitorTick>("/monitor/tick", { method: "POST" }),

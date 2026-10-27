@@ -4,7 +4,7 @@ export type TrustLevel = "unknown" | "origin_verified" | "signed" | "recorded";
 export type Severity = "info" | "low" | "medium" | "high" | "critical";
 export type Outcome = "allow" | "allow_with_conditions" | "quarantine" | "block";
 export type ArtifactStatus =
-  | "submitted" | "quarantined" | "admitted" | "admitted_with_conditions" | "blocked" | "revoked";
+  | "submitted" | "quarantined" | "admitted" | "admitted_with_conditions" | "blocked" | "revoked" | "unregistered";
 export type StageId = "S0" | "S1" | "S2" | "S3" | "S4" | "S5" | "S6" | "S7";
 
 export interface Evidence { kind: string; ref: string; detail: string }

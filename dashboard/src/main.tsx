@@ -14,6 +14,9 @@ import GraphPage from "./pages/LineageGraph";
 import Policy from "./pages/Policy";
 import Approvals from "./pages/Approvals";
 import Bench from "./pages/Bench";
+import TrustedPublishers from "./pages/TrustedPublishers";
+import Federated from "./pages/Federated";
+import Monitor from "./pages/Monitor";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -29,6 +32,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="policy" element={<Policy />} />
           <Route path="approvals" element={<Approvals />} />
           <Route path="bench" element={<Bench />} />
+          <Route path="publishers" element={<TrustedPublishers />} />
+          <Route path="federated" element={<Federated />} />
+          <Route path="monitor" element={<Monitor />} />
         </Route>
       </Routes>
     </BrowserRouter>

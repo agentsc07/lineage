@@ -11,6 +11,9 @@ const nav = [
   { to: "/approvals", label: "Approvals" },
   { to: "/graph", label: "Lineage" },
   { to: "/policy", label: "Policy" },
+  { to: "/publishers", label: "Publishers" },
+  { to: "/federated", label: "Federated" },
+  { to: "/monitor", label: "Monitor" },
   { to: "/bench", label: "Bench" },
 ];
 
