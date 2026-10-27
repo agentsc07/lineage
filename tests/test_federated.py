@@ -115,7 +115,7 @@ def test_round_api_flags_quarantines_and_links_the_client_to_the_global_model(ap
     assert clients["evil"]["quarantined"] and clients["evil"]["trust"] < 0.3 and not clients["h0"]["quarantined"]
     assert api.get("/fl/rounds/r0").json()["round_id"] == "r0"
     assert api.post("/fl/rounds", json=round_body(api, "r0")).status_code == 409
-    g = api.get(f"/graph/{api.model_id}", params={"direction": "up"}).json()
+    g = api.get(f"/graph/{api.model_id}", params={"direction": "up", "collapse": "false"}).json()
     assert {e["kind"] for e in g["edges"]} == {"contributed_to"} and "ghost:fl-client:evil" in {n["id"] for n in g["nodes"]}
 
 
