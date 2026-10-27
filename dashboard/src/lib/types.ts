@@ -42,7 +42,23 @@ export interface ArtifactDetail {
 }
 export interface StageEvent {
   job_id: string; stage: StageId; name: string; status: "started" | "completed" | "skipped" | "failed";
-  findings: Finding[]; message: string; decision?: Decision | null; ts: string;
+  findings: Finding[]; message: string; decision?: Decision | null; elapsed_ms?: number | null; ts: string;
+}
+export type OriginStatus = "matching" | "changed" | "missing" | "extra" | "unchecked";
+export interface ArtifactView {
+  artifact_id: string; merkle_root: string; claimed_origin: string | null; origin_checked: boolean;
+  files: { path: string; size: number | null; sha256: string | null; origin: OriginStatus }[];
+  facts: { key: string; value: string | null; provenance: Fact["provenance"]; source: string }[];
+  creator_passport: { present: boolean; claimed_publisher?: string; claimed_source?: string; key_id?: string; signature?: string; key_status?: string; signer?: string | null; bytes_match?: boolean | null };
+  finding_classes: Record<string, "hard_block" | "policy_dependent" | "scored">;
+  decision: Decision | null; requester: string | null; hard_block: boolean; next_action: string;
+  pull_command: string | null; pull_command_first_use: string | null;
+}
+export interface JobView { job_id: string; requester: string | null; artifact_type: string | null; environment: string | null; label: string | null; created_at: string | null; done: boolean; artifact_id: string | null }
+export interface Limits { max_upload_mb: number; max_fetch_mb: number; max_archive_files: number; accepted: string[] }
+export interface AttestationView {
+  attestation: { attestation: { artifact_id: string; digest: string; outcome: Outcome; environment: string; trust: TrustLevel; policy_version: string; issued_at: string; expires_at: string; revoked: boolean }; signature: string; key_id: string };
+  signature_ok: boolean; registry_key_id: string; verified_by: string;
 }
 export interface GraphNode {
   id: string; label: string; artifact_type: ArtifactType; trust_level: TrustLevel;

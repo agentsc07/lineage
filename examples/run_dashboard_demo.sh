@@ -36,5 +36,6 @@ echo "API server on $API_URL (fresh database $DB); demo tokens in $TOKENS"
 LINEAGE_API="$API_URL" LINEAGE_DEMO_DIR="$WORK" LINEAGE_DEMO_DB="$DB" LINEAGE_DEMO_TOKENS="$TOKENS" LINEAGE_DEMO_FEED="$WORK/feed.json" HUB_PORT="$HUB_PORT" SITE_PORT="$SITE_PORT" \
   examples/demo_scenario.sh
 
+uv run --quiet --project "$REPO" python "$REPO/examples/make_dashboard_samples.py" "$WORK/demo" "$WORK/samples" >/dev/null && export LINEAGE_SAMPLES_DIR="$WORK/samples"
 echo; echo "Dashboard: http://localhost:$DASH_PORT  (sign in with alice or bob from $TOKENS; Ctrl+C stops the dashboard and the API server)"
 cd dashboard && { [[ -d node_modules ]] || npm install; } && LINEAGE_API="$API_URL" npm run dev -- --port "$DASH_PORT" --strictPort

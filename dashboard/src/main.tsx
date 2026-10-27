@@ -25,7 +25,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route element={<Layout />}>
           <Route index element={<Overview />} />
           <Route path="catalogue" element={<Catalogue />} />
-          <Route path="intake" element={<Intake />} />
+          <Route path="intake/:jobId?" element={<Intake />} />
           <Route path="artifacts/:id" element={<ArtifactPage />} />
           <Route path="graph" element={<GraphPage />} />
           <Route path="graph/:id" element={<GraphPage />} />

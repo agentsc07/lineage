@@ -1,10 +1,19 @@
 import { auth } from "./auth";
 import type {
-  Artifact, ArtifactDetail, Decision, Graph, MerkleLog, MonitorTick, PolicySignature, PolicyState,
-  RevokeResult, StageEvent,
+  Artifact, ArtifactDetail, ArtifactView, AttestationView, Decision, Graph, JobView, Limits, MerkleLog, MonitorTick, PolicySignature, PolicyState,
+  RevokeResult, SignedPassport, StageEvent,
 } from "./types";
 
 const BASE = "/api";
+
+/** A message a person can act on: the server's own `detail`, or why the server could not be reached at all. */
+export function describeError(e: unknown): string {
+  const m = e instanceof Error ? e.message : String(e);
+  if (e instanceof TypeError || /Failed to fetch|NetworkError|Load failed/i.test(m)) return "Cannot reach the Lineage server. Is it running, and does the dashboard point at it (LINEAGE_API)?";
+  const j = m.match(/^\d+ [^:]*: (.*)$/s)?.[1];
+  if (j) { try { const d = JSON.parse(j).detail; if (typeof d === "string") return d; if (d?.message) return `${d.message}: ${(d.reasons ?? []).join("; ")}`; } catch { /* not JSON */ } }
+  return m;
+}
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(BASE + path, {
@@ -24,6 +33,11 @@ export const api = {
   revoke: (id: string, reason: string) =>
     req<RevokeResult>(`/revoke/${encodeURIComponent(id)}?reason=${encodeURIComponent(reason)}`, { method: "POST" }),
   verifyPassport: (id: string) => req<{ valid: boolean; problems: string[]; revoked: boolean }>(`/passports/${encodeURIComponent(id)}/verify`),
+  artifactView: (id: string) => req<ArtifactView>(`/artifacts/${encodeURIComponent(id)}/view`),
+  job: (id: string) => req<JobView>(`/jobs/${encodeURIComponent(id)}`),
+  limits: () => req<Limits>("/limits"),
+  attestationView: (id: string, env: string) => req<AttestationView>(`/attestations/${encodeURIComponent(id)}/view?env=${encodeURIComponent(env)}`),
+  passport: (id: string) => req<SignedPassport>(`/passports/${encodeURIComponent(id)}`),
   whoami: () => req<import("./auth").Me>("/whoami"),
   upload: (file: File) => { const f = new FormData(); f.append("file", file); return req<{ upload_id: string; filename: string; size: number }>("/uploads", { method: "POST", body: f }); },
   approve: (id: string, body: { reason: string; expires: string }) =>
