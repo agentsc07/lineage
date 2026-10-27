@@ -67,6 +67,10 @@ PAUSE=0 examples/demo_scenario.sh     # the story only, no dashboard
 ```
 No GPU and no API key are needed. Optional: `NVIDIA_API_KEY` turns on the hosted reviewer (no Brev), `LINEAGE_GPU_URL` the GPU worker.
 
+## Signing
+
+Passports are signed with Ed25519 keys; trust comes only from keys listed in the policy's `trusted_publishers`, with a scope. `lineage sign --sigstore` is hidden and **experimental**: it writes a Sigstore bundle that nothing in Lineage verifies (not `lineage verify`, not intake, not the registry). Lineage does not claim Sigstore support.
+
 ## Uploads are never executed to inspect them
 
 Inspection reads bytes. It never imports, runs, unpickles or installs an uploaded artifact: archives are extracted with streaming caps

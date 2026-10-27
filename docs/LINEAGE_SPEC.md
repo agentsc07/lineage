@@ -214,7 +214,7 @@ Evidence bundles map to the frameworks the organisation follows (NIST AI RMF, IS
 
 | Component | Form | Stack |
 |---|---|---|
-| `lineage` | pip package: CLI + SDK | Python 3.11, Typer, Pydantic, safetensors, Ed25519 (`cryptography`) with optional Sigstore keyless |
+| `lineage` | pip package: CLI + SDK | Python 3.11, Typer, Pydantic, safetensors, Ed25519 (`cryptography`); a hidden, experimental `--sigstore` flag writes a bundle that nothing verifies (no Sigstore support is claimed) |
 | `lineage-server` | Registry, policy engine, Gate, Monitor | FastAPI, SQLite (demo) / Postgres, append-only Merkle log, TUF-style role keys |
 | Inspector | Plugin scanners | Own pickle / template / capability / taint scanners; OSV API |
 | GPU workers (Brev) | Weight analysis, behavioural tests, LLM reviewer, Notary, sandbox | PyTorch, vLLM, Nemotron models |

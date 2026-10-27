@@ -102,7 +102,7 @@ def sign(
     parent: Annotated[list[str] | None, typer.Option(help="Parent passport id (repeatable)")] = None,
     hub: Annotated[str | None, typer.Option(help="Source hub, e.g. huggingface")] = None,
     repo: Annotated[str | None, typer.Option(help="Source repo, e.g. org/name")] = None,
-    sigstore: Annotated[bool, typer.Option(help="Also write a Sigstore bundle (needs the sigstore package)")] = False,
+    sigstore: Annotated[bool, typer.Option(hidden=True, help="EXPERIMENTAL. Also write a Sigstore bundle (needs the sigstore package). Nothing in Lineage verifies the bundle.")] = False,
 ) -> None:
     """Hash an artifact, build its passport and sign it."""
     from lineage.passport.build import build_passport
