@@ -81,14 +81,15 @@ def evaluate(
     extra_findings: list[Finding] | None = None,
     extra_exceptions: list[PolicyException] | None = None,
     now: datetime | None = None,
+    environment: str | None = None,
 ) -> Decision:
-    """Run the engine over what is stored (plus extras) without saving anything."""
+    """Run the engine over what is stored (plus extras) without saving anything. `environment` asks "and for that environment?"."""
     signed = models.get_signed_passport(conn, artifact_id)
     if signed is None:
         raise NotFound(artifact_id)
     previous = models.latest_decision(conn, artifact_id)
     art = models.artifact_row(conn, artifact_id)
-    env = previous.environment if previous else art.environment  # type: ignore[union-attr]
+    env = environment or (previous.environment if previous else art.environment)  # type: ignore[union-attr]
     findings = models.get_findings(conn, artifact_id) + list(extra_findings or [])
     return decide(
         signed.passport.predicate,

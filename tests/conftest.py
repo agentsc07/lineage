@@ -14,6 +14,13 @@ def offline(monkeypatch):
     monkeypatch.setenv("LINEAGE_OFFLINE", "1")
 
 
+@pytest.fixture(autouse=True)
+def dev_server_defaults(monkeypatch):
+    """Server tests run unauthenticated with local paths allowed unless a test turns auth on (tests/test_roles.py)."""
+    monkeypatch.setenv("LINEAGE_REQUIRE_AUTH", "0")
+    monkeypatch.setenv("LINEAGE_DEV_LOCAL_PATHS", "1")
+
+
 @pytest.fixture
 def policy_path() -> Path:
     return REPO / "examples" / "policy.org.yaml"

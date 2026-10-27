@@ -53,7 +53,8 @@ def intake(
 
     from lineage.intake.hub import default_hub
 
-    for event in run_intake(artifact_type, ref, env, PolicyPack.from_yaml(policy), job_id="cli", hub=default_hub()):
+    for event in run_intake(artifact_type, "" if ref.startswith(("hf:", "hf-dataset:", "pypi:")) else ref, env, PolicyPack.from_yaml(policy), job_id="cli",
+                            hub=default_hub(), source=ref if ref.startswith(("hf:", "hf-dataset:", "pypi:")) else None):
         console.print(event.model_dump_json())
 
 
@@ -265,27 +266,67 @@ def run(
 @app.command("load-check")
 def load_check(
     path: Annotated[Path, typer.Argument(help="Artifact to re-check at use")],
-    passport: Annotated[Path, typer.Option(help="Signed passport JSON")],
-    policy: Annotated[Path, typer.Option(help="Policy pack YAML")] = Path("examples/policy.org.yaml"),
-    pubkey: Annotated[Path | None, typer.Option(help="Also verify the signature with this public key")] = None,
+    env: Annotated[str, typer.Option("--env", "-e", help="Environment the artifact is about to be used in")] = "prod",
+    server: Annotated[str | None, typer.Option(help="Registry URL (else LINEAGE_SERVER / ~/.lineage/config.toml)")] = None,
+    allow_pickle: Annotated[bool, typer.Option(help="Do not refuse pickle files")] = False,
 ) -> None:
-    """Re-hash an artifact against its passport and policy, as `lineage.load()` would."""
-    from lineage.bind import check
-    from lineage.schemas.passport import SignedPassport
-    from lineage.schemas.policy import PolicyPack
-    from lineage.signing.keys import load_public_key
+    """The same checks as `lineage.load()`, without loading: registry attestation, revocation, expiry, re-hash. Exit 1 on refuse."""
+    from lineage.client import check_for_use
 
-    problems = check(
-        path,
-        SignedPassport.model_validate_json(passport.read_text()),
-        PolicyPack.from_yaml(policy),
-        public_key=load_public_key(pubkey) if pubkey else None,
-    )
+    problems = check_for_use(path, env=env, server=server, allow_pickle=allow_pickle)
     for p in problems:
         err.print(f"  [red]✗[/] {p}", soft_wrap=True)
     _verdict(not problems, "load allowed", "REFUSED: lineage.load() would raise LoadRefused")
     if problems:
         raise typer.Exit(code=1)
+
+
+@app.command()
+def pull(
+    ref: Annotated[str, typer.Argument(help="Artifact id (lp:...), or a source such as hf:org/name or pypi:name==1.0")],
+    dest: Annotated[Path, typer.Argument(help="Directory to write the admitted bytes into")],
+    env: Annotated[str, typer.Option("--env", "-e")] = "prod",
+    server: Annotated[str | None, typer.Option(help="Registry URL (else LINEAGE_SERVER / ~/.lineage/config.toml)")] = None,
+    pin: Annotated[bool, typer.Option(help="First use: fetch the registry key and pin it in ~/.lineage/config.toml")] = False,
+) -> None:
+    """Download an admitted artifact from the store; verify the attestation and every hash; write the attestation beside it."""
+    import httpx
+
+    from lineage import client
+
+    cfg = client.settings()
+    srv = (server or cfg["server"]).rstrip("/")
+    key = cfg["registry_pubkey"]
+    if pin and srv:
+        key = httpx.get(f"{srv}/registry-key", headers={"Authorization": f"Bearer {cfg['token']}"} if cfg["token"] else {}).json()["public_key"]
+        where = client.pin_registry_key(key)
+        err.print(f"[yellow]![/] pinned registry key {key[:16]}… in {where} (trust on first use; check it out of band)")
+    try:
+        signed = client.pull(ref, dest, env=env, server=srv, registry_pubkey=key)
+    except client.LoadRefused as e:
+        err.print(f"[red]✗[/] {e}")
+        raise typer.Exit(code=1)
+    a = signed.attestation
+    console.print(f"[green]✓[/] pulled {a.artifact_id[:19]}… ({len(a.files)} file(s)) into {dest}: {a.outcome} for {a.environment}, expires {a.expires_at:%Y-%m-%d %H:%M} UTC")
+
+
+@app.command()
+def upload(
+    path: Annotated[Path, typer.Argument(help="File or archive to send to the registry")],
+    server: Annotated[str | None, typer.Option(help="Registry URL (else LINEAGE_SERVER / ~/.lineage/config.toml)")] = None,
+) -> None:
+    """Send a file or archive to the registry (POST /uploads) and print the `upload:<id>` source to intake."""
+    import httpx
+
+    from lineage import client
+
+    cfg = client.settings()
+    srv = (server or cfg["server"]).rstrip("/")
+    r = httpx.post(f"{srv}/uploads", files={"file": (path.name, path.open("rb"))}, headers={"Authorization": f"Bearer {cfg['token']}"} if cfg["token"] else {}, timeout=600)
+    if r.status_code != 200:
+        err.print(f"[red]✗[/] upload refused ({r.status_code}): {r.text[:200]}")
+        raise typer.Exit(code=1)
+    console.print(f"upload:{r.json()['upload_id']}")
 
 
 @app.command()

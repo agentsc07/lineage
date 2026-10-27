@@ -1,27 +1,18 @@
+"""lineage.load() trusts only a registry-signed attestation for this environment (REFACTOR_SPEC section 5); see also
+tests/test_load_enforcement.py for the end-to-end refusals."""
 import sys
 import types
 import zipfile
+from datetime import timedelta
 
 import pytest
 
 import lineage
-from lineage.bind import LoadRefused, check, find_pickle_files, load
-from lineage.passport.build import build_passport
-from lineage.schemas.policy import PolicyPack
-from lineage.schemas.passport import SourceRef
-from lineage.signing.ed25519 import sign_passport
-from lineage.signing.keys import generate_keypair, load_private_key, load_public_key
+from lineage.bind import LoadRefused, find_pickle_files, load
+from lineage.client import check_for_use
+from tests.attest_helpers import REGISTRY_PUB, attest
 
-
-@pytest.fixture
-def policy(policy_path):
-    return PolicyPack.from_yaml(policy_path)
-
-
-@pytest.fixture
-def keys(tmp_path):
-    generate_keypair(tmp_path / "k")
-    return load_private_key(tmp_path / "k/default.key"), load_public_key(tmp_path / "k/default.pub")
+KW = dict(registry_pubkey=REGISTRY_PUB, server="", env="dev")
 
 
 @pytest.fixture
@@ -31,32 +22,43 @@ def model(tiny_model):
 
 
 @pytest.fixture
-def signed(model, keys):
-    return sign_passport(build_passport(model, "model", "t", "1", SourceRef(), trust_level="origin_verified"), keys[0], "k")
+def no_transformers(monkeypatch):
+    # a None entry makes `import transformers` raise ImportError, exercising the raw-safetensors fallback
+    monkeypatch.setitem(sys.modules, "transformers", None)
 
 
-def test_clean_artifact_passes(model, signed, policy):
-    assert check(model, signed, policy) == []
+def test_clean_artifact_passes(model):
+    attest(model)
+    assert check_for_use(model, **KW) == []
 
 
-def test_swapped_tokenizer_refused(model, signed, policy):
+def test_swapped_tokenizer_refused(model):
+    attest(model)
     (model / "tokenizer.json").write_text('{"v": 2, "added_tokens": ["<evil>"]}')
-    problems = check(model, signed, policy)
-    assert any("tokenizer.json" in p for p in problems)
+    assert any("tokenizer.json" in p for p in check_for_use(model, **KW))
     with pytest.raises(LoadRefused, match="tokenizer.json"):
-        load(model, signed, policy)
+        load(model, **KW)
 
 
-def test_modified_weights_refused(model, signed, policy, tiny_model_child):
+def test_modified_weights_refused(model, tiny_model_child):
+    attest(model)
     (model / "model.safetensors").write_bytes((tiny_model_child / "model.safetensors").read_bytes())
     with pytest.raises(LoadRefused, match="model.safetensors"):
-        load(model, signed, policy)
+        load(model, **KW)
 
 
-def test_unpinned_file_refused(model, signed, policy):
+def test_unattested_file_refused(model):
+    attest(model)
     (model / "modeling_evil.py").write_text("x = 1")
-    with pytest.raises(LoadRefused, match="unpinned.*modeling_evil.py"):
-        load(model, signed, policy)
+    with pytest.raises(LoadRefused, match="unattested file: modeling_evil.py"):
+        load(model, **KW)
+
+
+def test_missing_file_refused(model):
+    attest(model)
+    (model / "tokenizer.json").unlink()
+    with pytest.raises(LoadRefused, match="missing file: tokenizer.json"):
+        load(model, **KW)
 
 
 def _torch_zip(path):
@@ -64,16 +66,14 @@ def _torch_zip(path):
         z.writestr("archive/data.pkl", b"\x80\x02N.")
 
 
-def test_pickle_refused_by_policy_even_if_pinned(model, keys, policy):
+def test_pickle_refused_even_if_attested(model):
     _torch_zip(model / "weights.pt")
     (model / "legacy.bin").write_bytes(b"\x80\x04N.")
-    signed = sign_passport(build_passport(model, "model", "t", "1", SourceRef()), keys[0], "k")
+    attest(model)
     assert {p.name for p in find_pickle_files(model)} == {"weights.pt", "legacy.bin"}
-    problems = check(model, signed, policy)
-    assert any("pickle" in p and "weights.pt" in p for p in problems)
-    assert any("pickle" in p and "legacy.bin" in p for p in problems)
-    policy.model_files.allow_pickle = True
-    assert check(model, signed, policy) == []
+    problems = check_for_use(model, **KW)
+    assert any("pickle" in p and "weights.pt" in p for p in problems) and any("legacy.bin" in p for p in problems)
+    assert check_for_use(model, allow_pickle=True, **KW) == []
 
 
 def test_safetensors_bin_not_flagged(model):
@@ -81,44 +81,28 @@ def test_safetensors_bin_not_flagged(model):
     assert find_pickle_files(model) == []
 
 
-def test_no_policy_defaults_to_refusing_pickle(model, keys):
-    (model / "w.pkl").write_bytes(b"\x80\x04N.")
-    signed = sign_passport(build_passport(model, "model", "t", "1", SourceRef()), keys[0], "k")
-    assert any("pickle" in p for p in check(model, signed, None))
+def test_no_attestation_refused(model):
+    with pytest.raises(LoadRefused, match="no attestation"):
+        load(model, **KW)
 
 
-def test_no_passport_refused(model, policy):
-    with pytest.raises(LoadRefused, match="no passport"):
-        load(model, None, policy)
+def test_no_pinned_registry_key_refused(model):
+    attest(model)
+    with pytest.raises(LoadRefused, match="no registry public key"):
+        load(model, server="", env="dev", registry_pubkey=None)
 
 
-@pytest.fixture
-def no_transformers(monkeypatch):
-    # a None entry makes `import transformers` raise ImportError, exercising the raw-safetensors fallback
-    monkeypatch.setitem(sys.modules, "transformers", None)
+def test_attestation_signed_by_another_key_refused(model):
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+    attest(model, key=Ed25519PrivateKey.generate())
+    with pytest.raises(LoadRefused, match="signature does not verify"):
+        load(model, **KW)
 
 
-def test_passport_autodiscovered_next_to_artifact(model, signed, policy, no_transformers):
-    (model / "passport.json").write_text(signed.model_dump_json(by_alias=True))
-    with pytest.raises(LoadRefused, match="unpinned"):  # passport.json itself isn't pinned...
-        load(model, None, policy)
-    side = model.parent / (model.name + ".passport.json")
-    side.write_text(signed.model_dump_json(by_alias=True))
-    (model / "passport.json").unlink()
-    tensors = load(model, None, policy)
-    assert "layers.0.weight" in tensors
-
-
-def test_signature_checked_when_key_given(model, signed, policy, tmp_path):
-    generate_keypair(tmp_path / "other")
-    other = load_public_key(tmp_path / "other/default.pub")
-    with pytest.raises(LoadRefused, match="signature"):
-        load(model, signed, policy, public_key=other)
-
-
-def test_load_returns_tensors(model, signed, policy, keys, no_transformers):
-    out = load(model, signed, policy, public_key=keys[1])
-    assert set(out) == {"layers.0.weight", "layers.0.bias", "layers.1.weight", "layers.1.bias"}
+def test_load_returns_tensors(model, no_transformers):
+    attest(model)
+    assert set(load(model, **KW)) == {"layers.0.weight", "layers.0.bias", "layers.1.weight", "layers.1.bias"}
 
 
 def test_lineage_load_exported():
@@ -142,25 +126,28 @@ def fake_transformers(monkeypatch):
     return calls
 
 
-def test_transformers_wrapper_verifies_then_delegates(model, signed, policy, fake_transformers):
+def test_transformers_wrapper_verifies_then_delegates(model, fake_transformers):
     from lineage.bind import LineageAutoModel
 
-    out = LineageAutoModel.from_pretrained(model, passport=signed, policy=policy)
-    assert out == "MODEL"
+    attest(model)
+    assert LineageAutoModel.from_pretrained(model, **KW) == "MODEL"
     path, kw = fake_transformers[0]
     assert path == str(model) and kw["use_safetensors"] is True
     (model / "tokenizer.json").write_text("{}")
     with pytest.raises(LoadRefused):
-        LineageAutoModel.from_pretrained(model, passport=signed, policy=policy)
+        LineageAutoModel.from_pretrained(model, **KW)
     assert len(fake_transformers) == 1  # never reached transformers
 
 
-def test_load_uses_transformers_when_available(model, signed, policy, fake_transformers):
-    assert load(model, signed, policy, dtype="bf16") == "MODEL"
+def test_load_uses_transformers_when_available(model, fake_transformers):
+    attest(model)
+    assert load(model, dtype="bf16", **KW) == "MODEL"
     assert fake_transformers[0][1]["dtype"] == "bf16"
 
 
-def test_trust_remote_code_needs_origin_verified_trust(model, keys, policy, fake_transformers):
-    declared = sign_passport(build_passport(model, "model", "t", "1", SourceRef(), trust_level="unknown"), keys[0], "k")
+def test_trust_remote_code_needs_origin_verified_trust(model, fake_transformers):
+    attest(model, trust="unknown")
     with pytest.raises(LoadRefused, match="trust_remote_code"):
-        load(model, declared, policy, trust_remote_code=True)
+        load(model, trust_remote_code=True, **KW)
+    attest(model, trust="origin_verified")
+    assert load(model, trust_remote_code=True, **KW) == "MODEL"

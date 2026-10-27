@@ -73,6 +73,8 @@ class PolicyPack(BaseModel):
     unrun_checks: dict[str, dict[str, Severity]] = Field(default_factory=_default_unrun)
     trusted_publishers: list[TrustedPublisher] = Field(default_factory=list)
     revoked_keys: list[str] = Field(default_factory=list)  # key ids
+    # How long a client may keep using a cached attestation when the registry is unreachable. 0 = fail closed.
+    offline_grace_hours: dict[str, int] = Field(default_factory=lambda: {"dev": 24, "staging": 6, "prod": 0})
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> "PolicyPack":

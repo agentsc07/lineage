@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from lineage.schemas.artifact import PassportReceipt, VerifyResult
 from lineage.schemas.passport import SignedPassport
 from lineage_server import log, models, trust
+from lineage_server.auth import require
 from lineage_server.deps import get_conn
 
 router = APIRouter()
@@ -19,7 +20,7 @@ def _log_index(conn: sqlite3.Connection, passport_id: str) -> int:
     return log.inclusion_proof(conn, passport_id).index
 
 
-@router.post("/passports", response_model=PassportReceipt)
+@router.post("/passports", response_model=PassportReceipt, dependencies=[Depends(require("requester"))])
 def submit_passport(signed: SignedPassport, conn: sqlite3.Connection = Depends(get_conn)) -> PassportReceipt:
     pub = trust.trusted_key(conn, signed.key_id)
     if pub is None:

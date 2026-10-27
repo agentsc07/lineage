@@ -10,6 +10,7 @@ from fastapi.responses import StreamingResponse
 from lineage.schemas.artifact import InclusionProof, MerkleLog, MonitorTick
 from lineage.schemas.policy import PolicyPack
 from lineage_server import log, monitor
+from lineage_server.auth import require
 from lineage_server.deps import get_conn, get_policy
 from lineage_server.jobs import Job
 
@@ -44,7 +45,7 @@ def get_proof(ref: str, conn: sqlite3.Connection = Depends(get_conn)) -> Inclusi
         raise HTTPException(404, f"no log entry for {ref}")
 
 
-@router.post("/monitor/tick", response_model=MonitorTick)
+@router.post("/monitor/tick", response_model=MonitorTick, dependencies=[Depends(require("approver", "requester"))])
 def monitor_tick(
     conn: sqlite3.Connection = Depends(get_conn), active: tuple[PolicyPack, bool] = Depends(get_policy)
 ) -> MonitorTick:

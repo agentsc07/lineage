@@ -8,6 +8,7 @@ from pydantic import ValidationError
 
 from lineage.schemas.artifact import PolicyState, PolicyUpdate
 from lineage_server import log, policy_store, tuf
+from lineage_server.auth import require
 from lineage_server.deps import get_conn
 
 router = APIRouter()
@@ -21,7 +22,7 @@ def get_policy(conn: sqlite3.Connection = Depends(get_conn)) -> PolicyState:
     return state
 
 
-@router.put("/policy", response_model=PolicyState)
+@router.put("/policy", response_model=PolicyState, dependencies=[Depends(require("admin"))])
 def put_policy(update: PolicyUpdate, conn: sqlite3.Connection = Depends(get_conn)) -> PolicyState:
     try:
         before = policy_store.get_state(conn)
