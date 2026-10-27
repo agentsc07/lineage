@@ -70,6 +70,21 @@ uv run python -m lineage_server.tuf sign examples/policy.org.yaml \
 ```
 The new metadata must expire later than the current policy's (no rollback).
 
+### Tokens, uploads, the store, the package index (refactor)
+Every request needs a bearer token (roles `requester`, `approver`, `admin`, `auditor`); `LINEAGE_REQUIRE_AUTH=0` turns that off for local development.
+```bash
+uv run python -m lineage_server.auth add --db lineage.db --name alice --roles requester     # prints the token once
+uv run python -m lineage_server.auth demo --db lineage.db --out examples/demo_tokens.json   # alice, bob, carol, auditor
+export LINEAGE_SERVER=http://localhost:8000 LINEAGE_TOKEN=lg_...
+uv run lineage upload ./model.zip                              # -> upload:<id>
+curl -XPOST $LINEAGE_SERVER/intake -H "Authorization: Bearer $LINEAGE_TOKEN" -H 'content-type: application/json' \
+  -d '{"artifact_type":"model","source":"upload:<id>","claimed_origin":"hf:org/name@<sha>","environment":"prod"}'
+uv run lineage pull lp:... ./model --env prod --pin           # --pin: trust the registry key on first use
+uv run lineage load-check ./model --env prod                  # exit 1 if lineage.load() would refuse
+pip install --index-url http://user:$LINEAGE_TOKEN@localhost:8000/simple/ requests   # only admitted wheels
+```
+Admitted bytes live in `LINEAGE_STORE` (default `./lineage-store`), uploads in `LINEAGE_UPLOADS`. `lineage.load(path, env="prod")` needs a registry-signed attestation (pinned key in `~/.lineage/config.toml` or `LINEAGE_REGISTRY_PUBKEY`) and fails closed in prod when the registry is unreachable. Dashboard: paste a token at the login screen.
+
 ## Prove core (Track A) quick tour
 ```bash
 uv run lineage keygen                                  # lineage.key / lineage.pub

@@ -45,5 +45,5 @@ echo "API server on $API_URL (fresh database $DB)"
 LINEAGE_DEMO_TOKENS="examples/demo_tokens.json" LINEAGE_DEMO_HUB_FILE="$WORK/hub.json" LINEAGE_API="$API_URL" LINEAGE_DEMO_KEYDIR="$WORK" LINEAGE_DEMO_FEED="$WORK/feed.json" \
   examples/demo_scenario.sh
 
-echo; echo "Dashboard: http://localhost:$DASH_PORT  (Ctrl+C stops the dashboard and the API server)"
+echo; echo "Dashboard sign-in tokens (alice requests, bob approves): examples/demo_tokens.json"; echo "Dashboard: http://localhost:$DASH_PORT  (Ctrl+C stops the dashboard and the API server)"
 cd dashboard && { [[ -d node_modules ]] || npm install; } && LINEAGE_API="$API_URL" npm run dev -- --port "$DASH_PORT" --strictPort

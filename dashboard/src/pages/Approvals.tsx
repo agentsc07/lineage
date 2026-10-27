@@ -5,6 +5,7 @@ import { useAsync } from "../lib/useAsync";
 import { session, useSession } from "../lib/session";
 import { ago, dt } from "../lib/format";
 import { Empty, ErrorBox, Header, Risk, Verdict } from "../components/ui";
+import { auth, useMe } from "../lib/auth";
 
 const inDays = (n: number) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
 
@@ -12,7 +13,9 @@ export default function Approvals() {
   const arts = useAsync(api.artifacts);
   const sess = useSession();
   const [open, setOpen] = useState<string | null>(null);
-  const [approver, setApprover] = useState("");
+  const { me } = useMe();
+  const mine = new Set(sess.map((s) => s.decision.artifact_id)); // started from this browser by the signed-in user
+  const canApprove = auth.can("approver");
   const [reason, setReason] = useState("");
   const [expires, setExpires] = useState(inDays(30));
   const [busy, setBusy] = useState(false);
@@ -29,17 +32,17 @@ export default function Approvals() {
   const submit = async (id: string) => {
     setBusy(true); setErr(null);
     try {
-      const d = await api.approve(id, { approver: approver.trim(), reason: reason.trim(), expires: new Date(expires + "T23:59:59Z").toISOString() });
-      session.approve(id, { by: approver.trim(), reason: reason.trim(), expires }, d);
-      setLocalApproved((m) => ({ ...m, [id]: `${approver.trim()} until ${expires}` }));
+      const d = await api.approve(id, { reason: reason.trim(), expires: new Date(expires + "T23:59:59Z").toISOString() });
+      session.approve(id, { by: me?.name ?? "you", reason: reason.trim(), expires }, d);
+      setLocalApproved((m) => ({ ...m, [id]: `${me?.name ?? "you"} until ${expires}` }));
       setOpen(null); setReason("");
     } catch (e: any) { setErr(e.message); } finally { setBusy(false); }
   };
-  const valid = approver.trim() && reason.trim().length >= 8 && expires;
+  const valid = reason.trim().length >= 8 && expires;
 
   return (
     <div className="page">
-      <Header title="Approvals" sub="Quarantined artifacts wait here for a person. An approval needs a reason and always expires." />
+      <Header title="Approvals" sub="Quarantined artifacts wait here for a person. The approver is the signed-in user; whoever requested an intake cannot approve it. Approvals need a reason and always expire." />
       {arts.error && <ErrorBox msg={arts.error} retry={arts.reload} />}
       <section className="card">
         <div className="card-h"><h2 className="h-title">Waiting for review <span className="text-faint font-normal">({pending.length})</span></h2></div>
@@ -57,10 +60,12 @@ export default function Approvals() {
               {q.reasons.length > 0 && <ul className="text-sm text-mute list-disc pl-4 mt-3 space-y-0.5">{q.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul>}
               {open === q.id + q.at && (
                 <form className="mt-4 grid sm:grid-cols-[180px_1fr_160px_auto] gap-3 items-end bg-raised/50 border border-line rounded-md p-3" onSubmit={(e) => { e.preventDefault(); if (valid) submit(q.id); }}>
-                  <label className="text-sm text-mute">Approver<input className="input mt-1" value={approver} onChange={(e) => setApprover(e.target.value)} placeholder="name@apollo.health" /></label>
+                  <div className="text-sm text-mute">Approver<p className="mt-1 h-9 flex items-center text-ink">{me?.name}</p></div>
                   <label className="text-sm text-mute">Reason<input className="input mt-1" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why this is safe to use" /></label>
                   <label className="text-sm text-mute">Expires<input type="date" className="input mt-1" value={expires} min={inDays(1)} onChange={(e) => setExpires(e.target.value)} /></label>
-                  <button className="btn btn-primary" disabled={!valid || busy}>{busy ? "Approving…" : "Approve"}</button>
+                  <button className="btn btn-primary" disabled={!valid || busy || !canApprove || mine.has(q.id)}
+                    title={!canApprove ? "Your token has no approver role" : mine.has(q.id) ? "You requested this intake and cannot approve it" : undefined}>{busy ? "Approving…" : "Approve"}</button>
+                  {(!canApprove || mine.has(q.id)) && <p className="text-xs text-quar sm:col-span-4">{!canApprove ? "You need the approver role to approve." : "You requested this intake; someone else must approve it (separation of duties)."}</p>}
                   {err && <p className="text-sm text-block sm:col-span-4">{err}</p>}
                 </form>)}
             </div>))}

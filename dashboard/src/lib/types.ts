@@ -5,7 +5,7 @@ export type Severity = "info" | "low" | "medium" | "high" | "critical";
 export type Outcome = "allow" | "allow_with_conditions" | "quarantine" | "block";
 export type ArtifactStatus =
   | "submitted" | "quarantined" | "admitted" | "admitted_with_conditions" | "blocked" | "revoked";
-export type StageId = "S1" | "S2" | "S3" | "S4" | "S5" | "S6" | "S7";
+export type StageId = "S0" | "S1" | "S2" | "S3" | "S4" | "S5" | "S6" | "S7";
 
 export interface Evidence { kind: string; ref: string; detail: string }
 export interface Finding {
@@ -30,7 +30,9 @@ export interface PassportBody {
   parents: string[]; action?: { kind: string } | null; trust_level: TrustLevel;
   findings_digest: string; risk_score: number; certificates: string[];
   issued_by: { name: string; key_id?: string | null }; issued_at: string; expires_at?: string | null;
+  facts?: Fact[];
 }
+export interface Fact { key: string; value: string | null; provenance: "computed" | "fetched" | "signed" | "declared"; source: string; at: string }
 export interface SignedPassport {
   passport: { _type: string; subject: { name: string; digest: Record<string, string> }[]; predicateType: string; predicate: PassportBody };
   signature: string; key_id: string;
