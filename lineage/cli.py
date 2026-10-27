@@ -193,7 +193,8 @@ def verify(
         key = Ed25519PublicKey.from_public_bytes(bytes.fromhex(entry["key"]))
     r = verify_passport(signed, key, artifact, server)
     body = signed.passport.predicate
-    console.print(f"[bold]{body.name} {body.version}[/]  [dim]{_short(r.passport_id)}[/]  trust: {body.trust_level}")
+    console.print(f"[bold]{body.name} {body.version}[/]  [dim]{_short(r.passport_id)}[/]  trust claimed by the passport: "
+                  f"{'none' if body.trust_level == 'unknown' else body.trust_level} (the verifier decides)")
     mark = lambda ok: "[green]✓[/]" if ok else "[red]✗[/]"  # noqa: E731
     t = Table.grid(padding=(0, 2))
     t.add_row(mark(r.signature_ok), "signature", f"key {signed.key_id}")
