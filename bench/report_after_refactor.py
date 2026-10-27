@@ -106,6 +106,7 @@ def main() -> None:
             L += [f"- **{label}**: newly flagged {len(up)} ({sum(1 for _, l in up if l == 'malicious')} malicious, {sum(1 for _, l in up if l == 'benign')} benign); unflagged {len(down)}. "
                   + (", ".join(f"`{i}` ({l})" for i, l in up[:8]) if up else "")]
         L.append("")
+    L += ["## Real-world false alarms", "", "The PyPI top-400 and 100 chat-template sets were re-run after the refactor (static only): see `bench/results_realworld_after.md`.", ""]
     pr = ROOT / "bench" / "taint_recheck.md"
     if pr.is_file():
         L += ["## Taint hang re-check on real wheels", "", pr.read_text(), ""]

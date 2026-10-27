@@ -239,12 +239,16 @@ def _role_remap(tree: nodes.Template, ref: str, an: "_Analysis") -> list[Finding
     return out
 
 
+# Names that appear in the *description* of a tool-call format (Falcon3, Hermes, Qwen explain `{"name": "function_name", ...}`); a real hidden call names a real tool.
+PLACEHOLDER_NAMES = {"function_name", "function-name", "tool_name", "tool-name", "func_name", "function", "name", "tool", "func", "fn", "your_function", "name_of_function"}
+
+
 def _hidden_tool_calls(tree: nodes.Template, ref: str) -> list[Finding]:
     """Function-call markup with a literal function name, printed by the template itself rather than built from a message's tool_calls."""
     out: list[Finding] = []
     for line, text in _literal_text(tree):
         m = TOOL_CALL_LITERAL.search(text)
-        if m:
+        if m and m.group(2).strip().lower() not in PLACEHOLDER_NAMES and not re.search(r"[<>{}.\s]", m.group(2)):  # documentation of the format, not a call
             out.append(finding("MODEL.TEMPLATE.HIDDEN_TOOL_CALL", f"{ref}: the template itself emits a tool call to {m.group(2)!r}", "high", "model", "S3",
                                [ev("field", f"{ref}:{line}", text.strip()[:140])]))
     return out

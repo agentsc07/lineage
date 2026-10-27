@@ -1,0 +1,274 @@
+{
+  "PyPI top 1-200 (dev)": {
+    "n": 200,
+    "flagged": 2,
+    "timeouts": 1,
+    "errors": 0,
+    "wilson": 0.01,
+    "items": [
+      {
+        "id": "jsonschema",
+        "outcome": "quarantine",
+        "risk": 35,
+        "findings": [
+          "PKG.NEW.SUBPROCESS",
+          "PROV.PUBLISHER.UNLISTED"
+        ],
+        "error": null
+      },
+      {
+        "id": "nodeenv",
+        "outcome": "quarantine",
+        "risk": 35,
+        "findings": [
+          "PKG.NEW.CREDENTIAL_PATH",
+          "PROV.PUBLISHER.UNLISTED"
+        ],
+        "error": null
+      },
+      {
+        "id": "pandas",
+        "outcome": null,
+        "risk": null,
+        "findings": null,
+        "error": "timeout after 120 s (intake did not finish)"
+      }
+    ]
+  },
+  "HF chat templates (dev, 50)": {
+    "n": 50,
+    "flagged": 3,
+    "timeouts": 0,
+    "errors": 0,
+    "wilson": 0.06,
+    "items": [
+      {
+        "id": "THUDM__glm-4-9b-chat",
+        "outcome": "quarantine",
+        "risk": 52,
+        "findings": [
+          "LLM.CARD.MISSING",
+          "MODEL.CONFIG.AUTO_MAP",
+          "MODEL.CONFIG.AUTO_MAP_MISSING",
+          "PROV.PUBLISHER.UNLISTED"
+        ],
+        "error": null
+      },
+      {
+        "id": "internlm__internlm2_5-7b-chat",
+        "outcome": "quarantine",
+        "risk": 52,
+        "findings": [
+          "LLM.CARD.MISSING",
+          "MODEL.CONFIG.AUTO_MAP",
+          "MODEL.CONFIG.AUTO_MAP_MISSING",
+          "PROV.PUBLISHER.UNLISTED"
+        ],
+        "error": null
+      },
+      {
+        "id": "moonshotai__Kimi-K2-Instruct",
+        "outcome": "quarantine",
+        "risk": 52,
+        "findings": [
+          "LLM.CARD.MISSING",
+          "MODEL.CONFIG.AUTO_MAP",
+          "MODEL.CONFIG.AUTO_MAP_MISSING",
+          "PROV.PUBLISHER.UNLISTED"
+        ],
+        "error": null
+      }
+    ]
+  },
+  "PyPI 201-400 (final)": {
+    "n": 199,
+    "flagged": 8,
+    "timeouts": 5,
+    "errors": 0,
+    "wilson": 0.04020100502512563,
+    "items": [
+      {
+        "id": "databricks-sdk",
+        "outcome": "quarantine",
+        "risk": 50,
+        "findings": [
+          "PKG.CODE.BAIT_ON_RISKY_CODE",
+          "PROV.PUBLISHER.UNLISTED"
+        ],
+        "error": null
+      },
+      {
+        "id": "debugpy",
+        "outcome": "block",
+        "risk": 50,
+        "findings": [
+          "PKG.HOOK.STARTUP_HOOK",
+          "PROV.PUBLISHER.UNLISTED"
+        ],
+        "error": null
+      },
+      {
+        "id": "google-cloud-aiplatform",
+        "outcome": null,
+        "risk": null,
+        "findings": null,
+        "error": "timeout after 120 s (intake did not finish)"
+      },
+      {
+        "id": "google-genai",
+        "outcome": "quarantine",
+        "risk": 50,
+        "findings": [
+          "PKG.CODE.BAIT_ON_RISKY_CODE",
+          "PROV.PUBLISHER.UNLISTED"
+        ],
+        "error": null
+      },
+      {
+        "id": "grpcio-tools",
+        "outcome": "quarantine",
+        "risk": 35,
+        "findings": [
+          "PKG.RULE.IMPORT_HOOK",
+          "PROV.PUBLISHER.UNLISTED"
+        ],
+        "error": null
+      },
+      {
+        "id": "litellm",
+        "outcome": null,
+        "risk": null,
+        "findings": null,
+        "error": "timeout after 120 s (intake did not finish)"
+      },
+      {
+        "id": "onnxruntime",
+        "outcome": "quarantine",
+        "risk": 50,
+        "findings": [
+          "PKG.CODE.BAIT_ON_RISKY_CODE",
+          "PROV.PUBLISHER.UNLISTED"
+        ],
+        "error": null
+      },
+      {
+        "id": "paramiko",
+        "outcome": "quarantine",
+        "risk": 50,
+        "findings": [
+          "PKG.CODE.DELAYED_EXEC",
+          "PROV.PUBLISHER.UNLISTED"
+        ],
+        "error": null
+      },
+      {
+        "id": "parso",
+        "outcome": "quarantine",
+        "risk": 50,
+        "findings": [
+          "PKG.CODE.DELAYED_EXEC",
+          "PROV.PUBLISHER.UNLISTED"
+        ],
+        "error": null
+      },
+      {
+        "id": "sympy",
+        "outcome": null,
+        "risk": null,
+        "findings": null,
+        "error": "timeout after 120 s (intake did not finish)"
+      },
+      {
+        "id": "torch",
+        "outcome": null,
+        "risk": null,
+        "findings": null,
+        "error": "timeout after 120 s (intake did not finish)"
+      },
+      {
+        "id": "tornado",
+        "outcome": "quarantine",
+        "risk": 50,
+        "findings": [
+          "PKG.COMBO.OBFUSCATED_PAYLOAD",
+          "PROV.PUBLISHER.UNLISTED"
+        ],
+        "error": null
+      },
+      {
+        "id": "transformers",
+        "outcome": null,
+        "risk": null,
+        "findings": null,
+        "error": "timeout after 120 s (intake did not finish)"
+      }
+    ]
+  },
+  "HF chat templates (final, 50)": {
+    "n": 50,
+    "flagged": 5,
+    "timeouts": 0,
+    "errors": 0,
+    "wilson": 0.1,
+    "items": [
+      {
+        "id": "THUDM__chatglm3-6b",
+        "outcome": "quarantine",
+        "risk": 52,
+        "findings": [
+          "LLM.CARD.MISSING",
+          "MODEL.CONFIG.AUTO_MAP",
+          "MODEL.CONFIG.AUTO_MAP_MISSING",
+          "PROV.PUBLISHER.UNLISTED"
+        ],
+        "error": null
+      },
+      {
+        "id": "internlm__internlm2-chat-7b",
+        "outcome": "quarantine",
+        "risk": 52,
+        "findings": [
+          "LLM.CARD.MISSING",
+          "MODEL.CONFIG.AUTO_MAP",
+          "MODEL.CONFIG.AUTO_MAP_MISSING",
+          "PROV.PUBLISHER.UNLISTED"
+        ],
+        "error": null
+      },
+      {
+        "id": "moonshotai__Kimi-K2-Thinking",
+        "outcome": "quarantine",
+        "risk": 52,
+        "findings": [
+          "LLM.CARD.MISSING",
+          "MODEL.CONFIG.AUTO_MAP",
+          "MODEL.CONFIG.AUTO_MAP_MISSING",
+          "PROV.PUBLISHER.UNLISTED"
+        ],
+        "error": null
+      },
+      {
+        "id": "nvidia__NVIDIA-Nemotron-Nano-9B-v2",
+        "outcome": "quarantine",
+        "risk": 65,
+        "findings": [
+          "LLM.CARD.MISSING",
+          "MODEL.TEMPLATE.CONTENT_CONDITIONAL",
+          "PROV.PUBLISHER.UNLISTED"
+        ],
+        "error": null
+      },
+      {
+        "id": "tiiuae__Falcon3-7B-Instruct",
+        "outcome": "quarantine",
+        "risk": 40,
+        "findings": [
+          "LLM.CARD.MISSING",
+          "MODEL.TEMPLATE.HIDDEN_TOOL_CALL",
+          "PROV.PUBLISHER.UNLISTED"
+        ],
+        "error": null
+      }
+    ]
+  }
+}

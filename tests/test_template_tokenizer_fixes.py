@@ -52,3 +52,12 @@ def test_zero_width_characters_inside_a_directive_are_caught():
     assert got["TOOL.DESC.INVISIBLE_UNICODE"].severity == "high"
     assert got["TOOL.DESC.AGENT_INSTRUCTION"].severity in ("high", "critical")
     assert "zero-width-split" in got["TOOL.DESC.AGENT_INSTRUCTION"].title
+
+
+def test_a_template_that_describes_the_tool_call_format_is_not_a_hidden_tool_call():
+    from lineage.inspect import chat_template as ct
+
+    doc = '{% for m in messages %}{{ m["content"] }}{% endfor %}You must follow this format: <tool_call>\\n[{"name": "function_name", "arguments": {}}]\\n</tool_call>'
+    assert "MODEL.TEMPLATE.HIDDEN_TOOL_CALL" not in {f.id for f in ct.scan_template(doc)}  # Falcon3
+    bad = doc.replace("function_name", "send_email")
+    assert "MODEL.TEMPLATE.HIDDEN_TOOL_CALL" in {f.id for f in ct.scan_template(bad)}

@@ -57,6 +57,10 @@ Frozen TPR/FPR cells are `TPR x (tp/n) / FPR y (fp/n)`; intervals are Wilson 95%
 - **dev (bench/corpus_holdout)**: newly flagged 0 (0 malicious, 0 benign); unflagged 0. 
 - **FINAL synthetic (bench/corpus_final)**: newly flagged 1 (1 malicious, 0 benign); unflagged 0. `f_tool_mal_undeclared_delete` (malicious)
 
+## Real-world false alarms
+
+The PyPI top-400 and 100 chat-template sets were re-run after the refactor (static only): see `bench/results_realworld_after.md`.
+
 ## Taint hang re-check on real wheels
 
 Wheels downloaded with `pip download --no-deps` on this machine and scanned with `package_taint.scan` (budget 20 s, step cap 400k, file cap 400):
