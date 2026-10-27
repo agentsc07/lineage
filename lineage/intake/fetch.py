@@ -43,6 +43,7 @@ class Acquired:
     record: dict = field(default_factory=dict)  # hub metadata, in the shape the inspectors read
     fetched: bool = False  # Lineage fetched it from the hub itself
     distribution: dict[str, str] | None = None  # {filename, sha256}: the wheel to serve from /simple
+    dist_path: Path | None = None
     notes: list[tuple[str, str, str]] = field(default_factory=list)  # (finding id, title, severity): problems found while fetching
     skipped_files: list[str] = field(default_factory=list)
 
@@ -234,8 +235,10 @@ def fetch_pypi(origin: str, dest: Path, *, base_url: str | None = None, client: 
     archive.write_bytes(blob)
     try:
         safe_extract(archive, dest)
-    finally:
+    except AcquireError:
         archive.unlink(missing_ok=True)
+        raise
+    acq.dist_path = archive  # kept: the wheel itself goes into the store and is what the package index serves
     stamp = pick.get("upload_time_iso_8601")
     acq.record = {**meta, "name": name, "version": ver, "released_at": stamp, "repo": (info.get("project_urls") or {}).get("Source") and
                   re.sub(r"^https?://(www\.)?github\.com/", "", (info.get("project_urls") or {}).get("Source", "")).strip("/") or None,

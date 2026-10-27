@@ -74,6 +74,10 @@ def resolve_upload(root: Path, upload_id: str, artifact_type: str) -> Path:
 @router.post("/intake", response_model=IntakeJob)
 def start_intake(req: IntakeRequest, request: Request, active: tuple[PolicyPack, bool] = Depends(get_policy),
                  user: User = Depends(require("requester"))) -> IntakeJob:
+    return launch(req, request, active, user)
+
+
+def launch(req: IntakeRequest, request: Request, active: tuple[PolicyPack, bool], user: User) -> IntakeJob:
     policy, expired = active
     if req.environment not in policy.environments:
         raise HTTPException(400, f"unknown environment {req.environment!r}; policy defines {sorted(policy.environments)}")

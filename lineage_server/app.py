@@ -24,7 +24,7 @@ from lineage.schemas.policy import PolicyPack
 from lineage.store import Store
 from lineage_server import auth, db, policy_store, trust
 from lineage_server.jobs import JobStore
-from lineage_server.routes import artifacts, attestations, decisions, events, graph, intake, passports, policy, store, trusted_publishers
+from lineage_server.routes import artifacts, attestations, decisions, events, graph, intake, passports, policy, simple, store, trusted_publishers
 
 
 def create_app(
@@ -64,7 +64,7 @@ def create_app(
     conn.commit()
     conn.close()
 
-    for module in (intake, events, artifacts, passports, graph, decisions, policy, trusted_publishers, attestations, store):
+    for module in (intake, events, artifacts, passports, graph, decisions, policy, trusted_publishers, attestations, store, simple):
         app.include_router(module.router, dependencies=[Depends(auth.current_user)])
 
     @app.get("/healthz")

@@ -419,6 +419,8 @@ def _s0(ctx: IntakeContext, source: str | None, hub: Hub | None, work_dir: Path 
             return "failed", [insp.not_run("ACQUIRE", str(e), "S0")], f"could not fetch {source}"
         ctx.acquired, ctx.ref = acq, str(acq.path)
         ctx.distribution = acq.distribution
+        if acq.distribution and acq.dist_path and ctx.store is not None:
+            ctx.store.put_file(acq.dist_path, acq.distribution["sha256"])
         ctx.origin_verified = True
         ctx.metadata = dict(acq.record)
         add_dict_facts(ctx, acq.record, "fetched", f"hub api for {source}")
