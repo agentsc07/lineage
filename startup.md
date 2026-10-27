@@ -72,7 +72,7 @@ The new metadata must expire later than the current policy's (no rollback).
 ## Prove core (Track A) quick tour
 ```bash
 uv run lineage keygen                                  # lineage.key / lineage.pub
-uv run lineage sign ./model_dir --name tiny --trust inspected   # -> model_dir.passport.json
+uv run lineage sign ./model_dir --name tiny   # -> model_dir.passport.json
 uv run lineage verify model_dir.passport.json --artifact ./model_dir
 uv run lineage diff ./parent_dir ./child_dir           # changed tensors + relative L2
 uv run lineage run -- python train.py                  # records inputs/outputs -> .lineage/runs/*/passport.json (trust: recorded)

@@ -13,11 +13,11 @@ export const sevMeta: Record<Severity, { cls: string; rank: number }> = {
   low: { cls: "text-accent bg-accent/10 border-accent/30", rank: 1 },
   info: { cls: "text-mute bg-raised border-line", rank: 0 },
 };
-export const trustOrder: TrustLevel[] = ["unknown", "declared", "inspected", "recorded", "attested"];
-// Trust ladder as colour: unknown is the warning end, attested the strongest.
+export const trustOrder: TrustLevel[] = ["unknown", "origin_verified", "signed", "recorded"];
+// Trust ladder as colour: unknown is the warning end, recorded the strongest.
 export const trustColor: Record<TrustLevel, string> = {
-  unknown: "var(--block)", declared: "var(--quar)", inspected: "var(--accent)",
-  recorded: "var(--allow)", attested: "var(--allow)",
+  unknown: "var(--block)", origin_verified: "var(--quar)", signed: "var(--accent)",
+  recorded: "var(--allow)",
 };
 export const statusLabel: Record<ArtifactStatus, string> = {
   submitted: "Submitted", quarantined: "Quarantined", admitted: "Admitted",

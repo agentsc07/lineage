@@ -12,8 +12,11 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from lineage.schemas.fact import Fact
+
 ArtifactType = Literal["dataset", "model", "package", "tool", "agent"]
-TrustLevel = Literal["unknown", "declared", "inspected", "recorded", "attested"]
+# Ordered low to high. Trust comes only from evidence (REFACTOR_SPEC section 2); human approval is an exception, not a level.
+TrustLevel = Literal["unknown", "origin_verified", "signed", "recorded"]
 ActionKind = Literal["train", "fine-tune", "quantize", "intake", "publish"]
 
 STATEMENT_TYPE = "https://in-toto.io/Statement/v1"
@@ -62,6 +65,14 @@ class Action(BaseModel):
     env_sbom_digest: str | None = None
 
 
+class SbomComponent(BaseModel):
+    """CycloneDX-style component; `purl` looks like `pkg:pypi/torch@2.4.1`."""
+
+    name: str
+    version: str
+    purl: str
+
+
 class Signer(BaseModel):
     name: str
     key_id: str | None = None
@@ -79,6 +90,10 @@ class PassportBody(BaseModel):
     findings_digest: str  # sha256 of canonical JSON of the findings list
     risk_score: int = Field(ge=0, le=100)
     certificates: list[str] = Field(default_factory=list)  # notary cert ids
+    # Passport v2 (all optional, so v1 passports still parse): what a `lineage run` read and what it ran with.
+    inputs: dict[str, str] = Field(default_factory=dict)  # path -> sha256 of every file the run read
+    sbom: list[SbomComponent] = Field(default_factory=list)
+    facts: list[Fact] = Field(default_factory=list)  # what the creator asserts; `signed` only if the signature is in scope
     issued_by: Signer
     issued_at: datetime
     expires_at: datetime | None = None

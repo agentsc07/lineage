@@ -4,8 +4,9 @@ Configuration (environment variables, all optional):
 - `LINEAGE_DB`          SQLite file (default `lineage.db`); the registry signing key lives beside it as `<db>.key`.
 - `LINEAGE_POLICY`      initial policy YAML, installed on first start only (default `examples/policy.org.yaml`).
 - `LINEAGE_ROLE_KEYS`   JSON file `{"owner": "<pubkey hex>", "security": ..., "compliance": ...}`; enables PUT /policy.
-- `LINEAGE_TRUSTED_KEYS` comma-separated passport signer keys to trust at start-up: `.pub` PEM paths or 64-char hex.
-- `LINEAGE_GPU_URL`    GPU worker (default `http://localhost:8800`).
+- `LINEAGE_TRUSTED_KEYS` dev bootstrap only: passport signer keys trusted (any scope) when the policy lists no `trusted_publishers`.
+- `LINEAGE_GPU_URL`    GPU worker (default `http://localhost:8800`); optional, unreachable means `CHECK.NOT_RUN.*` findings.
+- `LINEAGE_HUB_URL`    hub that vouches for artifacts (`fetched` facts); tests and the demo point it at `tests/fakehub.py`.
 - `LINEAGE_ADVISORY_FEED` local advisory feed for the monitor (see `lineage_server.monitor`).
 """
 from __future__ import annotations
@@ -17,6 +18,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from lineage.intake.hub import Hub, default_hub
 from lineage.schemas.policy import PolicyPack
 from lineage_server import db, policy_store, trust
 from lineage_server.jobs import JobStore
@@ -27,6 +29,7 @@ def create_app(
     db_path: Path | str | None = None,
     policy_path: Path | str | None = None,
     role_keys_path: Path | str | None = None,
+    hub: Hub | None = None,
 ) -> FastAPI:
     db_path = Path(db_path or os.environ.get("LINEAGE_DB", "lineage.db"))
     policy_path = Path(policy_path or os.environ.get("LINEAGE_POLICY", "examples/policy.org.yaml"))
@@ -42,6 +45,7 @@ def create_app(
     app.state.db_path = db_path
     app.state.signing_key = trust.load_or_create_key(db_path.with_suffix(db_path.suffix + ".key"))
     app.state.jobs = JobStore()
+    app.state.hub = hub or default_hub()  # fetched facts come from here (`LINEAGE_HUB_URL`); None means nothing is fetched
     if policy_store.get_state(conn) is None:
         policy_store.bootstrap(conn, PolicyPack.from_yaml(policy_path))
     if role_keys_path:

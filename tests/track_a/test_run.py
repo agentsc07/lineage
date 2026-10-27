@@ -27,7 +27,7 @@ def project(tmp_path, tiny_dataset):
 def test_records_inputs_outputs_and_emits_recorded_passport(project):
     rec = run_recorded_full([sys.executable, "train.py"], project)
     p = rec.passport.predicate
-    assert p.trust_level == "recorded" and p.action.kind == "train"
+    assert p.trust_level == "unknown"  # trust is decided by the verifier, not by `lineage run` and p.action.kind == "train"
     assert p.action.command == [sys.executable, "train.py"]
     assert set(p.contents.files) == {"out.txt"}
     assert p.contents.files["out.txt"] == hashlib.sha256(b"21").hexdigest()

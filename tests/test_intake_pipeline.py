@@ -15,6 +15,7 @@ from lineage.schemas.policy import PolicyPack
 from lineage_server import db, models, service, trust
 from lineage_server.registry import SqliteRegistry
 from mcp_gateway.gateway import pins_from_db
+from tests.fakehub import StaticHub, old_release_hub
 from tests.server_helpers import KEY, NOW, finding, make_signed, ship_passport
 
 
@@ -39,6 +40,7 @@ def registry(conn):
 
 def intake(kind, ref, env="dev", policy=None, **kw):
     kw.setdefault("now", NOW)
+    kw.setdefault("hub", old_release_hub())  # a hub that vouches for an old release date (fetched), like a registry would
     return run_to_decision(kind, str(ref), env, policy, "job1", **kw)
 
 
@@ -56,11 +58,12 @@ def test_event_stream_shape_and_decision_on_s6(policy, tiny_dataset):
     assert {e.job_id for e in events} == {"job1"}
 
 
-def test_clean_dev_dataset_skips_deep_stages_and_is_allowed(policy, tiny_dataset):
+def test_clean_dev_dataset_runs_every_stage_and_is_allowed(policy, tiny_dataset):
+    """One mandatory flow (REFACTOR_SPEC P2): no stage is skipped because the environment is dev or nothing looked suspicious."""
     decision, events = intake("dataset", tiny_dataset, policy=policy)
     by_stage = {e.stage: e for e in events if e.status != "started"}
-    assert by_stage["S4"].status == "skipped" and by_stage["S5"].status == "skipped"
-    assert decision.outcome == "allow" and decision.trust_level == "inspected"
+    assert all(by_stage[s].status == "completed" for s in ("S1", "S2", "S3", "S4", "S5"))
+    assert decision.outcome == "allow" and decision.trust_level == "origin_verified"
     assert not any(i.startswith("SCANNER.") for i in ids(decision))  # Track C scanners are real now, none degrade
 
 
@@ -161,33 +164,32 @@ def test_lookalike_publisher_detected(policy, tiny_model):
 
 
 # --- remote refs, missing paths ---
-def test_remote_reference_is_unknown_trust_and_quarantined_in_dev(policy):
-    d, _ = intake("model", "meta-llama/Llama-3.2-1B", policy=policy)
-    assert d.trust_level == "unknown" and "PROV.UNVERIFIED.REMOTE_REF" in ids(d)
-    assert d.outcome == "quarantine" and any("below dev minimum" in r for r in d.reasons)
+def test_remote_reference_without_bytes_cannot_be_inspected_and_is_blocked(policy):
+    d, _ = intake("model", "meta-llama/Llama-3.2-1B", policy=policy, hub=None)
+    assert d.trust_level == "unknown" and "CHECK.NOT_RUN.ACQUIRE" in ids(d)
+    assert d.outcome == "block" and any("nothing could be inspected" in r for r in d.reasons)
 
 
 @pytest.mark.parametrize("ref", ["./definitely/not/here", "/definitely/not/here"])
 def test_missing_local_path_fails_s1_but_still_decides(policy, ref):
     d, events = run_to_decision("model", ref, "dev", policy, "j", now=NOW)
     assert next(e for e in events if e.stage == "S1" and e.status != "started").status == "failed"
-    assert "INTAKE.REF.NOT_FOUND" in ids(d) and d.outcome == "quarantine"
+    assert "INTAKE.REF.NOT_FOUND" in ids(d) and "CHECK.NOT_RUN.ACQUIRE" in ids(d) and d.outcome == "block"
 
 
 # --- packages / cooldown ---
 def test_young_package_release_is_quarantined_by_cooldown(policy, tmp_path):
     p = tmp_path / "litellm"
     shutil.copytree("tests/fixtures/toy_package", p)
-    (p / "lineage.meta.json").write_text(json.dumps({"released_at": (NOW - timedelta(hours=2)).isoformat()}))
-    d, _ = intake("package", p, policy=policy)
+    d, _ = intake("package", p, policy=policy, hub=StaticHub({"released_at": (NOW - timedelta(hours=2)).isoformat()}))
     assert d.outcome == "quarantine" and any(r.startswith("cooldown") for r in d.reasons)
 
 
-def test_explicit_metadata_overrides_sidecar_and_pypi_style_upload_time(policy, tmp_path):
+def test_fetched_pypi_style_upload_time_clears_the_cooldown(policy, tmp_path):
     p = tmp_path / "pkg"
     shutil.copytree("tests/fixtures/toy_package", p)
     meta = {"urls": [{"upload_time_iso_8601": (NOW - timedelta(days=30)).isoformat()}]}
-    d, _ = intake("package", p, policy=policy, metadata=meta)
+    d, _ = intake("package", p, policy=policy, hub=StaticHub(meta))
     assert d.outcome == "allow"
 
 
@@ -298,10 +300,12 @@ def test_model_deep_inspection_flags_backdoor_signals(policy, model_dir, monkeyp
     assert d.outcome in ("quarantine", "block")
 
 
-def test_gpu_unreachable_degrades_to_info_finding(policy, model_dir):
+def test_gpu_unreachable_emits_priced_not_run_findings(policy, model_dir):
     d, events = intake("model", model_dir, env="staging", policy=policy, gpu_url="http://127.0.0.1:9")  # closed port
-    skipped = [f for f in d.findings if f.id == "GPU.CHECK.SKIPPED"]
-    assert skipped and all(f.severity == "info" and f.score == 0 for f in skipped)
+    unrun = {f.id: f for f in d.findings if f.id.startswith("CHECK.NOT_RUN.")}
+    # the policy prices each: WEIGHT_BACKDOOR is `low` in staging, the rest fall back to the default (`medium`)
+    assert unrun["CHECK.NOT_RUN.WEIGHT_BACKDOOR"].severity == "low" and unrun["CHECK.NOT_RUN.BEHAVIOUR_DIFF"].severity == "medium"
+    assert all(f.score > 0 for f in unrun.values())
     assert events[-1].stage == "S7" and next(e for e in events if e.stage == "S4" and e.status != "started").status == "completed"
 
 
@@ -313,8 +317,8 @@ def test_gpu_rejection_is_reported_as_not_applicable_not_unreachable(policy, mod
 
     monkeypatch.setattr(gpu, "post", reject)
     d, _ = intake("model", model_dir, env="staging", policy=policy)
-    titles = [f.title for f in d.findings if f.id == "GPU.CHECK.SKIPPED" and "weight analysis" in f.title]
-    assert titles and "not applicable to this model" in titles[0] and "unreachable" not in titles[0]
+    titles = [f.title for f in d.findings if f.id == "CHECK.NOT_RUN.WEIGHT_BACKDOOR"]
+    assert titles and "cannot analyse this model" in titles[0] and "unreachable" not in titles[0]
 
 
 def test_card_review_claims_are_grounded_and_ungrounded_ones_dropped(policy, model_dir, monkeypatch):
@@ -339,7 +343,7 @@ def test_notary_mismatch_flagged(policy, model_dir, monkeypatch, registry):
 
     files = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in model_dir.iterdir() if p.is_file()}
     body = PassportBody(artifact_type="model", name="m", version="1", source=SourceRef(), contents=Contents(merkle_root="0" * 64, files=files),
-                        trust_level="declared", findings_digest=sha256_hex(b"[]"), risk_score=0, certificates=["cert-1"],
+                        trust_level="unknown", findings_digest=sha256_hex(b"[]"), risk_score=0, certificates=["cert-1"],
                         issued_by=Signer(name="c"), issued_at=NOW)
     sp = trust.sign_passport(Passport(subject=[Subject(name="m", digest={"sha256": "0" * 64})], predicate=body), KEY)
     (model_dir / "passport.json").write_text(sp.model_dump_json(by_alias=True))
@@ -366,6 +370,9 @@ def test_real_tensor_hashes_land_in_the_passport(policy, tiny_model, conn, regis
 def test_child_model_parent_is_identified_from_local_weights_and_chained(policy, registry, tmp_path):
     from tests.fixtures.builders import make_tiny_model
 
+    # GPU-less checks cost nothing here: this test is about the chain, not about what an unrun check costs
+    policy = policy.model_copy(update={"unrun_checks": {"default": {"dev": "info", "staging": "info", "prod": "info"}}})
+
     base = make_tiny_model(tmp_path / "base")
     parent_decision, _ = intake("model", base, env="staging", policy=policy, registry=registry)
     assert parent_decision.outcome == "allow"
@@ -374,7 +381,7 @@ def test_child_model_parent_is_identified_from_local_weights_and_chained(policy,
     got = {f.id: f for f in d.findings}
     assert parent_decision.artifact_id in got["MODEL.PARENT.IDENTIFIED"].evidence[0].ref
     assert [e.ref for e in got["MODEL.WEIGHTS.CHANGED_LAYERS"].evidence] == ["layers.1.weight"]
-    assert "needs GPU worker" in next(f for f in d.findings if f.id == "GPU.CHECK.SKIPPED").title
+    assert "needs the GPU worker" in next(f for f in d.findings if f.id == "CHECK.NOT_RUN.WEIGHT_BACKDOOR").title
     stored = models.get_signed_passport(registry.conn, d.artifact_id)
     assert stored.passport.predicate.parents == [parent_decision.artifact_id]
 

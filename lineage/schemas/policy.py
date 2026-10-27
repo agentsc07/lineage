@@ -36,6 +36,18 @@ class Thresholds(BaseModel):
     quarantine: int = Field(ge=0, le=100)  # allow < score <= quarantine -> quarantine; above -> block
 
 
+class TrustedPublisher(BaseModel):
+    """A signing key the organisation trusts, and the sources it may speak for (fnmatch globs such as `hf:nvidia/*`)."""
+
+    name: str
+    key: str  # ed25519 public key, hex
+    scope: list[str] = Field(default_factory=list)
+
+
+def _default_unrun() -> dict[str, dict[str, Severity]]:
+    return {"default": {"dev": "info", "staging": "medium", "prod": "high"}}
+
+
 class PolicyException(BaseModel):
     artifact: str
     approver: str
@@ -57,6 +69,10 @@ class PolicyPack(BaseModel):
     thresholds: Thresholds
     exceptions: list[PolicyException] = Field(default_factory=list)
     compliance_map: dict[str, list[str]] = Field(default_factory=dict)  # control -> finding categories
+    # Severity of `CHECK.NOT_RUN.<NAME>` per environment; `default` covers names without their own entry.
+    unrun_checks: dict[str, dict[str, Severity]] = Field(default_factory=_default_unrun)
+    trusted_publishers: list[TrustedPublisher] = Field(default_factory=list)
+    revoked_keys: list[str] = Field(default_factory=list)  # key ids
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> "PolicyPack":

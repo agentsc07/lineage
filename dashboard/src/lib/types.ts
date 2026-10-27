@@ -1,6 +1,6 @@
 // Hand-written mirror of lineage/schemas (frozen contracts). Keep in sync with docs/API.md.
 export type ArtifactType = "dataset" | "model" | "package" | "tool" | "agent";
-export type TrustLevel = "unknown" | "declared" | "inspected" | "recorded" | "attested";
+export type TrustLevel = "unknown" | "origin_verified" | "signed" | "recorded";
 export type Severity = "info" | "low" | "medium" | "high" | "critical";
 export type Outcome = "allow" | "allow_with_conditions" | "quarantine" | "block";
 export type ArtifactStatus =

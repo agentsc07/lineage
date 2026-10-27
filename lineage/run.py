@@ -155,7 +155,7 @@ def run_recorded_full(
     kind: str = "train",
 ) -> RunRecord:
     """Run `command` with an audit-hook sitecustomize injected via PYTHONPATH, capture files opened,
-    `pip freeze` as SBOM and outputs; return a RunRecord whose passport is at trust level 'recorded'."""
+    `pip freeze` as SBOM and outputs; return a RunRecord whose passport is (trust is decided by the verifier, not the signer)."""
     if not command:
         raise ValueError("no command given")
     workdir = Path(workdir).resolve()
@@ -212,7 +212,6 @@ def run_recorded_full(
         SourceRef(hub="local-run"),
         parents=all_parents,
         action=Action(kind=kind, command=list(command), env_sbom_digest=sha256_hex(sbom.encode())),  # type: ignore[arg-type]
-        trust_level="recorded",
         contents=contents_for_files(workdir, out_rels),
     )
     (record_dir / "run.json").write_text(

@@ -16,6 +16,7 @@ from lineage.schemas.passport import SignedPassport
 from lineage.schemas.policy import PolicyPack
 from lineage_server import log, trust, tuf
 from lineage_server.app import create_app
+from tests.fakehub import old_release_hub
 from tests.server_helpers import KEY, make_signed, ship_passport
 
 
@@ -28,7 +29,7 @@ def role_keys():
 def client(tmp_path, policy_path, role_keys):
     keys_file = tmp_path / "roles.json"
     keys_file.write_text(json.dumps({r: trust.public_hex(k.public_key()) for r, k in role_keys.items()}))
-    app = create_app(tmp_path / "api.db", policy_path, keys_file)
+    app = create_app(tmp_path / "api.db", policy_path, keys_file, hub=old_release_hub())
     with TestClient(app) as c:
         yield c
 

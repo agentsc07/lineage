@@ -90,7 +90,6 @@ def sign(
     key: Annotated[Path, typer.Option(help="Ed25519 private key")] = Path("lineage.key"),
     out: Annotated[Path | None, typer.Option(help="Where to write the signed passport")] = None,
     parent: Annotated[list[str] | None, typer.Option(help="Parent passport id (repeatable)")] = None,
-    trust: Annotated[TrustLevel, typer.Option(help="Trust level to claim")] = "declared",
     hub: Annotated[str | None, typer.Option(help="Source hub, e.g. huggingface")] = None,
     repo: Annotated[str | None, typer.Option(help="Source repo, e.g. org/name")] = None,
     sigstore: Annotated[bool, typer.Option(help="Also write a Sigstore bundle (needs the sigstore package)")] = False,
@@ -111,7 +110,7 @@ def sign(
     with console.status("hashing…"):
         passport = build_passport(
             path, artifact_type, name or path.name, version, SourceRef(hub=hub, repo=repo),
-            parents=parent or [], trust_level=trust,
+            parents=parent or [],
         )
     signed = sign_passport(passport, priv, key_id(priv.public_key()))
     dest = out or path.with_name(path.name + ".passport.json")

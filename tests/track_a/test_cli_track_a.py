@@ -59,10 +59,10 @@ def test_sign_with_parent_and_trust(tmp_path, tiny_dataset):
     invoke("keygen", "--dir", tmp_path)
     out = tmp_path / "d.json"
     r = invoke("sign", tiny_dataset, "--type", "dataset", "--key", tmp_path / "lineage.key", "--out", out,
-               "--parent", "lp:abc", "--trust", "inspected")
+               "--parent", "lp:abc")
     assert r.exit_code == 0
     body = json.loads(out.read_text())["passport"]["predicate"]
-    assert body["parents"] == ["lp:abc"] and body["trust_level"] == "inspected"
+    assert body["parents"] == ["lp:abc"] and body["trust_level"] == "unknown"  # the signer never claims trust
 
 
 def test_diff_command_shows_changed_layer(tiny_model, tiny_model_child):
@@ -117,7 +117,7 @@ def test_revoke_renders_blast_radius(monkeypatch):
     import httpx
 
     payload = {"revoked": "lp:a", "reason": "bad", "blast_radius": [
-        {"id": "lp:b", "label": "model-b", "artifact_type": "model", "trust_level": "inspected", "status": "admitted", "risk_score": 10}]}
+        {"id": "lp:b", "label": "model-b", "artifact_type": "model", "trust_level": "origin_verified", "status": "admitted", "risk_score": 10}]}
 
     class R:
         def raise_for_status(self): pass

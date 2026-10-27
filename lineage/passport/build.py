@@ -74,7 +74,7 @@ def build_passport(
     *,
     parents: list[str] | None = None,
     action: Action | None = None,
-    trust_level: TrustLevel = "declared",
+    trust_level: TrustLevel = "unknown",
     findings: list[Finding] | None = None,
     signer_name: str = "local",
     contents: Contents | None = None,

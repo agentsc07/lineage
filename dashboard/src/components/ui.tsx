@@ -25,7 +25,7 @@ export function Severity_({ s }: { s: Severity }) {
   return <span className={`text-xs border rounded px-1.5 py-px font-medium ${sevMeta[s].cls}`}>{s}</span>;
 }
 
-/** Five-step ladder; filled segments show how far up the trust ladder an artifact is. */
+/** Four-step ladder; filled segments show how far up the trust ladder an artifact is. */
 export function Trust({ level, label = true }: { level: TrustLevel; label?: boolean }) {
   const n = trustOrder.indexOf(level) + 1;
   return (

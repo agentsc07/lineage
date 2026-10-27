@@ -22,12 +22,12 @@ def keys(tmp_path):
 
 
 def test_build_model_passport(tiny_model):
-    p = build_passport(tiny_model, "model", "tiny", "1.0.0", SourceRef(hub="local"), trust_level="declared")
+    p = build_passport(tiny_model, "model", "tiny", "1.0.0", SourceRef(hub="local"), trust_level="unknown")
     c = p.predicate.contents
     assert set(c.files) == {"model.safetensors", "config.json"}
     assert set(c.tensors) == {"layers.0.weight", "layers.0.bias", "layers.1.weight", "layers.1.bias"}
     assert p.subject[0].digest["sha256"] == c.merkle_root
-    assert p.predicate.trust_level == "declared" and p.predicate.risk_score == 0
+    assert p.predicate.trust_level == "unknown" and p.predicate.risk_score == 0
     assert p.passport_id.startswith("lp:")
 
 

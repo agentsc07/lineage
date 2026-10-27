@@ -26,7 +26,7 @@ def start_intake(req: IntakeRequest, request: Request, active: tuple[PolicyPack,
         try:
             registry = SqliteRegistry(conn, state.signing_key)
             for event in run_intake(req.artifact_type, req.ref, req.environment, policy, job.job_id,
-                                    registry=registry, policy_expired=expired):
+                                    registry=registry, policy_expired=expired, hub=state.hub):
                 job.push(event)
         finally:
             conn.close()

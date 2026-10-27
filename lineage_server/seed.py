@@ -99,7 +99,7 @@ class Seeder:
 
     def add(
         self, name: str, kind: str, version: str, findings: list[Finding], *, env: str = "staging",
-        parents: list[str] | None = None, trust_level: TrustLevel = "inspected", repo: str | None = None,
+        parents: list[str] | None = None, trust_level: TrustLevel = "signed", repo: str | None = None,
         hub: str = "local", released_days_ago: float = 30, files: list[str] | None = None, tool_pin: dict | None = None,
     ) -> Decision:
         digest = sha256_hex(f"{kind}:{name}@{version}".encode())

@@ -15,7 +15,7 @@ from lineage.signing.ed25519 import verify_signed
 
 _PICKLE_EXT = {".pkl", ".pickle", ".ckpt", ".joblib", ".dill"}
 _MAYBE_PICKLE_EXT = {".pt", ".pth", ".bin"}
-_REMOTE_CODE_TRUST = {"inspected", "recorded", "attested"}
+_REMOTE_CODE_TRUST = {"origin_verified", "signed", "recorded"}
 
 
 class LoadRefused(Exception):
@@ -93,7 +93,7 @@ def _verified(path, passport, policy, public_key, loader_kwargs) -> SignedPasspo
     problems = check(path, passport, policy, public_key=public_key)
     if loader_kwargs.get("trust_remote_code") and passport.passport.predicate.trust_level not in _REMOTE_CODE_TRUST:
         problems.append(
-            f"trust_remote_code requires trust level inspected or higher (passport is {passport.passport.predicate.trust_level})"
+            f"trust_remote_code requires trust level origin_verified or higher (passport is {passport.passport.predicate.trust_level})"
         )
     if problems:
         raise LoadRefused(f"refusing to load {path}:\n  - " + "\n  - ".join(problems))

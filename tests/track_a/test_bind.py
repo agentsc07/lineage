@@ -32,7 +32,7 @@ def model(tiny_model):
 
 @pytest.fixture
 def signed(model, keys):
-    return sign_passport(build_passport(model, "model", "t", "1", SourceRef(), trust_level="inspected"), keys[0], "k")
+    return sign_passport(build_passport(model, "model", "t", "1", SourceRef(), trust_level="origin_verified"), keys[0], "k")
 
 
 def test_clean_artifact_passes(model, signed, policy):
@@ -160,7 +160,7 @@ def test_load_uses_transformers_when_available(model, signed, policy, fake_trans
     assert fake_transformers[0][1]["dtype"] == "bf16"
 
 
-def test_trust_remote_code_needs_inspected_trust(model, keys, policy, fake_transformers):
-    declared = sign_passport(build_passport(model, "model", "t", "1", SourceRef(), trust_level="declared"), keys[0], "k")
+def test_trust_remote_code_needs_origin_verified_trust(model, keys, policy, fake_transformers):
+    declared = sign_passport(build_passport(model, "model", "t", "1", SourceRef(), trust_level="unknown"), keys[0], "k")
     with pytest.raises(LoadRefused, match="trust_remote_code"):
         load(model, declared, policy, trust_remote_code=True)

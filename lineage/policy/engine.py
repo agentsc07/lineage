@@ -7,7 +7,10 @@ Finding-id conventions the engine relies on (scanners and the pipeline emit them
   `CAPABILITY_ALIASES`) or whose evidence detail contains `capability:X`.
 - `PKG.OSV.MAL*`: malicious-package advisory (hard block). Other `PKG.OSV.*` carry the vulnerability severity.
 - `PROV.COOLDOWN*`: release too recent (used when `released_at` is not passed).
-- `DATA.PII*`, `POLICY.LICENCE*`: policy violations.
+- `PROV.COOLDOWN.UNVERIFIED`: no fetched or signed release date, so the cooldown is *not cleared* (soft quarantine).
+- `CHECK.NOT_RUN.<name>`: a check that could not run. Its severity comes from the policy's `unrun_checks` for the
+  environment (`apply_unrun_costs`); `CHECK.NOT_RUN.ACQUIRE` is a hard block, since nothing could be inspected.
+- `DATA.PII*`, `POLICY.LICENCE.NOT_ALLOWED`: policy violations.
 - `IDENTITY_IDS` (look-alike name / repo / publisher, repo-owner mismatch): critical blocks, high quarantines, whatever the score.
 """
 from __future__ import annotations
@@ -15,13 +18,13 @@ from __future__ import annotations
 from datetime import date, datetime, time, timedelta, timezone
 from fnmatch import fnmatchcase
 
-from lineage.risk import risk_score
+from lineage.risk import SEVERITY_WEIGHT, risk_score
 from lineage.schemas.decision import Decision, Outcome
 from lineage.schemas.finding import Finding
 from lineage.schemas.passport import PassportBody, canonical_json, sha256_hex
 from lineage.schemas.policy import PolicyException, PolicyPack
 
-TRUST_ORDER = ["unknown", "declared", "inspected", "recorded", "attested"]
+TRUST_ORDER = ["unknown", "origin_verified", "signed", "recorded"]
 SEVERITY_RANK = {"info": 0, "low": 1, "medium": 2, "high": 3, "critical": 4}
 PICKLE_SUFFIXES = (".pkl", ".pickle", ".pt", ".pth", ".bin", ".ckpt")
 # Hard-block reasons that come from the organisation's rules, not from anything found in the artifact. Reports count
@@ -43,6 +46,23 @@ def aware(value: date | datetime) -> datetime:
     if isinstance(value, datetime):
         return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
     return datetime.combine(value, time.max, tzinfo=timezone.utc)
+
+
+NOT_RUN_PREFIX = "CHECK.NOT_RUN."
+
+
+def apply_unrun_costs(findings: list[Finding], environment: str, policy: PolicyPack) -> list[Finding]:
+    """Set the severity and score of every `CHECK.NOT_RUN.<name>` from the policy. Idempotent; other findings untouched."""
+    out: list[Finding] = []
+    for f in findings:
+        if not f.id.startswith(NOT_RUN_PREFIX):
+            out.append(f)
+            continue
+        name = f.id.removeprefix(NOT_RUN_PREFIX).split(".")[0]
+        table = policy.unrun_checks.get(name) or policy.unrun_checks.get("default") or {}
+        sev = table.get(environment) or (policy.unrun_checks.get("default") or {}).get(environment) or f.severity
+        out.append(f.model_copy(update={"severity": sev, "score": SEVERITY_WEIGHT[sev]}))
+    return out
 
 
 def _has_id(findings: list[Finding], *prefixes: str) -> list[Finding]:
@@ -71,6 +91,8 @@ def hard_blocks(passport: PassportBody, findings: list[Finding], policy: PolicyP
         out.append(f"hash mismatch: {f.title}")
     for f in _has_id(findings, "PROV.PARENT.REVOKED"):
         out.append(f"revoked parent: {f.title}")
+    for f in _has_id(findings, "CHECK.NOT_RUN.ACQUIRE"):
+        out.append(f"nothing could be inspected: {f.title}")
     for f in _has_id(findings, "PKG.OSV.MAL"):
         out.append(f"known-malicious package advisory: {f.title}")
 
@@ -133,6 +155,7 @@ def decide(
         raise ValueError(f"unknown environment {environment!r}; policy defines {sorted(policy.environments)}")
     env = policy.environments[environment]
     aid = artifact_id or "lp:" + sha256_hex(canonical_json(passport))
+    findings = apply_unrun_costs(findings, environment, policy)
     score = risk_score(findings, passport.trust_level)
 
     reasons: list[str] = []
@@ -179,7 +202,7 @@ def decide(
     if not policy.data.pii_allowed:
         for f in _has_id(findings, "DATA.PII"):
             soft.append(("block", f"personal data not allowed by policy: {f.title}"))
-    for f in _has_id(findings, "POLICY.LICENCE"):
+    for f in _has_id(findings, "POLICY.LICENCE.NOT_ALLOWED"):
         soft.append(("quarantine", f"licence needs review: {f.title}"))
 
     # trust

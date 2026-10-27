@@ -20,7 +20,7 @@ def make_signed(
     kind: str = "package",
     version: str = "1.0.0",
     parents: list[str] | None = None,
-    trust_level: str = "inspected",
+    trust_level: str = "signed",
     risk: int = 0,
     repo: str | None = None,
     files: dict[str, str] | None = None,
@@ -57,7 +57,7 @@ def ago(**kw) -> datetime:
     return NOW - timedelta(**kw)
 
 
-def ship_passport(directory, key=KEY, parents=None, trust_level="declared", name=None, tamper_signature=False):
+def ship_passport(directory, key=KEY, parents=None, trust_level="unknown", name=None, tamper_signature=False):
     """Write `passport.json` next to an artifact, as a creator would: hashes of every current file, signed with `key`."""
     import hashlib
 

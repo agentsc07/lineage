@@ -56,9 +56,9 @@ def _passport(name: str, kind: str, version: str, trust: str, risk: int, parents
     return SignedPassport(passport=p, signature="bW9jay1zaWduYXR1cmU=", key_id="mock-key")
 
 
-_DATASET = _passport("radiology-notes", "dataset", "1.0.0", "inspected", 8, [])
-_MODEL = _passport("triage-llama-ft", "model", "2.1.0", "inspected", 12, [_DATASET.passport_id])
-_AGENT = _passport("triage-agent", "agent", "0.3.0", "inspected", 14, [_MODEL.passport_id])
+_DATASET = _passport("radiology-notes", "dataset", "1.0.0", "signed", 8, [])
+_MODEL = _passport("triage-llama-ft", "model", "2.1.0", "signed", 12, [_DATASET.passport_id])
+_AGENT = _passport("triage-agent", "agent", "0.3.0", "signed", 14, [_MODEL.passport_id])
 DATASET_ID, MODEL_ID, AGENT_ID = _DATASET.passport_id, _MODEL.passport_id, _AGENT.passport_id
 
 FINDINGS = [
@@ -122,10 +122,10 @@ def decision(artifact_id: str, environment: str = "prod", outcome: str = "allow"
         artifact_id=artifact_id,
         environment=environment,
         outcome=outcome,  # type: ignore[arg-type]
-        reasons=["risk 12 <= 25", "trust inspected >= inspected"],
+        reasons=["risk 12 <= 25", "trust signed >= origin_verified"],
         conditions=[],
         risk_score=12,
-        trust_level="inspected",
+        trust_level="signed",
         findings=[],
         policy_version=policy.version,
         decided_at=NOW,
