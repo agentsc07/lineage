@@ -168,7 +168,7 @@ def test_the_creator_passport_report_separates_signature_key_and_bytes(tmp_path,
 
 def test_the_view_reports_the_status_and_says_who_rejected(tmp_path, policy_path, hubroot):
     api = make_api(tmp_path, policy_path, hubroot)
-    _, _, d = submit(api, tmp_path, hubroot)  # prod: a clean copy still needs a human
+    _, _, d = submit(api, tmp_path, hubroot, env="staging")  # a clean copy that still needs a human
     v = api.get(f"/artifacts/{d['artifact_id']}/view").json()
     assert v["status"] == "quarantined"
     assert api.post(f"/decisions/{d['artifact_id']}/reject", json={"reason": "duplicate of an admitted model"}).status_code == 200
