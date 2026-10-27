@@ -101,7 +101,7 @@ def api(tmp_path, policy_path):
 
 
 def round_body(api, rid, evil=True):
-    rng = np.random.default_rng(abs(hash(rid)) % 1000)
+    rng = np.random.default_rng(__import__("zlib").crc32(rid.encode()) % 1000)
     ups = [{"client_id": f"h{i}", "inline": npz(rng.normal(0, 1, 40) + 1)} for i in range(8)]
     ups.append({"client_id": "evil", "inline": npz(-80 * np.ones(40) if evil else rng.normal(0, 1, 40) + 1)})
     return {"round_id": rid, "global_model_id": api.model_id, "updates": ups}

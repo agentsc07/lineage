@@ -12,6 +12,7 @@ from __future__ import annotations
 import base64
 import json
 import logging
+import os
 import re
 from collections import defaultdict
 from collections.abc import Callable
@@ -718,10 +719,57 @@ def local_parent_diff(ctx: IntakeContext) -> list[Finding]:
                                 "model", "S4", [Evidence(kind="field", ref="claimed_base", detail=f"{claimed} != {label}")],
                                 source="statistical"))
     out += _template_vs_parent(ctx.path, parent_path, label)
+    from lineage.inspect import tokenizer
+
+    out += [f for f in tokenizer.scan(ctx.path, parent_path) if f.id != "MODEL.TOKENIZER.NO_BASE"]  # the parent's tokenizer is the base to diff against
     out.append(make_finding(
         "MODEL.WEIGHTS.CHANGED_LAYERS", f"{len(changed)} tensor(s) differ from parent {label}: " + ", ".join(d.tensor for d in changed[:4]) + ("…" if len(changed) > 4 else ""), "info", "model", "S4",
         [Evidence(kind="tensor", ref=d.tensor, detail="shape/dtype changed" if d.relative_l2 == float("inf")
                   else f"relative L2 {d.relative_l2:.3g}") for d in changed[:12]], source="statistical"))
+    return out
+
+
+@register("model", "S4")
+def hub_parent(ctx: IntakeContext) -> list[Finding]:
+    """S4. Compare the weights with the named base model on the hub without downloading it (range requests: config, tokenizer, the safetensors
+    header and the first embedding rows). A match identifies the parent; a base the weights contradict is `MODEL.PARENT.CLAIM_MISMATCH`.
+    The base's tokenizer is then diffed against the model's, which until now never ran."""
+    from lineage.diff import hub_parent as hp
+    from lineage.inspect import tokenizer
+
+    base = ctx.fact_value("base_model", trusted_only=False)
+    if not base:
+        return [make_finding("MODEL.PARENT.NO_CLAIMED_BASE", "No base model is named by the hub, the passport or the uploader; nothing to fetch and compare", "info", "model", "S4")]
+    if ctx.path is None:
+        return [not_run("PARENT_FETCH", "no model bytes", "S4")]
+    fact = ctx.fact("base_model", trusted_only=False)
+    base_url = getattr(ctx.hub, "base_url", None) or None
+    from lineage.intake import fetch
+
+    if not base_url and not os.environ.get("LINEAGE_HF_URL") and not os.environ.get("LINEAGE_HUB_URL"):
+        base_url = fetch.hf_url()
+    import tempfile
+
+    work = Path(tempfile.mkdtemp(prefix="lineage-base-"))
+    try:
+        m = hp.compare(ctx.path, base, "main", base_url=base_url or fetch.hf_url(), client=getattr(ctx.hub, "client", None), work_dir=work)
+    except (hp.HubParentError, ValueError, OSError) as e:
+        return [not_run("PARENT_FETCH", f"could not fetch the base {base}: {e}", "S4")]
+    out: list[Finding] = []
+    basis = "" if fact and fact.provenance != "declared" else " (the base is only declared)"
+    ev_ = [Evidence(kind="field", ref=base, detail=f"{m.tensor}: mean row cosine {m.similarity}; {m.bytes_fetched} bytes fetched" if m.similarity is not None else "; ".join(m.notes))]
+    if m.similarity is None:
+        out.append(not_run("PARENT_FETCH", "; ".join(m.notes) or "no comparable tensor", "S4"))
+    elif m.similarity >= hp.IDENTIFIED:
+        out.append(make_finding("MODEL.PARENT.IDENTIFIED", f"Parent identified from the weights: {base} (embedding cosine {m.similarity:.3f}, {m.bytes_fetched} bytes fetched){basis}",
+                                "info", "model", "S4", ev_, source="statistical"))
+        if base not in ctx.parents:
+            ctx.graph_refs.append({"kind": "derived_from", "type": "model", "name": base.split("/")[-1], "ref": f"base model {base}"})
+        if m.base_dir is not None:
+            out += [f for f in tokenizer.scan(ctx.path, m.base_dir) if f.id != "MODEL.TOKENIZER.NO_BASE"]
+    else:
+        out.append(make_finding("MODEL.PARENT.CLAIM_MISMATCH", f"The weights do not match the named base {base} (embedding cosine {m.similarity:.3f}){basis}",
+                                "high", "model", "S4", ev_, source="statistical"))
     return out
 
 
