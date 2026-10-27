@@ -71,6 +71,8 @@ def _verdict(ok: bool, good: str, bad: str) -> None:
 def keygen(
     directory: Annotated[Path, typer.Option("--dir", help="Where to write the key pair")] = Path("."),
     name: Annotated[str, typer.Option(help="Key file stem")] = "lineage",
+    publish: Annotated[bool, typer.Option("--publish", help="Also write .well-known/lineage-keys.json for you to host")] = False,
+    scope: Annotated[list[str] | None, typer.Option(help="Sources this key may sign for, e.g. hf:my-org/* (repeatable); default *")] = None,
 ) -> None:
     """Generate an Ed25519 signing key pair (`<name>.key` private, `<name>.pub` public)."""
     from lineage.signing.keys import generate_keypair
@@ -82,6 +84,11 @@ def keygen(
         raise typer.Exit(code=1)
     console.print(f"[green]✓[/] wrote [bold]{directory / (name + '.key')}[/] (keep secret) and {directory / (name + '.pub')}")
     console.print(f"  key id: [cyan]{kid}[/]")
+    if publish:
+        from lineage.signing import wellknown
+
+        f = wellknown.publish(directory, name, wellknown.public_hex_of(directory / (name + ".pub")), scope or ["*"])
+        console.print(f"[green]✓[/] wrote [bold]{f}[/]: host it at https://<your-domain>/{wellknown.WELL_KNOWN}")
 
 
 @app.command()
@@ -146,6 +153,8 @@ def verify(
     artifact: Annotated[Path | None, typer.Option(help="Artifact path to re-hash against the passport")] = None,
     pubkey: Annotated[Path, typer.Option(help="Ed25519 public key")] = Path("lineage.pub"),
     server: Annotated[str | None, typer.Option(help="Server URL for revocation status")] = None,
+    from_: Annotated[str | None, typer.Option("--from", help="Fetch the signer's keys from https://<site>/.well-known/lineage-keys.json and pin them")] = None,
+    accept_change: Annotated[bool, typer.Option(help="With --from: accept a changed key list (the old pin is replaced)")] = False,
 ) -> None:
     """Verify a signed passport (signature, hashes, chain, revocation)."""
     from lineage.passport.verify import verify_passport
@@ -153,7 +162,36 @@ def verify(
     from lineage.signing.keys import load_public_key
 
     signed = SignedPassport.model_validate_json(passport.read_text())
-    r = verify_passport(signed, load_public_key(pubkey), artifact, server)
+    key = load_public_key(pubkey) if from_ is None else None
+    if from_ is not None:
+        from lineage.signing import wellknown
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+
+        try:
+            fetched = wellknown.fetch(from_)
+        except Exception as e:  # noqa: BLE001 - network, JSON, shape: all end the same way
+            err.print(f"[red]✗[/] cannot fetch the key list from {from_}: {e}")
+            raise typer.Exit(code=1)
+        trusted, status = wellknown.pin(from_, fetched, accept_change)
+        if status == "new":
+            err.print(f"[yellow]![/] first use: pinned {len(trusted)} key(s) from {from_} in {wellknown.pin_file()}; confirm them out of band")
+        elif status == "changed" and not accept_change:
+            err.print(f"[red]![/] the key list at {from_} CHANGED since it was pinned; verifying with the pinned keys (use --accept-change to take the new list)")
+        elif status == "changed":
+            err.print(f"[yellow]![/] the key list at {from_} changed; the new list is pinned")
+        entry = next((e for e in trusted if wellknown.key_id_of(e["key"]) == signed.key_id), None)
+        if entry is None:
+            err.print(f"[red]✗[/] the passport's key {signed.key_id} is not among the keys {from_} publishes")
+            raise typer.Exit(code=1)
+        from lineage.intake.inspectors import in_scope, source_id_of
+
+        src = signed.passport.predicate.source
+        sid = source_id_of(src.hub, src.repo)
+        if sid and not in_scope(entry.get("scope", ["*"]), [sid]):
+            err.print(f"[red]✗[/] SCOPE MISMATCH: {entry['name']} may sign for {entry.get('scope')}, but this passport claims {sid}")
+            raise typer.Exit(code=1)
+        key = Ed25519PublicKey.from_public_bytes(bytes.fromhex(entry["key"]))
+    r = verify_passport(signed, key, artifact, server)
     body = signed.passport.predicate
     console.print(f"[bold]{body.name} {body.version}[/]  [dim]{_short(r.passport_id)}[/]  trust: {body.trust_level}")
     mark = lambda ok: "[green]✓[/]" if ok else "[red]✗[/]"  # noqa: E731
