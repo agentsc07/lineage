@@ -152,10 +152,10 @@ def _identify(ctx: IntakeContext, claims: dict | None, hub: Hub | None, claimed_
               uploader: str) -> tuple[str, list[Finding]]:
     out: list[Finding] = []
     ref = ctx.ref
-    p = Path(ref).expanduser()
-    if p.exists():
+    p = Path(ref).expanduser() if ref else None  # an empty ref means "nothing was acquired", never "the current directory"
+    if p is not None and p.exists():
         ctx.path = p.resolve()
-    elif _looks_like_path(ref):
+    elif ref and _looks_like_path(ref):
         out.append(insp.make_finding("INTAKE.REF.NOT_FOUND", f"Path {ref} does not exist", "high", "integrity", "S1",
                                      [Evidence(kind="field", ref="ref", detail=ref)]))
 
@@ -450,7 +450,7 @@ def _s0(ctx: IntakeContext, source: str | None, hub: Hub | None, work_dir: Path 
                                            + ", ".join(acq.skipped_files[:3]), "high", "model", "S0",
                                            [Evidence(kind="file_line", ref=p) for p in acq.skipped_files[:5]]))
         return "completed", found, f"fetched {source} ({len(list(acq.path.rglob('*')))} entries)"
-    p = Path(ctx.ref).expanduser()
+    p = Path(ctx.ref).expanduser() if ctx.ref else Path("/nonexistent-lineage-ref")
     if p.is_file() and ctx.artifact_type == "package" and p.suffix in (".whl", ".zip", ".gz"):
         try:
             fetch.safe_extract(p, work / "pkg")

@@ -67,6 +67,12 @@ def test_unreachable_hub_cannot_acquire_and_blocks(policy, tmp_path):
     dead = HttpHub(base_url="http://127.0.0.1:9", trusted_local=False)
     d, _ = run("model", "", policy, dead, source=f"hf:{REPO}", work_dir=tmp_path / "w")
     assert "CHECK.NOT_RUN.ACQUIRE" in ids(d) and d.outcome == "block"
+    assert not any(f.id == "INTAKE.DIGEST.KNOWN" for f in d.findings) and d.risk_score <= 100
+    from lineage.intake.pipeline import run_intake
+
+    s1 = next(e for e in run_intake("model", "", "dev", PolicyPack.from_yaml("examples/policy.org.yaml"), "j", hub=dead, source=f"hf:{REPO}", work_dir=tmp_path / "w2", now=NOW)
+              if e.stage == "S1" and e.status != "started")
+    assert "0 file(s)" not in s1.message and "hashed" not in s1.message  # nothing was hashed: an empty ref is not the current directory
 
 
 def test_upload_matching_the_published_repo_is_origin_verified(policy, hub, hubroot, tmp_path):

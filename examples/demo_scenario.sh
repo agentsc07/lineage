@@ -39,6 +39,7 @@ verdict_line() { # outcome risk trust
   esac
 }
 
+[[ "${LINEAGE_DEMO_REAL_HUB:-}" == 1 ]] && DEMO_HF_URL="https://huggingface.co"
 if [[ "$OWN" == 1 ]]; then
   # shellcheck disable=SC1091
   source examples/demo_up.sh || exit 1
