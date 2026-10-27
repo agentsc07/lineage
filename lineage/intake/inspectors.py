@@ -830,9 +830,15 @@ def gpu_card_review(ctx: IntakeContext) -> list[Finding]:
         return [make_finding("LLM.CARD.MISSING", "No model/dataset card to review", "low", "llm", "S5", source="deterministic")]
     measured = {"files": len(ctx.files), "claimed_base": ctx.fact_value("base_model", trusted_only=False),
                 "findings": sorted({f"{f.id}:{f.severity}" for f in ctx.findings})}
+    from lineage.inspect.llm_review import client as lc
+
     try:
-        resp = gpu.post("/review/card", ReviewCardRequest(card_text=ctx.card_text, measured=measured), ReviewResponse, ctx.gpu_url)
-    except gpu.GpuUnavailable:
+        req = ReviewCardRequest(card_text=ctx.card_text, measured=measured)
+        if ctx.gpu_url is None and lc.GpuClient().hosted:  # hosted NVIDIA API, no GPU worker needed
+            resp = lc.review_card_hosted(req)
+        else:
+            resp = gpu.post("/review/card", req, ReviewResponse, ctx.gpu_url)
+    except (gpu.GpuUnavailable, lc.GpuUnavailable):
         return [not_run("LLM_REVIEW", "the reviewer backend is unreachable (card review)", "S5")]
     return claims_to_findings(resp, ctx.root, "LLM.CARD")
 
@@ -852,11 +858,13 @@ def gpu_code_review(ctx: IntakeContext) -> list[Finding]:
     if not slices:
         return [make_finding("LLM.REVIEW.NOTHING_TO_REVIEW", "Reviewer ran: no source-to-sink flow, hook or risky capability to send", "info", "llm", "S5")]
     caps = sorted({h.cap for h in analysis.hits} | {k.kind for k in analysis.hooks})
-    purpose = ctx.fact_value("description") or ctx.metadata.get("summary") or _manifest_description(ctx) or ctx.name
+    # the artifact's purpose comes from trusted facts first (PyPI summary, hub card), then its own description; a mismatch only adds risk
+    purpose = ctx.fact_value("description") or ctx.metadata.get("summary") or (ctx.metadata.get("info") or {}).get("summary") \
+        or ctx.fact_value("description", trusted_only=False) or _manifest_description(ctx) or ctx.name
     diff = client.make_diff(ctx.previous[0], ctx.root) if ctx.previous else None
     static = [f for f in ctx.findings if f.severity != "info"]
     found = client.review_to_findings(ReviewCodeRequest(purpose=purpose, capabilities=caps, slices=slices, diff=diff or None),
-                                      ctx.gpu_url or gpu.DEFAULT_URL, root=ctx.root, static_findings=static)
+                                      ctx.gpu_url, root=ctx.root, static_findings=static)
     return [not_run("LLM_REVIEW", "the reviewer backend is unreachable (code review)", "S5") if f.id == "LLM.REVIEW.SKIPPED" else f
             for f in found]
 

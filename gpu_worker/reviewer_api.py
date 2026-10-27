@@ -42,9 +42,10 @@ def reviewer_model() -> str | None:
 
 
 # ------------------------------------------------------------------ schemas for constrained output
-_CLAIM = {"type": "object", "additionalProperties": False, "required": ["text", "file", "line", "api", "severity"],
+_CLAIM = {"type": "object", "additionalProperties": False, "required": ["text", "file", "line", "api", "severity"],  # purpose_mismatch is optional
           "properties": {"text": {"type": "string", "maxLength": 300}, "file": {"type": "string"}, "line": {"type": "integer"},
-                         "api": {"type": "string", "minLength": 3, "maxLength": 80}, "severity": {"type": "string", "enum": SEVERITIES}}}
+                         "api": {"type": "string", "minLength": 3, "maxLength": 80}, "severity": {"type": "string", "enum": SEVERITIES},
+                         "purpose_mismatch": {"type": "boolean"}}}
 PROSECUTOR_SCHEMA = {"type": "object", "additionalProperties": False, "required": ["analysis", "claims", "verdict"],
                      "properties": {"analysis": {"type": "string", "maxLength": 500}, "claims": {"type": "array", "maxItems": MAX_CLAIMS, "items": _CLAIM},
                                     "verdict": {"type": "string", "enum": VERDICTS}}}
@@ -317,6 +318,8 @@ def _headers(resp: Response, trace: llm.Trace) -> None:
 
 
 def _require_llm() -> None:
+    if llm.hosted():  # the hosted NVIDIA API: configured by LINEAGE_LLM_API_KEY / NVIDIA_API_KEY, nothing to serve
+        return
     if reviewer_model() is None:
         raise HTTPException(503, "reviewer LLM not configured: set reviewer_llm in gpu_worker/models.yaml")
     if not llm.is_up():

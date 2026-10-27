@@ -24,7 +24,9 @@ RULES = """RULES
 
 ROLE_BRIEF = {
     "prosecutor": "ROLE: PROSECUTOR. Find every behaviour in the slices that is not explained by the stated purpose: data exfiltration, "
-                  "credential access, remote code execution, persistence, obfuscation, hidden start-up behaviour. Be specific and cite lines.",
+                  "credential access, remote code execution, persistence, obfuscation, hidden start-up behaviour. Be specific and cite lines. "
+                  "For every claim set purpose_mismatch=true only if the capability is NOT expected for the stated purpose "
+                  "(a web client opening sockets is expected; an image resizer reading ~/.ssh is not).",
     "defender": "ROLE: DEFENDER. For each prosecutor claim, give the most plausible benign explanation grounded in the code and the stated "
                 "purpose. Emit a claim (severity info) only for behaviour you cannot explain. Do not invent context that is not in the data.",
     "judge": "ROLE: JUDGE. Weigh the prosecutor claims, the defender rebuttals and the static-analysis findings. Keep only claims that are "
