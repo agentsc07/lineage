@@ -22,6 +22,7 @@ from pydantic import ValidationError
 from lineage.inspect import package_capabilities, package_taint
 from lineage.inspect._common import cap_severity, ev, finding
 from lineage.inspect._pycode import iter_python
+from lineage.serviceauth import bearer
 from lineage.inspect.llm_review import bait as bait_mod
 from lineage.inspect.llm_review.grounding import Dropped, ground_claims_with_reasons
 from lineage.inspect.llm_review.prompts import build_request
@@ -73,7 +74,7 @@ class GpuClient:
             if self.hosted:
                 resp = _in_process("review_code", req)
             else:
-                r = self._http.post(f"{self.base_url}/review/code", json=req.model_dump())
+                r = self._http.post(f"{self.base_url}/review/code", json=req.model_dump(), headers=bearer("LINEAGE_GPU_TOKEN"))
                 r.raise_for_status()
                 resp = ReviewResponse.model_validate(r.json())
         except (httpx.HTTPError, ValidationError, json.JSONDecodeError, ValueError) as e:

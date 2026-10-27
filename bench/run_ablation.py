@@ -33,6 +33,8 @@ from pathlib import Path
 
 import httpx
 
+from lineage.serviceauth import bearer
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 os.environ.setdefault("LINEAGE_OFFLINE", "1")
@@ -56,7 +58,7 @@ SETS = [
 
 def _stats(url: str) -> dict:
     try:
-        return httpx.get(url + "/review/stats", timeout=5).json()
+        return httpx.get(url + "/review/stats", timeout=5, headers=bearer("LINEAGE_GPU_TOKEN")).json()
     except httpx.HTTPError:
         return {"calls": 0, "latency_s": 0.0, "prompt_tokens": 0, "completion_tokens": 0}
 

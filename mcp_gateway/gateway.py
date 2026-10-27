@@ -31,6 +31,8 @@ import httpx
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response
 
+from lineage.serviceauth import add_token_auth
+
 SURFACE_KEYS = ("name", "description", "inputSchema", "annotations")
 IGNORED_NAMES = {"passport.json", "lineage.meta.json"}
 ERR_DISABLED, ERR_UNKNOWN, ERR_UPSTREAM, ERR_OUTPUT = -32001, -32602, -32002, -32003
@@ -303,6 +305,7 @@ def _error(mid: Any, code: int, message: str, data: dict | None = None) -> dict:
 def create_app(gateway: Gateway):
     """HTTP JSON-RPC endpoint (single or batch) plus /gateway/status."""
     app = FastAPI(title="Lineage MCP gateway")
+    add_token_auth(app, "LINEAGE_GATEWAY_TOKEN")  # unset: open, loopback only (the default bind)
 
     @app.post("/")
     async def rpc(request: Request):

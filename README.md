@@ -84,6 +84,10 @@ worker's behaviour check loads the candidate model's weights and runs inference 
 one deep stage is the only place uploaded weights are loaded; it is isolated in the worker process. **Dynamic analysis of code (running a
 package or tool to watch it) is out of scope until a separately isolated sandbox exists.**
 
+## Service exposure (read before deploying)
+
+The API server needs a token for every route except `/healthz`; the dashboard opens its event stream with a 60-second job-scoped ticket, and the API token is never accepted from a URL. The **GPU worker** and the **MCP gateway** can each require a shared bearer secret (`LINEAGE_GPU_TOKEN`, `LINEAGE_GATEWAY_TOKEN`, set on both sides). That is a single shared secret, not a user system, and with the variable unset a service accepts anyone who can reach its port. **Neither service is production-secure as shipped**: keep them on loopback or a private network, set the secret, and put TLS in front (no service here terminates TLS). The registry's read routes are open to every signed-in role.
+
 ## Limits (read these)
 
 - **A weight-only backdoor in a model with no known base is an open problem.** Such a model cannot reach prod without a human, and the unrun weight check carries an explicit price.

@@ -9,11 +9,13 @@ from __future__ import annotations
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from lineage.serviceauth import add_token_auth
 from gpu_worker import behaviour_api, modelio, notary_api, reviewer_api, reviewer_llm, weights_api
 from gpu_worker.policy_check import policy_model_id
 from gpu_worker.weights_api import CALIBRATION, bank
 
 app = FastAPI(title="Lineage GPU worker", version="0.1.0")
+add_token_auth(app, "LINEAGE_GPU_TOKEN", frozenset({"/health"}))  # unset: open, loopback or private network only
 for module in (weights_api, behaviour_api, notary_api, reviewer_api):
     app.include_router(module.router)
 

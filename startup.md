@@ -41,6 +41,8 @@ Stop with Ctrl+C. Tests: `uv run pytest -q`. Dashboard build: `cd dashboard && n
 | `LINEAGE_TOKEN`, `LINEAGE_SERVER`, `LINEAGE_REGISTRY_PUBKEY` | none | CLI side: token, registry URL, pinned registry key (also in `~/.lineage/config.toml`) |
 | `NVIDIA_API_KEY` | none | Optional hosted LLM reviewer and embeddings (see `.env.example`); without it those checks report "did not run" |
 | `LINEAGE_GPU_URL` | none | Optional GPU worker (weights, behaviour, notary); without it those checks report "did not run" |
+| `LINEAGE_GPU_TOKEN` | none | Shared secret: set it on the worker and on the server and the worker answers 401 without `Authorization: Bearer <secret>` (`/health` stays open). Unset: the worker is open, loopback or private network only |
+| `LINEAGE_GATEWAY_TOKEN` | none | Same for the MCP gateway (`POST /`, `/gateway/status`); unset: open, and it binds to 127.0.0.1 by default |
 
 ## Common problems
 - **`uv run lineage` cannot import `lineage`** (macOS): prefix with `PYTHONPATH=$PWD`.
