@@ -139,6 +139,10 @@ def scan(model_dir: Path, base_tokenizer_dir: Path | None = None) -> list[Findin
                            f"{len(moved)} added/special token(s) have a different id than in the base tokenizer: " + ", ".join(f"{c!r} {a}->{b}" for c, (a, b) in list(moved.items())[:4]),
                            "critical" if special else "high", "model", "S3",
                            [ev("field", "tokenizer.json#added_tokens", f"{c!r}: id {a} -> {b}") for c, (a, b) in list(moved.items())[:8]]))
+    flipped = [c for c, a in model.added.items() if c in base.added and a["special"] != base.added[c]["special"]]
+    if flipped:  # same text, same id, but now (not) a control token: the model reads or skips it differently
+        out.append(finding("MODEL.TOKENIZER.SPECIAL_FLAG_CHANGED", f"{len(flipped)} added token(s) changed their 'special' flag: " + ", ".join(repr(c[:30]) for c in flipped[:4]),
+                           "high", "model", "S3", [ev("field", "tokenizer.json#added_tokens", f"{c!r}: special {base.added[c]['special']} -> {model.added[c]['special']}") for c in flipped[:8]]))
     new_added = {c for c in model.added if c not in base.added}
     if new_added:
         out.append(finding("MODEL.TOKENIZER.ADDED_TOKENS", f"{len(new_added)} added/special token(s) differ from the base", "medium", "model", "S3",
