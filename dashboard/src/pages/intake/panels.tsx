@@ -148,7 +148,7 @@ export function DecisionPanel({ decision, view, env, findings, onChanged }: { de
       <div className="flex flex-wrap gap-6 items-start">
         <div className="min-w-[200px]">
           <p className="text-sm text-mute mb-2">Verdict for {env} · policy <span className="mono">{decision.policy_version}</span></p>
-          <Verdict outcome={decision.outcome} size="lg" />
+          <Verdict outcome={view?.status === "rejected" ? "rejected" : view?.status === "revoked" ? "revoked" : decision.outcome} size="lg" />
           <div className="mt-4 flex flex-col gap-2 text-sm"><Trust level={decision.trust_level} /><Risk score={decision.risk_score} /></div>
         </div>
         <div className="flex-1 min-w-[260px]">

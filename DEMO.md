@@ -24,10 +24,10 @@ Sign in with a token from `examples/demo_tokens.json` (`alice` requests, `bob` a
 Click path for the video:
 1. **Intake** -> "Load sample..." -> *Tampered copy (one byte changed)*. Watch S0-S7 fill in with timings; open the identity table (`model.safetensors: changed`) and the `PROV.ORIGIN.MODIFIED` finding (hard block).
 2. Same page -> *Clean model* (prod): "human approval required" is the headline; open **Passport and attestation** (five checks, passport JSON, signed attestation).
-3. Sign out, sign in as **bob**, reload `/intake/<job id>` (state is rebuilt from the server), **Approve** with a reason and an expiry. The copyable `lineage pull` command appears.
+3. Sign out, sign in as **bob**, reload `/intake/<job id>` (state is rebuilt from the server), **Approve** with a reason and an expiry (or **Reject** to refuse the pending request; that records your name and reason and revokes nothing). The copyable `lineage pull` command appears.
 4. **Graph** -> `triage-trained`: SBOM packages fold into one node; the advised package (`jinja2`) stays separate; click a node or an edge for evidence.
 5. **Graph** -> `instructions@3c33a2c0f23c` -> **Revoke**: the blast radius lists `triage-trained@1.0.0`.
-6. **Policy** is read-only in the browser. A policy change is signed outside it (`uv run python -m lineage_server.tuf sign new-policy.yaml --key owner=owner.key --key security=security.key > update.json`, 2 of 3 role keys) and applied by an admin on that page with "Apply a signed update", or with `PUT /policy`. The page never creates a signature and holds no key.
+6. **Policy** is read-only in the browser. A policy change is signed outside it (`uv run python -m lineage_server.tuf sign new-policy.yaml --key owner=owner.key --key security=security.key > update.json`, 2 of 3 role keys) and applied by an admin on that page with "Apply a signed update", or with `PUT /policy`. The page never creates a signature and holds no key. (The demo server has no role keys configured, so it answers "no role keys configured; policy updates are disabled"; set `LINEAGE_ROLE_KEYS` to enable updates.)
 7. **Monitor**, **Federated**, **Trusted publishers** pages show the rest of the story.
 
 ## 3. Use what was admitted (CLI)
