@@ -164,3 +164,13 @@ def test_the_creator_passport_report_separates_signature_key_and_bytes(tmp_path,
     cp = api.get(f"/artifacts/{aid}/view").json()["creator_passport"]
     assert cp["present"] and cp["claimed_publisher"] == "meta-llama/Llama-3" and cp["signature"] == "not_checked"
     assert cp["key_status"] == "not_a_trusted_publisher" and cp["bytes_match"] is True
+
+
+def test_the_view_reports_the_status_and_says_who_rejected(tmp_path, policy_path, hubroot):
+    api = make_api(tmp_path, policy_path, hubroot)
+    _, _, d = submit(api, tmp_path, hubroot)  # prod: a clean copy still needs a human
+    v = api.get(f"/artifacts/{d['artifact_id']}/view").json()
+    assert v["status"] == "quarantined"
+    assert api.post(f"/decisions/{d['artifact_id']}/reject", json={"reason": "duplicate of an admitted model"}).status_code == 200
+    v = api.get(f"/artifacts/{d['artifact_id']}/view").json()
+    assert v["status"] == "rejected" and "Rejected by" in v["next_action"] and "duplicate of an admitted model" in v["next_action"] and v["pull_command"] is None

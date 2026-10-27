@@ -4,7 +4,7 @@ export type TrustLevel = "unknown" | "origin_verified" | "signed" | "recorded";
 export type Severity = "info" | "low" | "medium" | "high" | "critical";
 export type Outcome = "allow" | "allow_with_conditions" | "quarantine" | "block";
 export type ArtifactStatus =
-  | "submitted" | "quarantined" | "admitted" | "admitted_with_conditions" | "blocked" | "revoked" | "unregistered";
+  | "submitted" | "quarantined" | "admitted" | "admitted_with_conditions" | "blocked" | "revoked" | "rejected" | "unregistered";
 export type StageId = "S0" | "S1" | "S2" | "S3" | "S4" | "S5" | "S6" | "S7";
 
 export interface Evidence { kind: string; ref: string; detail: string }
@@ -51,7 +51,7 @@ export interface ArtifactView {
   facts: { key: string; value: string | null; provenance: Fact["provenance"]; source: string }[];
   creator_passport: { present: boolean; claimed_publisher?: string; claimed_source?: string; key_id?: string; signature?: string; key_status?: string; signer?: string | null; bytes_match?: boolean | null };
   finding_classes: Record<string, "hard_block" | "policy_dependent" | "scored">;
-  decision: Decision | null; requester: string | null; hard_block: boolean; next_action: string;
+  decision: Decision | null; status: string; requester: string | null; hard_block: boolean; next_action: string;
   pull_command: string | null; pull_command_first_use: string | null;
 }
 export interface JobView { job_id: string; requester: string | null; artifact_type: string | null; environment: string | null; label: string | null; created_at: string | null; done: boolean; artifact_id: string | null }

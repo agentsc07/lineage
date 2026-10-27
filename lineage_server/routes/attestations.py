@@ -36,7 +36,7 @@ def attestation_status(artifact_id: str, env: str = "prod", conn: sqlite3.Connec
         raise HTTPException(404, f"unknown artifact {artifact_id}")
     revoked = models.is_revoked(conn, artifact_id)
     ancestors = [n.id for n in graph.reachable(conn, artifact_id, "up") if n.id != artifact_id and models.is_revoked(conn, n.id)]
-    outcome = "block" if revoked else service.evaluate(conn, artifact_id, active[0], policy_expired=active[1], environment=env).outcome
+    outcome = "block" if revoked or models.is_rejected(conn, artifact_id) else service.evaluate(conn, artifact_id, active[0], policy_expired=active[1], environment=env).outcome
     return AttestationStatus(artifact_id=artifact_id, environment=env, revoked=revoked, ancestor_revoked=ancestors, current_outcome=outcome,
                              usable=not revoked and not ancestors and outcome in ("allow", "allow_with_conditions"))
 

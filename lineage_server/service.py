@@ -175,12 +175,37 @@ def approve(
     """
     exc = PolicyException(artifact=artifact_id, approver=req.approver, reason=req.reason, expires=req.expires)
     with tx(conn):
+        if models.is_rejected(conn, artifact_id):
+            raise ApprovalRefused(["this request was rejected; submit the artifact again to start a new one"])
         trial = evaluate(conn, artifact_id, policy, policy_expired=policy_expired, extra_exceptions=[exc], now=now)
         if trial.outcome in ("block", "quarantine"):
             raise ApprovalRefused(trial.reasons)
         models.add_approval(conn, artifact_id, req.approver, req.reason, req.expires)
         models.save_decision(conn, trial)
     return trial
+
+
+class NotRejectable(Exception):
+    """Only a pending or quarantined request can be rejected; an admitted artifact is revoked instead."""
+
+
+def reject(conn: sqlite3.Connection, artifact_id: str, actor: str, reason: str, *, now: datetime | None = None) -> None:
+    """Refuse a pending (quarantined) admission request. The reason and the actor are recorded, the decision history stays, nothing is revoked,
+    and no descendant changes: the artifact was never admitted, so nothing was built on it through Lineage."""
+    now = now or _now()
+    with tx(conn):
+        art = models.artifact_row(conn, artifact_id)
+        if art is None:
+            raise NotFound(artifact_id)
+        if models.is_revoked(conn, artifact_id) or models.is_rejected(conn, artifact_id):
+            raise NotRejectable(f"already {'revoked' if models.is_revoked(conn, artifact_id) else 'rejected'}")
+        if models.was_admitted(conn, artifact_id) or art.status in ("admitted", "admitted_with_conditions"):
+            raise NotRejectable("it was admitted: use revoke, which re-evaluates what was built on it")
+        if art.status != "quarantined":
+            raise NotRejectable(f"only a pending (quarantined) request can be rejected; this one is {art.status}")
+        conn.execute("INSERT INTO rejections (artifact_id, actor, reason, rejected_at) VALUES (?, ?, ?, ?)", (artifact_id, actor, reason, now.isoformat()))
+        models.set_status(conn, artifact_id, "rejected")
+        log.append(conn, "rejection", artifact_id, now)
 
 
 def _parent_revoked_finding(parent_id: str, label: str, reason: str) -> Finding:

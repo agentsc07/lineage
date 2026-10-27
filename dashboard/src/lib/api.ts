@@ -32,6 +32,7 @@ export const api = {
     req<Graph>(`/graph/${encodeURIComponent(id)}?direction=${direction}`),
   revoke: (id: string, reason: string) =>
     req<RevokeResult>(`/revoke/${encodeURIComponent(id)}?reason=${encodeURIComponent(reason)}`, { method: "POST" }),
+  reject: (id: string, reason: string) => req<{ artifact_id: string; status: string; actor: string; reason: string }>(`/decisions/${encodeURIComponent(id)}/reject`, { method: "POST", body: JSON.stringify({ reason }) }),
   verifyPassport: (id: string) => req<{ valid: boolean; problems: string[]; revoked: boolean }>(`/passports/${encodeURIComponent(id)}/verify`),
   artifactView: (id: string) => req<ArtifactView>(`/artifacts/${encodeURIComponent(id)}/view`),
   job: (id: string) => req<JobView>(`/jobs/${encodeURIComponent(id)}`),

@@ -11,8 +11,8 @@ from lineage.schemas.finding import Finding
 from lineage.schemas.passport import ArtifactType, SignedPassport, TrustLevel
 
 ArtifactStatus = Literal[
-    "submitted", "quarantined", "admitted", "admitted_with_conditions", "blocked", "revoked", "unregistered"
-]  # unregistered: a ghost node (referenced, never admitted)
+    "submitted", "quarantined", "admitted", "admitted_with_conditions", "blocked", "revoked", "rejected", "unregistered"
+]  # rejected: a human refused a pending request (never admitted); revoked: an admitted artifact was withdrawn; unregistered: a ghost node
 StageId = Literal["S0", "S1", "S2", "S3", "S4", "S5", "S6", "S7"]
 StageStatus = Literal["started", "completed", "skipped", "failed"]
 

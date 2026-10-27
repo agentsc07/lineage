@@ -12,7 +12,7 @@ type NData = { node: GraphNode; state: "idle" | "revoked" | "hit"; vkey: Verdict
 
 // Border colour follows the decision; the trust ladder stays as the bar inside the node.
 const decisionColor: Record<VerdictKey, string> = {
-  allow: "var(--allow)", allow_with_conditions: "var(--cond)", quarantine: "var(--quar)", block: "var(--block)", block_monitor: "var(--block)", revoked: "var(--block)",
+  allow: "var(--allow)", allow_with_conditions: "var(--cond)", quarantine: "var(--quar)", block: "var(--block)", block_monitor: "var(--block)", revoked: "var(--block)", rejected: "var(--faint)",
 };
 
 function LineageNode({ data, selected }: NodeProps<Node<NData>>) {

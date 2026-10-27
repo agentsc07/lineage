@@ -5,7 +5,7 @@ import { extraMeta, outcomeMeta, riskColor, sevMeta, statusOutcome, statusLabel,
 
 export function Verdict({ outcome, size = "sm" }: { outcome: VerdictKey | null | undefined; size?: "sm" | "lg" }) {
   if (!outcome) return <span className="text-faint text-sm">Pending</span>;
-  const m = outcome === "revoked" || outcome === "block_monitor" ? extraMeta[outcome] : outcomeMeta[outcome];
+  const m = outcome === "revoked" || outcome === "rejected" || outcome === "block_monitor" ? extraMeta[outcome] : outcomeMeta[outcome];
   return (
     <span className={`inline-flex items-center gap-1.5 border rounded-md font-medium whitespace-nowrap ${m.cls} ${size === "lg" ? "px-3 py-1.5 text-base" : "px-2 py-0.5 text-xs"}`}>
       <span className={`rounded-full ${m.dot} ${size === "lg" ? "w-2 h-2" : "w-1.5 h-1.5"}`} />

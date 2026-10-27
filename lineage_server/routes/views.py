@@ -46,6 +46,7 @@ class ArtifactView(BaseModel):
     creator_passport: dict = Field(default_factory=dict)  # present, claimed_publisher, key_id, signature, key_status, bytes_match
     finding_classes: dict[str, str] = Field(default_factory=dict)  # finding id -> hard_block | policy_dependent | scored
     decision: Decision | None = None
+    status: str = ""  # the artifact's lifecycle status: quarantined, admitted, blocked, rejected, revoked ...
     requester: str | None = None
     hard_block: bool = False
     next_action: str = ""
@@ -89,7 +90,10 @@ def artifact_view(artifact_id: str, request: Request, conn: sqlite3.Connection =
     hard = bool(decision and decision.outcome == "block" and hard_blocks(body, findings, policy, env))
     revoked = models.is_revoked(conn, artifact_id)
     outcome = decision.outcome if decision else None
-    if revoked:
+    rej = conn.execute("SELECT actor, reason FROM rejections WHERE artifact_id = ? ORDER BY seq DESC LIMIT 1", (artifact_id,)).fetchone()
+    if rej:
+        nxt = f"Rejected by {rej['actor']}: {rej['reason']}. It was never admitted; submit it again to start a new request."
+    elif revoked:
         nxt = "Revoked: it cannot be used anywhere."
     elif outcome in ("allow", "allow_with_conditions"):
         nxt = "Admitted: pull the registry's copy with the command below."
@@ -100,14 +104,14 @@ def artifact_view(artifact_id: str, request: Request, conn: sqlite3.Connection =
             else "Blocked by soft rules: an approver can accept them with an expiry, or the artifact can be fixed and resubmitted."
     else:
         nxt = ""
-    usable = not revoked and outcome in ("allow", "allow_with_conditions")
+    usable = not revoked and not rej and outcome in ("allow", "allow_with_conditions")
     server = public_url(request)
     dest = f"./admitted/{body.name}"
     return ArtifactView(
         artifact_id=artifact_id, merkle_root=ident.get("merkle_root") or body.contents.merkle_root, claimed_origin=ident.get("claimed_origin"),
         origin_checked=bool(ident.get("origin_checked")), files=[FileRow(**f) for f in files], facts=[FactRow(**f) for f in ident.get("facts", [])],
         creator_passport=ident.get("creator_passport", {"present": False}),
-        finding_classes={f.id: classify_finding(f, body, policy, env) for f in findings}, decision=decision, requester=requester,
+        finding_classes={f.id: classify_finding(f, body, policy, env) for f in findings}, decision=decision, status=art.status, requester=requester,
         hard_block=hard, next_action=nxt,
         pull_command=pull_command(artifact_id, dest, env, server) if usable else None,
         pull_command_first_use=pull_command(artifact_id, dest, env, server, pin=True) if usable else None)

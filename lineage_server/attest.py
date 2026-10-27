@@ -24,7 +24,7 @@ def issue(conn: sqlite3.Connection, key: Ed25519PrivateKey, artifact_id: str, po
     body = signed.passport.predicate
     revoked = models.is_revoked(conn, artifact_id)
     decision = service.evaluate(conn, artifact_id, policy, policy_expired=policy_expired, environment=environment, now=now)
-    outcome = "block" if revoked else decision.outcome
+    outcome = "block" if revoked or models.is_rejected(conn, artifact_id) else decision.outcome
     expires = now + LIFETIME
     if outcome == "allow_with_conditions":
         live = [datetime.fromisoformat(r["expires"]) for r in models.get_approvals(conn, artifact_id)]

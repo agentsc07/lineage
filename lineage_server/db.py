@@ -69,6 +69,14 @@ CREATE TABLE IF NOT EXISTS edges (
 );
 CREATE INDEX IF NOT EXISTS edges_child ON edges(child);
 
+CREATE TABLE IF NOT EXISTS rejections (
+    seq INTEGER PRIMARY KEY AUTOINCREMENT,
+    artifact_id TEXT NOT NULL,
+    actor TEXT NOT NULL,             -- the authenticated approver, never a typed name
+    reason TEXT NOT NULL,
+    rejected_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS revocations (
     artifact_id TEXT PRIMARY KEY,
     reason TEXT NOT NULL,

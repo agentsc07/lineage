@@ -133,12 +133,13 @@ export function DecisionPanel({ decision, view, env, findings, onChanged }: { de
   const [busy, setBusy] = useState(false);
   const drivers = [...decision.findings].filter((f) => f.score > 0).sort((a, b) => b.score - a.score).slice(0, 5);
   const unrun = decision.findings.filter(isNotRun);
-  const canAct = auth.can("approver") && !view?.hard_block && (decision.outcome === "quarantine" || decision.outcome === "block");
+  const pending = view?.status === "quarantined";
+  const canAct = auth.can("approver") && !view?.hard_block && pending;
   const act = async (kind: "approve" | "reject") => {
     setBusy(true); setErr(null);
     try {
       if (kind === "approve") await api.approve(decision.artifact_id, { reason: reason.trim(), expires: new Date(Date.now() + days * 86400000).toISOString() });
-      else await api.revoke(decision.artifact_id, `rejected: ${reason.trim()}`);
+      else await api.reject(decision.artifact_id, reason.trim());
       setOpen(null); onChanged();
     } catch (e) { setErr(describeError(e)); } finally { setBusy(false); }
   };
@@ -174,7 +175,7 @@ export function DecisionPanel({ decision, view, env, findings, onChanged }: { de
             {open && (
               <form className="mt-3 grid sm:grid-cols-[1fr_140px_auto] gap-3 items-end" onSubmit={(e) => { e.preventDefault(); if (reason.trim().length > 2) act(open); }}>
                 <label className="text-xs text-mute">Reason (recorded with your name)<input className="input mt-1" value={reason} onChange={(e) => setReason(e.target.value)} /></label>
-                {open === "approve" ? <label className="text-xs text-mute">Approval lasts<select className="input mt-1" value={days} onChange={(e) => setDays(+e.target.value)}>{[1, 3, 7, 30].map((d) => <option key={d} value={d}>{d} day{d > 1 ? "s" : ""}</option>)}</select></label> : <span className="text-xs text-faint">Rejecting revokes it: it will never be admitted.</span>}
+                {open === "approve" ? <label className="text-xs text-mute">Approval lasts<select className="input mt-1" value={days} onChange={(e) => setDays(+e.target.value)}>{[1, 3, 7, 30].map((d) => <option key={d} value={d}>{d} day{d > 1 ? "s" : ""}</option>)}</select></label> : <span className="text-xs text-faint">Rejecting refuses this request and records your reason and name. Nothing is revoked; the history stays.</span>}
                 <button className={`btn ${open === "approve" ? "btn-primary" : "btn-danger"}`} disabled={busy || reason.trim().length < 3}>{busy ? "Working…" : open === "approve" ? "Approve" : "Reject"}</button>
               </form>)}
             {err && <p className="text-sm text-block mt-2" role="alert" data-testid="act-error">{err}</p>}

@@ -16,8 +16,9 @@ All requests except `/healthz` need `Authorization: Bearer <token>` (roles: requ
 | POST | `/passports` | `SignedPassport` | `PassportReceipt {passport_id, log_index}` | Register a signed passport |
 | GET | `/passports/{id}` | – | `SignedPassport` | Fetch |
 | GET | `/passports/{id}/verify` | – | `VerifyResult` | Signature, chain, revocation |
+| POST | `/decisions/{id}/reject` | approver | body `{reason}` -> `{artifact_id, status: rejected, actor, reason}` | Refuse a pending (quarantined) request. Not a revocation: nothing is revoked and no descendant changes; the actor and reason are recorded (table `rejections`, Merkle log kind `rejection`). The requester cannot reject their own request (403); an admitted artifact (409, use revoke) or a hard block (409) cannot be rejected |
 | GET | `/graph/{id}?direction=up\|down&collapse=true` | – | `Graph {root, direction, nodes, edges}`; node adds `version`, `advisories[]`, `group_members[]`; edge adds `evidence` (fetched\|signed\|recorded\|declared\|inferred-from-weights\|sbom) | react-flow data; edges run parent → child. By default each artifact's un-advised SBOM packages (3 or more) fold into one `sbom-group:` node; `collapse=false` returns every node |
-| POST | `/revoke/{id}?reason=` | – | `RevokeResult {revoked, reason, blast_radius[]}` | Revoke; returns every flagged descendant |
+| POST | `/revoke/{id}?reason=` | approver | `RevokeResult {revoked, reason, blast_radius[]}` | Revoke; returns every flagged descendant |
 | GET | `/policy` | – | `PolicyState` | Current policy pack, version, signatures, expiry |
 | PUT | `/policy` | `PolicyUpdate {policy, signatures[], expires_at}` | `PolicyState` | Requires 2-of-3 role signatures (`owner`, `security`, `compliance`), TUF-style |
 | POST | `/decisions/{id}/approve` | `ApprovalRequest {approver, reason, expires}` | `Decision` | Human approval |
@@ -45,7 +46,7 @@ Status: the skeleton returns mock data (`lineage_server/mock.py`) that validates
 - `Finding {id, title, severity, category, stage, evidence[], score 0–40, source, grounded}`
 - `Decision {artifact_id, environment, outcome, reasons[], conditions[], risk_score, trust_level, findings[], policy_version, decided_at, approver?}`; `outcome` is `allow | allow_with_conditions | quarantine | block`
 - `StageEvent {job_id, stage S0–S7, name, status started|completed|skipped|failed, findings[], message, decision?, elapsed_ms?, ts}` (`elapsed_ms`: server-measured, on the finishing event of a stage)
-- `Artifact.status`: `submitted | quarantined | admitted | admitted_with_conditions | blocked | revoked`
+- `Artifact.status`: `submitted | quarantined | admitted | admitted_with_conditions | blocked | rejected | revoked` (rejected: a pending request was refused by an approver; revoked: an admitted artifact was withdrawn)
 - `passport_id = "lp:" + sha256(canonical_json(passport))`; canonical JSON is sorted keys, no whitespace, UTF-8, datetimes as UTC ISO-8601. The signature is not part of the id.
 
 ## 2. GPU worker API (`gpu_worker`, port `:8800`, runs on Brev)

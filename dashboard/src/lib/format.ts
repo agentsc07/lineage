@@ -21,20 +21,22 @@ export const trustColor: Record<TrustLevel, string> = {
 };
 export const statusLabel: Record<ArtifactStatus, string> = {
   submitted: "Submitted", quarantined: "Quarantined", admitted: "Admitted",
-  admitted_with_conditions: "Admitted, conditions", blocked: "Blocked", revoked: "Revoked", unregistered: "Not admitted",
+  admitted_with_conditions: "Admitted, conditions", blocked: "Blocked", revoked: "Revoked", rejected: "Rejected", unregistered: "Not admitted",
 };
 export const statusOutcome: Record<ArtifactStatus, Outcome | null> = {
   submitted: null, quarantined: "quarantine", admitted: "allow",
-  admitted_with_conditions: "allow_with_conditions", blocked: "block", revoked: "block", unregistered: null,
+  admitted_with_conditions: "allow_with_conditions", blocked: "block", revoked: "block", rejected: "block", unregistered: null,
 };
 /** What to call an artifact's state: revoked beats its old decision; a block that came from a monitor alert says so. */
-export type VerdictKey = Outcome | "revoked" | "block_monitor";
+export type VerdictKey = Outcome | "revoked" | "rejected" | "block_monitor";
 export const verdictKey = (status: ArtifactStatus, outcome: Outcome | null | undefined, id: string, monitorIds: Set<string>): VerdictKey | null => {
   if (status === "revoked") return "revoked";
+  if (status === "rejected") return "rejected";
   const o = outcome ?? statusOutcome[status];
   return o === "block" && monitorIds.has(id) ? "block_monitor" : o;
 };
-export const extraMeta: Record<"revoked" | "block_monitor", { label: string; cls: string; dot: string }> = {
+export const extraMeta: Record<"revoked" | "rejected" | "block_monitor", { label: string; cls: string; dot: string }> = {
+  rejected: { label: "Rejected", cls: "text-mute bg-raised border-line border-dashed", dot: "bg-faint" },
   revoked: { label: "Revoked", cls: "text-block bg-block/10 border-block/40 border-dashed", dot: "bg-block" },
   block_monitor: { label: "Blocked (monitor)", cls: "text-block bg-block/10 border-block/30", dot: "bg-block" },
 };
