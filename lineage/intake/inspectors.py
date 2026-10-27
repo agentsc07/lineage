@@ -632,6 +632,14 @@ def package_taint(ctx: IntakeContext) -> list[Finding]:
     return taint.scan(ctx.root, ctx.name, ctx.metadata) if ctx.root else []
 
 
+@register(("package", "tool"), "S3")
+def package_rules(ctx: IntakeContext) -> list[Finding]:
+    """S3. atexit effects, import hooks, run-time-built targets, git-hook writes, beacon threads."""
+    from lineage.inspect import package_rules as pr
+
+    return pr.scan(ctx.root) if ctx.root else []
+
+
 def _manifest(ctx: IntakeContext) -> Path | None:
     return ctx.root / "manifest.json" if ctx.root and (ctx.root / "manifest.json").exists() else None
 

@@ -13,7 +13,7 @@ from tests.server_helpers import NOW
 # network nor the GPU nor optional data, so an empty list cannot hide a check that did not run.
 QUIET_WHEN_CLEAN = {
     "publisher_policy", "signed_passport", "parent_chain", "licence", "release_age", "model_pickle", "model_config", "model_tokenizer",
-    "model_chat_template", "dataset_format", "dataset_pii", "dataset_stats", "package_capabilities", "package_taint", "tool_description",
+    "model_chat_template", "dataset_format", "dataset_pii", "dataset_stats", "package_capabilities", "package_taint", "package_rules", "tool_description",
     "tool_intent", "package_osv_clean",
 }
 FIXTURES = {"model": "tiny_model", "dataset": "tiny_dataset", "package": "toy_package", "tool": "toy_tool"}
