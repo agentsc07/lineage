@@ -16,6 +16,7 @@ import Approvals from "./pages/Approvals";
 import Bench from "./pages/Bench";
 import TrustedPublishers from "./pages/TrustedPublishers";
 import Federated from "./pages/Federated";
+import NotFound from "./pages/NotFound";
 import Monitor from "./pages/Monitor";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -35,6 +36,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="publishers" element={<TrustedPublishers />} />
           <Route path="federated" element={<Federated />} />
           <Route path="monitor" element={<Monitor />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -11,11 +11,23 @@ const originColour: Record<OriginStatus, string> = { matching: "text-allow", cha
 const classLabel = { hard_block: "hard block: no approval can change it", policy_dependent: "policy-dependent: an approval can accept it", scored: "adds risk points only" } as const;
 const classColour = { hard_block: "text-block border-block/40", policy_dependent: "text-quar border-quar/40", scored: "text-mute border-line" } as const;
 
+/** Text with any full `lp:` id shortened; clicking a short id copies the whole one. */
+export function WithIds({ text }: { text: string }) {
+  const [copied, setCopied] = useState<string | null>(null);
+  const parts = text.split(/(lp:[0-9a-f]{64})/);
+  return <>{parts.map((p, i) => /^lp:[0-9a-f]{64}$/.test(p)
+    ? <button key={i} type="button" className="mono underline decoration-dotted text-accent" title={`${p} (click to copy)`}
+        onClick={() => { navigator.clipboard?.writeText(p).then(() => { setCopied(p); setTimeout(() => setCopied(null), 1500); }).catch(() => {}); }}>{copied === p ? "copied" : `${p.slice(0, 11)}…${p.slice(-6)}`}</button>
+    : <span key={i}>{p}</span>)}</>;
+}
+
 export function StageDot({ status }: { status: StageStatus }) {
+  if (status === "not_run") return (  // a hollow circle with a slash: static, so it cannot be mistaken for a spinner
+    <svg className="w-3.5 h-3.5 shrink-0 text-quar" viewBox="0 0 14 14" aria-label={LABEL[status]} role="img"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.6" /><line x1="3.4" y1="10.6" x2="10.6" y2="3.4" stroke="currentColor" strokeWidth="1.6" /></svg>);
   const base = "w-3.5 h-3.5 rounded-full border-2 shrink-0";
   const cls: Record<StageStatus, string> = {
     pending: "border-line", running: "border-accent border-t-transparent animate-spin", done: "bg-allow border-allow", findings: "bg-quar border-quar",
-    not_run: "border-quar border-dashed", failed: "bg-block border-block", blocked: "bg-block border-block",
+    not_run: "", failed: "bg-block border-block", blocked: "bg-block border-block",
   };
   return <span className={`${base} ${cls[status]}`} aria-label={LABEL[status]} />;
 }
@@ -34,7 +46,7 @@ export function StageRow({ id, name, what, state, decision, view }: { id: string
         <span className="mono text-faint ml-auto">{id}</span>
       </div>
       {status === "pending" && <p className="text-xs text-faint mt-1 ml-[22px]">{what}</p>}
-      {state?.message && status !== "pending" && <p className="text-xs text-mute mt-1.5 ml-[22px]">{state.message}</p>}
+      {state?.message && status !== "pending" && <p className="text-xs text-mute mt-1.5 ml-[22px] break-words">{state.message ? <WithIds text={state.message} /> : null}</p>}
       {unrun.map((f) => {
         const cost = unrunCost(f, decision);
         return (
@@ -211,7 +223,7 @@ export function PassportPanel({ view, decision, env }: { view: ArtifactView; dec
         {tab === "checks" && (
           <ol className="space-y-3 text-sm" data-testid="five-checks">
             <li><span className="text-mute">1. Claimed publisher </span><Pill ok={null}>declared</Pill><p className="mt-1">{cp.present ? <>{cp.claimed_publisher || "none named"} <span className="text-faint">(from the creator passport; anyone can write this)</span></> : "No creator passport was supplied."}</p></li>
-            <li><span className="text-mute">2. Signature valid against key {cp.key_id ? <span className="mono">{cp.key_id}</span> : "X"} </span><Pill ok={cp.signature === "valid" ? true : cp.signature === "invalid" ? false : null}>{cp.present ? (cp.signature === "not_checked" ? "not checked" : cp.signature) : "no passport"}</Pill>
+            <li><span className="text-mute">2. Signature verifies against the signer's key{cp.key_id ? <> (key <span className="mono">{cp.key_id}</span>)</> : null} </span><Pill ok={cp.signature === "valid" ? true : cp.signature === "invalid" ? false : null}>{cp.present ? (cp.signature === "not_checked" ? "not checked" : cp.signature) : "no passport"}</Pill>
               {cp.signature === "not_checked" && <p className="mt-1 text-faint">The signing key is not one the policy trusts, so the signature was not used.</p>}</li>
             <li><span className="text-mute">3. Key trusted for this source </span><Pill ok={cp.key_status === "trusted_in_scope" ? true : cp.present ? false : null}>{cp.present ? (cp.key_status ?? "unknown") : "n/a"}</Pill>
               {cp.present && <p className="mt-1">{keyStatus[cp.key_status ?? "unknown"] ?? cp.key_status}{cp.signer ? ` · ${cp.signer}` : ""}{cp.claimed_source ? ` · claims ${cp.claimed_source}` : ""} <span className="text-faint">(trusted publishers and their scope are set in the policy, never by the upload)</span></p>}</li>
