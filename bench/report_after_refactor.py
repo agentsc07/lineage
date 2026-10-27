@@ -15,7 +15,7 @@ def wilson(k: int, n: int) -> tuple[float, float]:
     d = 1 + z * z / n
     c = p + z * z / (2 * n)
     m = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5)
-    return (c - m) / d, (c + m) / d
+    return max(0.0, (c - m) / d), min(1.0, (c + m) / d)
 
 
 def cell(k: int, n: int) -> str:
@@ -38,6 +38,10 @@ def main() -> None:
          f"Static-only generated {out['static']['generated'] if out['static'] else 'not run'}; reviewer-through-the-hosted-API generated "
          f"{out['hosted']['generated'] if out['hosted'] else 'NOT RUN (see below)'}. The frozen numbers are `bench/results_final.md` (never overwritten).", "",
          "## Read this first", "",
+         *([] if out["hosted"] else ["- **The reviewer-through-the-hosted-API run has not happened.** `NVIDIA_API_KEY` was not visible to the session that ran these benchmarks (it was exported "
+                                    "in an interactive shell started after the session). Run `NVIDIA_API_KEY=... uv run python -m bench.run_after_refactor --mode hosted && "
+                                    "uv run python -m bench.report_after_refactor` and the two right-hand columns, the latency/cost table and the 'what the reviewer changed' section fill in. "
+                                    "Reviewer: `LINEAGE_LLM_MODEL` defaults to `nvidia/nemotron-3.5-lightning-30b-a3b`."]),
          "- **After-refactor numbers were measured on sets the fixes were written with knowledge of** (the detection rules for atexit, import hooks, reversed names, git hooks, "
          "beacons, hidden tool calls, zero-width directives and tool-output scanning were written after the final-set misses were known). They are not unseen-data numbers; "
          "the frozen FINAL column is the only unseen measurement.",

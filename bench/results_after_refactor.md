@@ -1,21 +1,23 @@
 # After-refactor results
 
-Static-only generated 2026-10-27T12:01:14.295975+00:00; reviewer-through-the-hosted-API generated NOT RUN (see below). The frozen numbers are `bench/results_final.md` (never overwritten).
+Static-only generated 2026-10-27T12:22:50.928449+00:00; reviewer-through-the-hosted-API generated NOT RUN (see below). The frozen numbers are `bench/results_final.md` (never overwritten).
 
 ## Read this first
 
+- **The reviewer-through-the-hosted-API run has not happened.** `NVIDIA_API_KEY` was not visible to the session that ran these benchmarks (it was exported in an interactive shell started after the session). Run `NVIDIA_API_KEY=... uv run python -m bench.run_after_refactor --mode hosted && uv run python -m bench.report_after_refactor` and the two right-hand columns, the latency/cost table and the 'what the reviewer changed' section fill in. Reviewer: `LINEAGE_LLM_MODEL` defaults to `nvidia/nemotron-3.5-lightning-30b-a3b`.
 - **After-refactor numbers were measured on sets the fixes were written with knowledge of** (the detection rules for atexit, import hooks, reversed names, git hooks, beacons, hidden tool calls, zero-width directives and tool-output scanning were written after the final-set misses were known). They are not unseen-data numbers; the frozen FINAL column is the only unseen measurement.
 - **Only the in-repo synthetic sets were re-run.** The real-world sets (PyPI top 200 and 201-400, 100 HF templates) are not on this machine (their manifests point to `/home/ubuntu/...`), so their false-alarm rates are not re-measured; the frozen values stay in `results_final.md`. The taint hang was re-checked on the real `black`, `datasets` and `kubernetes` wheels instead (below).
 - **The frozen run's 'full system' used the Brev GPU worker** (reviewer `nvidia/NVIDIA-Nemotron-Nano-9B-v2` on vLLM plus weight/behaviour checks). The hosted API does not list that model, so this run's reviewer is `nvidia/nemotron-3.5-lightning-30b-a3b (not run)`, a different and larger model, in precise mode. **Reviewer numbers are not directly comparable with the frozen run**, and there is no GPU, so weight, behaviour and Notary checks are `CHECK.NOT_RUN.*` here.
+- **The LoRA weight-space items are not re-run** (they need the trained adapter bank and torch, neither on this machine): the in-sample column's frozen figures include 20 malicious and 20 benign LoRA items that the after-refactor columns leave out (the frozen LoRA AUROC, 0.81 / 0.78, is unchanged since no weight-space code changed). The `bind` items use passports re-issued in the new format (`bench/refresh_bind.py`); the tamper check is the old passport-hash one, kept for the benchmark.
 - Two policies per run: *as shipped* prices every unrun check (a model without the GPU checks carries risk in staging) and *unrun = info* prices them at 0 so the detectors can be compared with the frozen run, where those checks were simply absent. Flagged = `block` or risk above 30 (staging), as before.
 
 ## Detection on the synthetic sets
 
 | set | frozen full system (Brev worker) | frozen static only | after: static only, unrun = info | after: static only, as shipped | after: hosted reviewer, unrun = info | after: hosted reviewer, as shipped |
 |---|---|---|---|---|---|---|
-| **in-sample (bench/corpus)** | TPR 91% (62/68; 82-96%) / FPR 6% (4/63; 2-15%) | TPR 90% (61/68; 80-95%) / FPR 6% (4/63; 2-15%) | TPR 56% (38/68; 44-67%) / FPR 0% (0/63; -0-6%) | TPR 56% (38/68; 44-67%) / FPR 16% (10/63; 9-27%) | not run | not run |
-| **dev (bench/corpus_holdout)** | TPR 100% (40/40; 91-100%) / FPR 0% (0/40; -0-9%) | TPR 100% (40/40; 91-100%) / FPR 0% (0/40; -0-9%) | TPR 100% (40/40; 91-100%) / FPR 0% (0/40; -0-9%) | TPR 100% (40/40; 91-100%) / FPR 15% (6/40; 7-29%) | not run | not run |
-| **FINAL synthetic (bench/corpus_final)** | TPR 70% (28/40; 55-82%) / FPR 5% (2/40; 1-17%) | TPR 68% (27/40; 52-80%) / FPR 5% (2/40; 1-17%) | TPR 88% (35/40; 74-95%) / FPR 5% (2/40; 1-17%) | TPR 92% (37/40; 80-97%) / FPR 20% (8/40; 10-35%) | not run | not run |
+| **in-sample (bench/corpus)** | TPR 91% (62/68; 82-96%) / FPR 6% (4/63; 2-15%) | TPR 90% (61/68; 80-95%) / FPR 6% (4/63; 2-15%) | TPR 100% (48/48; 93-100%) / FPR 0% (0/43; 0-8%) | TPR 100% (48/48; 93-100%) / FPR 0% (0/43; 0-8%) | not run | not run |
+| **dev (bench/corpus_holdout)** | TPR 100% (40/40; 91-100%) / FPR 0% (0/40; 0-9%) | TPR 100% (40/40; 91-100%) / FPR 0% (0/40; 0-9%) | TPR 100% (40/40; 91-100%) / FPR 0% (0/40; 0-9%) | TPR 100% (40/40; 91-100%) / FPR 0% (0/40; 0-9%) | not run | not run |
+| **FINAL synthetic (bench/corpus_final)** | TPR 70% (28/40; 55-82%) / FPR 5% (2/40; 1-17%) | TPR 68% (27/40; 52-80%) / FPR 5% (2/40; 1-17%) | TPR 88% (35/40; 74-95%) / FPR 5% (2/40; 1-17%) | TPR 90% (36/40; 77-96%) / FPR 5% (2/40; 1-17%) | not run | not run |
 
 Frozen TPR/FPR cells are `TPR x (tp/n) / FPR y (fp/n)`; intervals are Wilson 95%. Benign pickles refused only by `allow_pickle: false` are policy blocks and excluded from FPR in every column.
 
@@ -23,9 +25,9 @@ Frozen TPR/FPR cells are `TPR x (tp/n) / FPR y (fp/n)`; intervals are Wilson 95%
 
 | set (unrun = info) | intake p50 / p95 | timeouts | errors | reviewer calls | reviewer wall s | reviewer tokens |
 |---|---|---|---|---|---|---|
-| in-sample (bench/corpus) | 3 / 135 ms | 0 | 55 | 0 | 0 | 0 |
-| dev (bench/corpus_holdout) | 7 / 162 ms | 0 | 0 | 0 | 0 | 0 |
-| FINAL synthetic (bench/corpus_final) | 7 / 149 ms | 0 | 0 | 0 | 0 | 0 |
+| in-sample (bench/corpus) | 6 / 141 ms | 0 | 0 | 0 | 0 | 0 |
+| dev (bench/corpus_holdout) | 6 / 140 ms | 0 | 0 | 0 | 0 | 0 |
+| FINAL synthetic (bench/corpus_final) | 6 / 143 ms | 0 | 0 | 0 | 0 | 0 |
 
 ## Reviewer through the hosted API
 

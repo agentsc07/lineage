@@ -138,3 +138,20 @@ uv run python -m bench.run_validation /tmp/lineage_rw out.json   # run twice (be
 python3 bench/report_dev.py before.json after.json               # writes bench/results_dev.md
 ```
 Package intake compares against the previous release: `previous_path` in the hub record, or (online, wheel with a `.dist-info`) the newest earlier wheel from PyPI. `LINEAGE_OFFLINE=1` disables the fetch. S5 sends the code behind every signal to the GPU worker's `/review/code`.
+
+
+## Demo v2, benchmarks and the refactor's commands
+```bash
+examples/run_dashboard_demo.sh        # fake hub + auth-on server (:8000) + the ten-step story + dashboard (:5173); tokens in examples/demo_tokens.json
+PAUSE=0 examples/demo_scenario.sh     # story only (own stack on :8765, no GPU, no key)
+LINEAGE_DEMO_REAL_HUB=1 PAUSE=0 examples/demo_scenario.sh   # step 2/3 use a real public model from huggingface.co (internet needed)
+LINEAGE_TEST_REAL_HUB=1 uv run pytest tests/test_real_hub.py  # the one test against the real hub
+uv run python -m bench.run_after_refactor --mode static                 # no key; writes bench/after_refactor_static.json
+NVIDIA_API_KEY=... uv run python -m bench.run_after_refactor --mode hosted   # reviewer through the hosted API (LINEAGE_LLM_MODEL, default nvidia/nemotron-3.5-lightning-30b-a3b)
+uv run python -m bench.report_after_refactor                            # bench/results_after_refactor.md (next to the frozen results_final.md)
+uv run python -m bench.data_bench && uv run python -m bench.fl_bench    # bench/results_data.md, bench/results_fl.md
+```
+Environment: `LINEAGE_HUB_URL` (hub for fetched facts), `LINEAGE_HF_URL` (Hugging Face host for `hf:` sources), `LINEAGE_STORE`, `LINEAGE_UPLOADS`, `LINEAGE_REQUIRE_AUTH`,
+`LINEAGE_MONITOR_MINUTES`, `LINEAGE_LLM_API_KEY`/`NVIDIA_API_KEY`, `LINEAGE_LLM_MODEL`, `LINEAGE_REVIEW_MODE` (precise|broad), `LINEAGE_EMBED_MODEL`, `LINEAGE_TAINT_BUDGET_S`.
+Common problems: a stale `lineage.db` from before the refactor does not parse (re-seed; the demo moves it aside); `ModuleNotFoundError: lineage` from a console script on macOS means the venv's
+hidden `.pth` file is skipped: `export PYTHONPATH=$PWD`.
