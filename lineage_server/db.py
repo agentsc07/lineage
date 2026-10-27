@@ -139,6 +139,22 @@ CREATE TABLE IF NOT EXISTS users (
     env TEXT NOT NULL DEFAULT 'prod' -- the environment this token's package index serves
 );
 
+CREATE TABLE IF NOT EXISTS fl_clients (
+    client_id TEXT PRIMARY KEY,
+    trust REAL NOT NULL,
+    flagged_rounds INTEGER NOT NULL DEFAULT 0,
+    clean_rounds INTEGER NOT NULL DEFAULT 0,
+    quarantined INTEGER NOT NULL DEFAULT 0,
+    reasons TEXT NOT NULL DEFAULT '[]'
+);
+
+CREATE TABLE IF NOT EXISTS fl_rounds (
+    round_id TEXT PRIMARY KEY,
+    global_model_id TEXT NOT NULL,
+    body TEXT NOT NULL,              -- RoundOut JSON
+    created_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS monitor_ticks (
     seq INTEGER PRIMARY KEY AUTOINCREMENT,
     n_alerts INTEGER NOT NULL,
