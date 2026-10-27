@@ -120,6 +120,28 @@ CREATE TABLE IF NOT EXISTS artifact_meta (
     signer_key TEXT                  -- key id of the in-scope creator passport, if any (monitor re-decides when it is revoked)
 );
 
+CREATE TABLE IF NOT EXISTS artifact_identity (
+    artifact_id TEXT PRIMARY KEY,
+    body TEXT NOT NULL               -- JSON: files (path, size, sha256, origin comparison), facts with provenance, claimed origin
+);
+
+CREATE TABLE IF NOT EXISTS jobs (
+    job_id TEXT PRIMARY KEY,
+    requester TEXT,
+    artifact_type TEXT,
+    environment TEXT,
+    label TEXT,                      -- what was asked for (upload filename or hub source)
+    created_at TEXT NOT NULL,
+    done INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS job_events (
+    seq INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_id TEXT NOT NULL,
+    body TEXT NOT NULL               -- StageEvent JSON
+);
+CREATE INDEX IF NOT EXISTS job_events_job ON job_events(job_id, seq);
+
 CREATE TABLE IF NOT EXISTS ghosts (
     id TEXT PRIMARY KEY,             -- the referenced id: `ghost:<type>:<name>@<version>` or an unregistered `lp:...`
     artifact_type TEXT NOT NULL,

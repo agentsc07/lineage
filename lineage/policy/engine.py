@@ -310,3 +310,14 @@ def _ago(delta: timedelta) -> str:
         return f"{minutes} min"
     hours = minutes // 60
     return f"{hours} h" if hours < 48 else f"{hours // 24} days"
+
+
+def classify_finding(finding: Finding, passport: PassportBody, policy: PolicyPack, environment: str) -> str:
+    """What this finding can lead to, for the dashboard: `hard_block` (blocks whatever the score and cannot be approved), `policy_dependent`
+    (blocks or quarantines because of the organisation's rules; an approval can accept it), or `scored` (only adds risk points)."""
+    if finding.severity != "info" or finding.id.startswith("CHECK.NOT_RUN.ACQUIRE"):
+        if hard_blocks(passport, [finding], policy, environment):
+            return "hard_block"
+    if finding.id.startswith(("PROV.COOLDOWN", "DATA.PII", "POLICY.", "PKG.OSV.")) or finding.id.startswith(IDENTITY_IDS):
+        return "policy_dependent"
+    return "scored"

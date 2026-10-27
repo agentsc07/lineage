@@ -97,6 +97,8 @@ def record(
                 " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 (signed.passport_id, meta.get("requester"), meta.get("source"), meta.get("claimed_origin"),
                  json.dumps(meta.get("claims")), json.dumps(meta.get("distribution")), meta.get("source_id"), meta.get("signer_key")))
+        if meta and meta.get("identity"):
+            conn.execute("INSERT OR REPLACE INTO artifact_identity (artifact_id, body) VALUES (?, ?)", (signed.passport_id, json.dumps(meta["identity"])))
         link_refs(conn, signed.passport_id, signed.passport.predicate.parents, (meta or {}).get("graph_refs", []))
         if tool_pin:
             conn.execute(

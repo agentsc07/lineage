@@ -24,6 +24,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import time
 from collections.abc import Callable, Iterator
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -353,10 +354,17 @@ def run_intake(
                         registry=registry or NullRegistry(), now=clock(), gpu_url=gpu_url)
     ctx.store = store
 
+    started: dict[str, float] = {}
+
     def event(stage: str, status: StageStatus, findings: list[Finding] | None = None, message: str = "",
               decision: Decision | None = None) -> StageEvent:
+        elapsed = None
+        if status == "started":
+            started[stage] = time.monotonic()
+        elif stage in started:
+            elapsed = int((time.monotonic() - started[stage]) * 1000)
         return StageEvent(job_id=job_id, stage=stage, name=dict(STAGES)[stage], status=status,  # type: ignore[arg-type]
-                          findings=findings or [], message=message, decision=decision, ts=datetime.now(timezone.utc))
+                          findings=findings or [], message=message, decision=decision, elapsed_ms=elapsed, ts=datetime.now(timezone.utc))
 
     steps: dict[str, Callable[[IntakeContext], tuple[StageStatus, list[Finding], str]]] = {
         "S2": _stage_scanners("S2"), "S3": _stage_scanners("S3"), "S4": _stage_scanners("S4"), "S5": _stage_scanners("S5"),
@@ -393,12 +401,29 @@ def run_intake(
                             meta={"requester": uploader, "source": source or ref, "claimed_origin": ctx.claimed_origin,
                                   "claims": claims, "distribution": ctx.distribution, "source_id": ctx.source_id,
                                   "signer_key": ctx.claimed.key_id if ctx.claimed and ctx.signature_in_scope else None,
-                                  "graph_refs": _graph_refs(ctx)})
+                                  "graph_refs": _graph_refs(ctx), "identity": _identity(ctx, passport.predicate.contents.merkle_root)})
         if ctx.store is not None and ctx.path is not None:
             ctx.store.write_manifest(signed.passport_id, ctx.files, ctx.distribution)
         yield event("S7", "completed", [], f"{signed.passport_id}: {STATUS_WORDS[decision.outcome]}")
     except Exception as e:  # noqa: BLE001
         yield event("S7", "failed", [], f"could not record result: {type(e).__name__}: {e}")
+
+
+def _identity(ctx: IntakeContext, merkle_root: str) -> dict:
+    """What the identity panel shows: every file with size and SHA-256 and its comparison with the claimed origin, the facts with their
+    provenance class, and the claimed origin. Persisted with the artifact; nothing here is made up in the browser."""
+    base = ctx.root if ctx.root is not None and ctx.root.is_dir() else (ctx.root.parent if ctx.root is not None else None)
+    files = []
+    for rel, sha in sorted(ctx.files.items()):
+        try:
+            size = (base / rel).stat().st_size if base is not None else None
+        except OSError:
+            size = None
+        files.append({"path": rel, "sha256": sha, "size": size, "origin": ctx.origin_files.get(rel, "unchecked")})
+    files += [{"path": rel, "sha256": None, "size": None, "origin": "missing"} for rel, st in sorted(ctx.origin_files.items()) if st == "missing" and rel not in ctx.files]
+    facts = [{"key": f.key, "value": f.value, "provenance": f.provenance, "source": f.source} for fs in ctx.facts.values() for f in fs]
+    return {"merkle_root": merkle_root, "files": files, "facts": facts, "claimed_origin": ctx.claimed_origin or ctx.source.repo,
+            "creator_passport": ctx.passport_report or {"present": False}, "origin_checked": bool(ctx.origin_files) and any(v != "unchecked" for v in ctx.origin_files.values())}
 
 
 def _graph_refs(ctx: IntakeContext) -> list[dict]:

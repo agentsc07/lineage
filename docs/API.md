@@ -32,6 +32,10 @@ All requests except `/healthz` need `Authorization: Bearer <token>` (roles: requ
 | GET | `/log/proof/{id}` | – | `InclusionProof {index, leaf_hash, path[], root, size}` | Inclusion proof for a log ref |
 | POST | `/monitor/tick` | – | `MonitorTick {checked, alerts[], ts}` | Re-check advisories; alerts carry the blast radius |
 | GET | `/monitor/latest` | – | `MonitorTick \| null` | Latest tick that raised alerts (else latest tick; null before any tick) |
+| GET | `/artifacts/{id}/view` | – | `ArtifactView {merkle_root, claimed_origin, files[{path,size,sha256,origin: matching\|changed\|missing\|extra\|unchecked}], facts[{key,value,provenance,source}], creator_passport{present,claimed_publisher,key_id,signature,key_status,bytes_match}, finding_classes{id: hard_block\|policy_dependent\|scored}, decision, requester, hard_block, next_action, pull_command, pull_command_first_use}` | What the intake page shows, from what intake persisted |
+| GET | `/jobs/{job_id}` | – | `{job_id, requester, artifact_type, environment, label, created_at, done, artifact_id}` | A reloaded page: what the job was (events replay from SQLite at `/events/{job_id}`) |
+| GET | `/limits` | – | `{max_upload_mb, max_fetch_mb, max_archive_files, accepted[]}` | The server's real caps |
+| GET | `/attestations/{id}/view?env=` | – | `{attestation: SignedAttestation, signature_ok, registry_key_id, verified_by}` | The attestation with the registry's own check of its signature (clients verify with the key they pinned) |
 | GET | `/healthz` | – | `{"status": "ok"}` | Liveness |
 
 Status: the skeleton returns mock data (`lineage_server/mock.py`) that validates against these models. Track B replaces it.
@@ -40,7 +44,7 @@ Status: the skeleton returns mock data (`lineage_server/mock.py`) that validates
 
 - `Finding {id, title, severity, category, stage, evidence[], score 0–40, source, grounded}`
 - `Decision {artifact_id, environment, outcome, reasons[], conditions[], risk_score, trust_level, findings[], policy_version, decided_at, approver?}`; `outcome` is `allow | allow_with_conditions | quarantine | block`
-- `StageEvent {job_id, stage S0–S7, name, status started|completed|skipped|failed, findings[], message, decision?, ts}`
+- `StageEvent {job_id, stage S0–S7, name, status started|completed|skipped|failed, findings[], message, decision?, elapsed_ms?, ts}` (`elapsed_ms`: server-measured, on the finishing event of a stage)
 - `Artifact.status`: `submitted | quarantined | admitted | admitted_with_conditions | blocked | revoked`
 - `passport_id = "lp:" + sha256(canonical_json(passport))`; canonical JSON is sorted keys, no whitespace, UTF-8, datetimes as UTC ISO-8601. The signature is not part of the id.
 

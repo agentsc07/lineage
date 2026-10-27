@@ -24,7 +24,7 @@ from lineage.schemas.policy import PolicyPack
 from lineage.store import Store
 from lineage_server import auth, db, policy_store, scheduler, trust
 from lineage_server.jobs import JobStore
-from lineage_server.routes import artifacts, attestations, decisions, events, graph, intake, passports, federated, hf_endpoint, policy, simple, store, trusted_publishers, whoami
+from lineage_server.routes import artifacts, attestations, decisions, events, graph, intake, passports, federated, hf_endpoint, policy, simple, store, trusted_publishers, views, whoami
 
 
 def create_app(
@@ -47,7 +47,7 @@ def create_app(
     db.init_schema(conn)
     app.state.db_path = db_path
     app.state.signing_key = trust.load_or_create_key(db_path.with_suffix(db_path.suffix + ".key"))
-    app.state.jobs = JobStore()
+    app.state.jobs = JobStore(db_path=db_path)
     app.state.require_auth = (os.environ.get("LINEAGE_REQUIRE_AUTH", "1") != "0") if require_auth is None else require_auth
     base = db_path.parent
     app.state.store = Store(os.environ.get("LINEAGE_STORE") or base / "lineage-store")
@@ -64,7 +64,7 @@ def create_app(
     conn.commit()
     conn.close()
 
-    for module in (intake, events, artifacts, passports, graph, decisions, policy, trusted_publishers, attestations, store, simple, whoami, federated, hf_endpoint):
+    for module in (intake, events, artifacts, passports, graph, decisions, policy, trusted_publishers, attestations, store, simple, whoami, federated, hf_endpoint, views):
         app.include_router(module.router, dependencies=[Depends(auth.current_user)])
 
     scheduler.start(app)  # LINEAGE_MONITOR_MINUTES; the thread is a daemon and ends with the process

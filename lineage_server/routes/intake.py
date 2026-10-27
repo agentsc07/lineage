@@ -61,7 +61,8 @@ def resolve_upload(root: Path, upload_id: str, artifact_type: str) -> Path:
         raise HTTPException(404, f"unknown upload {upload_id}")
     f = files[0]
     if artifact_type != "package" and (f.suffix in (".zip", ".tgz") or f.name.endswith((".tar.gz", ".tar"))):
-        out = d / "content"
+        stem = f.name.removesuffix(".tar.gz").removesuffix(".tgz").removesuffix(".tar").removesuffix(".zip") or "content"
+        out = d / stem  # the artifact is named after the archive ("tiny.zip" -> "tiny"), not after an internal folder
         if not out.exists():
             try:
                 fetch.safe_extract(f, out)
@@ -110,5 +111,6 @@ def launch(req: IntakeRequest, request: Request, active: tuple[PolicyPack, bool]
         finally:
             conn.close()
 
-    job = state.jobs.start(run)
+    job = state.jobs.start(run, meta={"requester": user.name, "artifact_type": req.artifact_type, "environment": req.environment,
+                                      "label": req.source or req.ref})
     return IntakeJob(job_id=job.job_id, events_url=f"/events/{job.job_id}")

@@ -65,6 +65,7 @@ class StageEvent(BaseModel):
     findings: list[Finding] = Field(default_factory=list)
     message: str = ""
     decision: Decision | None = None  # only on the final S6 event
+    elapsed_ms: int | None = None  # on a finishing event: how long the stage ran (measured by the server, not by the browser)
     ts: datetime
 
 

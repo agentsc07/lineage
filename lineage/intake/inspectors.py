@@ -70,6 +70,8 @@ class IntakeContext:
     gpu_down: bool = False
     previous: tuple[Path, str] | None = None  # (folder, version) of the release before this one, for diff-aware review
     signature_in_scope: bool = False  # S2b: a trusted key, in scope, hashes match
+    passport_report: dict | None = None  # what the creator-passport check found, for the five-way trust panel
+    origin_files: dict[str, str] = field(default_factory=dict)  # path -> matching | changed | missing | extra | unchecked (what the origin check saw)
     origin_verified: bool = False  # every file matches what the hub published, or Lineage fetched the bytes itself
     graph_refs: list[dict] = field(default_factory=list)  # things this artifact references: become edges or ghost nodes (P6)
     store: object | None = None  # lineage.store.Store: where every inspected file is kept
@@ -201,6 +203,7 @@ def origin_check(ctx: IntakeContext) -> list[Finding]:
         out.append(make_finding("PROV.ORIGIN.HINT", f"Suggested origin: {value} (from {hint}); not used for trust", "info", "provenance", "S2",
                                 [Evidence(kind="field", ref=hint, detail=value)]))
     if ctx.acquired is not None:
+        ctx.origin_files = {rel: "matching" for rel in ctx.files}  # downloaded from the hub; a differing hash is INTEGRITY.FETCH_MISMATCH
         out.append(make_finding("PROV.ORIGIN.VERIFIED", f"Fetched by Lineage from {ctx.claimed_origin}", "info", "provenance", "S2",
                                 [Evidence(kind="field", ref="origin", detail=str(ctx.claimed_origin))]))
         return out
@@ -208,17 +211,20 @@ def origin_check(ctx: IntakeContext) -> list[Finding]:
     if origin is None:
         if ctx.origin_verified:  # a hub stand-in vouched for the local bytes (tests, bench, demo)
             return out + [make_finding("PROV.ORIGIN.VERIFIED", "Vouched for by the configured hub record", "info", "provenance", "S2")]
+        ctx.origin_files = {rel: "unchecked" for rel in ctx.files}
         return out + [make_finding("PROV.ORIGIN.UNCLAIMED", "No origin was claimed, so nothing can be compared with a hub; trust stays unknown",
                                    "medium", "provenance", "S2")]
     hub = ctx.hub
     pub = hub.published_files(origin) if hub is not None else None
     if pub is None:
+        ctx.origin_files = {rel: "unchecked" for rel in ctx.files}
         return out + [make_finding("PROV.ORIGIN.UNVERIFIABLE", f"The claimed origin {origin} could not be checked (hub unreachable or repo unknown)",
                                    "high", "provenance", "S2", [Evidence(kind="field", ref="claimed_origin", detail=origin)])]
     if origin.startswith("pypi:"):
         dist = ctx.distribution or {}
         want = (pub.get(dist.get("filename", "")) or {}).get("sha256")
         diffs = [] if want and want == dist.get("sha256") else [f"{dist.get('filename', 'distribution')}: " + ("not published" if not want else "sha256 differs")]
+        ctx.origin_files = {rel: ("matching" if not diffs else "changed") for rel in ctx.files}
     else:
         base = ctx.root
         diffs = []
@@ -235,6 +241,9 @@ def origin_check(ctx: IntakeContext) -> list[Finding]:
             else:
                 diffs.append(f"{rel}: the hub published no hash to compare with")
         diffs += [f"{rel}: published but missing from the upload" for rel in sorted(pub) if rel not in ctx.files and _wanted(rel, kind)]
+        bad = {d.split(":")[0]: ("extra" if "not in the published repo" in d else "missing" if "missing from the upload" in d else "changed") for d in diffs}
+        ctx.origin_files = {rel: bad.get(rel, "matching") for rel in ctx.files}
+        ctx.origin_files.update({rel: "missing" for rel, st in bad.items() if st == "missing"})
     if diffs:
         return out + [make_finding("PROV.ORIGIN.MODIFIED", f"{len(diffs)} file(s) differ from what {origin} published: " + "; ".join(diffs[:3]),
                                    "critical", "provenance", "S2", [Evidence(kind="file_line", ref=d.split(":")[0], detail=d) for d in diffs[:20]])]
@@ -344,22 +353,29 @@ def signed_passport(ctx: IntakeContext) -> list[Finding]:
     body = sp.passport.predicate
     pub, scope, who = resolve_signer(ctx, sp.key_id)
     ok = True
+    rep = ctx.passport_report = {"present": True, "claimed_publisher": body.source.repo or body.issued_by.name, "claimed_source": source_id_of(body.source.hub, body.source.repo),
+                                 "key_id": sp.key_id, "signature": "not_checked", "key_status": "unknown_key", "signer": None, "bytes_match": None}
     if sp.key_id in ctx.policy.revoked_keys:
+        rep["key_status"] = "revoked"
         out.append(make_finding("PROV.SIGNATURE.REVOKED_KEY", f"Passport is signed with revoked key {sp.key_id}; treated as unsigned",
                                 "high", "provenance", "S2", [Evidence(kind="field", ref="key_id", detail=sp.key_id)]))
         ok = False
     elif pub is None:
+        rep["key_status"] = "not_a_trusted_publisher"
         out.append(make_finding("PROV.SIGNATURE.UNTRUSTED_KEY", f"Passport is signed with key {sp.key_id}, which is not a trusted publisher; treated as unsigned",
                                 "medium", "provenance", "S2", [Evidence(kind="field", ref="key_id", detail=sp.key_id)]))
         ok = False
     elif not _signature_ok(sp, pub):
+        rep.update(signature="invalid", key_status="trusted_key", signer=who)
         out.append(make_finding("PROV.SIGNATURE.INVALID", "Passport signature does not verify", "critical", "provenance", "S2",
                                 [Evidence(kind="field", ref="signature", detail=f"key {sp.key_id}")]))
         ok = False
     else:
+        rep.update(signature="valid", key_status="trusted_in_scope", signer=who)
         claimed_id = source_id_of(body.source.hub, body.source.repo)
         wanted = [x for x in (claimed_id, ctx.source_id) if x]
         if scope is not None and wanted and not in_scope(scope, wanted):
+            rep["key_status"] = "outside_scope"
             out.append(make_finding(
                 "PROV.SIGNATURE.SCOPE_MISMATCH",
                 f"Trusted key of {who} signs outside its scope: {', '.join(wanted)} is not covered by {', '.join(scope) or 'no scope'}; treated as unsigned",
@@ -376,6 +392,7 @@ def signed_passport(ctx: IntakeContext) -> list[Finding]:
                                     "critical", "integrity", "S2",
                                     [Evidence(kind="file_line", ref=rel, detail=f"expected {want[:12]}, got {(got or 'none')[:12]}")]))
         ok = ok and not bad
+        rep["bytes_match"] = not bad
         extra = sorted(set(ctx.files) - set(body.contents.files))
         if extra:
             out.append(make_finding("INTEGRITY.UNPINNED_FILE", f"{len(extra)} file(s) are not covered by the passport", "medium",
