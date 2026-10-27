@@ -12,6 +12,7 @@ import os
 import re
 import tarfile
 import zipfile
+import zlib
 from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import quote
@@ -60,49 +61,103 @@ def max_upload_bytes() -> int:
     return int(os.environ.get("LINEAGE_MAX_UPLOAD_MB", "2048")) * 1024 * 1024
 
 
+MAX_ARCHIVE_FILES = int(os.environ.get("LINEAGE_MAX_ARCHIVE_FILES", "10000"))
+MAX_ARCHIVE_DEPTH = 32
+MAX_RATIO = 200  # actual bytes written per compressed byte; checked once a member is over RATIO_FLOOR so tiny repetitive files never trip it
+RATIO_FLOOR = 1024 * 1024
+_CHUNK = 1024 * 1024
+
+
+class _Budget:
+    """What an archive may cost, counted from the bytes actually written (the sizes in a header are the attacker's, never trusted)."""
+
+    def __init__(self, limit: int):
+        self.limit, self.total, self.files = limit, 0, 0
+
+    def file(self, name: str) -> None:
+        self.files += 1
+        if self.files > MAX_ARCHIVE_FILES:
+            raise AcquireError(f"archive has more than {MAX_ARCHIVE_FILES} entries")
+        if len(Path(name).parts) > MAX_ARCHIVE_DEPTH:
+            raise AcquireError(f"archive path is nested deeper than {MAX_ARCHIVE_DEPTH} directories: {name[:80]}")
+
+    def copy(self, src, target: Path, compressed: int | None) -> None:
+        """Stream `src` into `target` in chunks, aborting as soon as the total cap or the compression ratio is exceeded."""
+        written = 0
+        with target.open("wb") as out:
+            while chunk := src.read(_CHUNK):
+                written += len(chunk)
+                self.total += len(chunk)
+                if self.total > self.limit:
+                    raise AcquireError("archive exceeds the size cap")
+                if compressed is not None and written > RATIO_FLOOR and written > MAX_RATIO * max(compressed, 1):
+                    raise AcquireError(f"{target.name}: compression ratio above {MAX_RATIO}:1 (a decompression bomb)")
+                out.write(chunk)
+
+
 def safe_extract(archive: Path, dest: Path, limit: int | None = None) -> None:
-    """Extract a .zip / .tar.gz refusing absolute paths, `..`, links and anything over `limit` bytes in total."""
+    """Extract a .zip / .tar.gz of untrusted content. Refused: absolute paths, `..`, a path that resolves outside `dest`, links and devices
+    (tar) and Unix symlinks or special files (zip), more than 10,000 entries, paths nested deeper than 32 directories, anything past `limit`
+    bytes in total (counted as written, not from headers), a member that inflates more than 200:1. Archives inside the archive are plain
+    files: they are written, never opened. Nothing extracted is ever imported, run, unpickled or installed by Lineage."""
     limit = limit if limit is not None else max_upload_bytes()
     dest.mkdir(parents=True, exist_ok=True)
     root = dest.resolve()
-    total = 0
+    budget = _Budget(limit)
 
     def check(name: str) -> Path:
         target = (dest / name).resolve()
-        if name.startswith(("/", "\\")) or ".." in Path(name).parts or not str(target).startswith(str(root)):
+        if name.startswith(("/", "\\")) or ".." in Path(name).parts or not target.is_relative_to(root):
             raise AcquireError(f"unsafe path in archive: {name}")
         return target
 
     if zipfile.is_zipfile(archive):
-        with zipfile.ZipFile(archive) as z:
-            for info in z.infolist():
-                total += info.file_size
-                if total > limit:
-                    raise AcquireError("archive exceeds the size cap")
-                target = check(info.filename)
-                if info.is_dir():
-                    target.mkdir(parents=True, exist_ok=True)
-                    continue
-                target.parent.mkdir(parents=True, exist_ok=True)
-                with z.open(info) as src, target.open("wb") as out:
-                    out.write(src.read())
+        try:
+            _extract_zip(archive, budget, check)
+        except (zipfile.BadZipFile, zlib.error, EOFError, NotImplementedError) as e:  # a header that lies about its sizes fails the CRC / length check
+            raise AcquireError(f"corrupt or lying zip archive: {e}") from e
     elif tarfile.is_tarfile(archive):
-        with tarfile.open(archive) as t:
-            for m in t.getmembers():
-                if m.issym() or m.islnk() or m.isdev():
-                    raise AcquireError(f"link or device in archive: {m.name}")
-                total += m.size
-                if total > limit:
-                    raise AcquireError("archive exceeds the size cap")
-                target = check(m.name)
-                if m.isdir():
-                    target.mkdir(parents=True, exist_ok=True)
-                elif m.isfile():
-                    target.parent.mkdir(parents=True, exist_ok=True)
-                    f = t.extractfile(m)
-                    target.write_bytes(f.read() if f else b"")
+        _extract_tar(archive, budget, check)
     else:
         raise AcquireError(f"{archive.name} is not a zip or tar archive")
+
+
+def _extract_zip(archive: Path, budget: _Budget, check) -> None:
+    with zipfile.ZipFile(archive) as z:
+        for info in z.infolist():
+            kind = (info.external_attr >> 16) & 0o170000
+            if kind not in (0, 0o100000, 0o040000):  # not a regular file or directory: symlink, fifo, device, socket
+                raise AcquireError(f"link or special file in archive: {info.filename}")
+            budget.file(info.filename)
+            target = check(info.filename)
+            if info.is_dir():
+                target.mkdir(parents=True, exist_ok=True)
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with z.open(info) as src:
+                budget.copy(src, target, info.compress_size)
+
+
+def _extract_tar(archive: Path, budget: _Budget, check) -> None:
+    archive_size = max(archive.stat().st_size, 1)
+    with tarfile.open(archive) as t:
+        for m in t.getmembers():
+            if m.issym() or m.islnk() or m.isdev() or m.isfifo():
+                raise AcquireError(f"link or device in archive: {m.name}")
+            budget.file(m.name)
+            target = check(m.name)
+            if m.isdir():
+                target.mkdir(parents=True, exist_ok=True)
+            elif m.isfile():
+                target.parent.mkdir(parents=True, exist_ok=True)
+                f = t.extractfile(m)
+                if f is None:
+                    target.write_bytes(b"")
+                else:
+                    with f:
+                        budget.copy(f, target, None)
+                if budget.total > RATIO_FLOOR and budget.total > MAX_RATIO * archive_size:
+                    raise AcquireError(f"archive inflates more than {MAX_RATIO}:1 (a decompression bomb)")
 
 
 def _git_oid(data: bytes) -> str:

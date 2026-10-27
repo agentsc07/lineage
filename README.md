@@ -67,6 +67,17 @@ PAUSE=0 examples/demo_scenario.sh     # the story only, no dashboard
 ```
 No GPU and no API key are needed. Optional: `NVIDIA_API_KEY` turns on the hosted reviewer (no Brev), `LINEAGE_GPU_URL` the GPU worker.
 
+## Uploads are never executed to inspect them
+
+Inspection reads bytes. It never imports, runs, unpickles or installs an uploaded artifact: archives are extracted with streaming caps
+(total bytes written, 200:1 compression ratio, 10,000 entries, depth 32, no links, nested archives stay plain files), the pickle scanner
+only disassembles opcodes, and package code is parsed (AST), not imported. `tests/test_uploads_never_executed.py` fails if production code
+gains a call to an execution primitive that has not been reviewed. Two things to know: `lineage/inspect/package_previous.py` runs
+`pip download --no-deps --only-binary=:all:` for the *public previous release* (a wheel is never built or imported), and the optional GPU
+worker's behaviour check loads the candidate model's weights and runs inference on probe prompts (`trust_remote_code` is never set). That
+one deep stage is the only place uploaded weights are loaded; it is isolated in the worker process. **Dynamic analysis of code (running a
+package or tool to watch it) is out of scope until a separately isolated sandbox exists.**
+
 ## Limits (read these)
 
 - **A weight-only backdoor in a model with no known base is an open problem.** Such a model cannot reach prod without a human, and the unrun weight check carries an explicit price.
