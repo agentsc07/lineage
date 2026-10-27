@@ -210,10 +210,17 @@ class _Scope:
                 return
         else:
             return
-        moved = {Taint(t.kind, t.src_line, t.path + (line,), t.desc) for t in taint}
+        self.budget.tick()
         if isinstance(target, (ast.Name, ast.Attribute)) and not isinstance(target.ctx, ast.Store):
             return
-        self.env[key] = (self.env.get(key, set()) | moved) if moved else self.env.get(key, set())
+        if not taint:
+            return
+        # One taint per (kind, source line) per variable, with a short path: `x = f(x)` repeated a thousand times used to build a thousand
+        # taints with ever-longer paths (quadratic work; the cause of the hang on black and datasets).
+        merged = {(t.kind, t.src_line): t for t in self.env.get(key, set())}
+        for t in taint:
+            merged[(t.kind, t.src_line)] = Taint(t.kind, t.src_line, (t.path + (line,))[-6:], t.desc)
+        self.env[key] = set(list(merged.values())[:16])
 
     def run(self, body: list[ast.stmt]) -> None:
         for stmt in body:

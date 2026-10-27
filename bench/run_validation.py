@@ -46,7 +46,7 @@ def run_realworld(rw: Path, policy) -> list[dict]:
         t0 = time.perf_counter()
         try:
             from bench.meta_hub import MetaFileHub
-            d, _ = run_to_decision(it["kind"], it["path"], "dev", policy, "bench", gpu_url=NO_WORKER, now=NOW, hub=MetaFileHub())
+            d, _ = run_to_decision(it["kind"], it["path"], "dev", policy, "bench", gpu_url=NO_WORKER, now=NOW, hub=MetaFileHub(it["path"]))
             flagged = d.outcome == "block" or d.risk_score > policy.thresholds.allow
             fs = [{"id": f.id, "severity": f.severity, "title": f.title, "score": f.score, "source": f.source,
                    "evidence": [f"{e.ref}" + (f" ({e.detail})" if e.detail else "") for e in f.evidence[:3]]}

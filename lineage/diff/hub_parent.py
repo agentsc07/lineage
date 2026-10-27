@@ -58,7 +58,7 @@ class _Fetcher:
     def get(self, name: str, byte_range: tuple[int, int] | None = None) -> bytes:
         h = {"Range": f"bytes={byte_range[0]}-{byte_range[1]}"} if byte_range else {}
         try:
-            r = self.client.get(f"{self.url}/{quote(name)}", headers=h, timeout=120.0)
+            r = self.client.get(f"{self.url}/{quote(name)}", headers=h, timeout=120.0, follow_redirects=True)
         except httpx.HTTPError as e:
             raise HubParentError(f"hub unreachable: {e}") from e
         if r.status_code not in (200, 206):

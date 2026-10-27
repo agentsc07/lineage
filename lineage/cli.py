@@ -259,8 +259,12 @@ def run(
     parent: Annotated[list[str] | None, typer.Option(help="Extra parent passport id (repeatable)")] = None,
     name: Annotated[str | None, typer.Option()] = None,
     version: Annotated[str, typer.Option()] = "0.0.0",
+    fact: Annotated[list[str] | None, typer.Option(help="A fact you assert, KEY=VALUE (licence, base_model, ...); repeatable. Becomes `signed` only if a verifier trusts your key.")] = None,
 ) -> None:
-    """Run a command and record its inputs/outputs into a child passport: `lineage run -- python train.py`."""
+    """Run a command and record its inputs/outputs into a child passport: `lineage run -- python train.py`.
+
+    The passport lists every file the run read (inputs, with hashes) and the environment (SBOM), and is written beside each output as
+    `<output>.passport.json` (signed with --key) and in .lineage/runs/<id>/. `lineage run` never claims a trust level."""
     from lineage.run import run_recorded_full
     from lineage.signing.ed25519 import sign_passport
     from lineage.signing.keys import key_id, load_private_key
@@ -270,7 +274,13 @@ def run(
         err.print("[red]✗[/] nothing to run. Usage: lineage run -- python train.py")
         raise typer.Exit(code=2)
     console.print(f"[bold]▶[/] {' '.join(command)}")
-    rec = run_recorded_full(command, Path.cwd(), parent or None, name=name, version=version)
+    from datetime import datetime, timezone
+
+    from lineage.schemas.fact import Fact
+
+    facts = [Fact(key=k, value=v, provenance="declared", source="creator passport", at=datetime.now(timezone.utc))
+             for k, _, v in (f.partition("=") for f in fact or [])]
+    rec = run_recorded_full(command, Path.cwd(), parent or None, name=name, version=version, facts=facts)
     if rec.exit_code != 0:
         err.print(f"[red]✗[/] command exited with status {rec.exit_code}; passport written for the record anyway")
     body = rec.passport.predicate
@@ -281,6 +291,10 @@ def run(
         doc = rec.passport.model_dump_json(by_alias=True, indent=2)
     dest = rec.record_dir / "passport.json"
     dest.write_text(doc)
+    for out in rec.outputs:  # beside each output, where intake and `lineage.load` look for it
+        o = Path.cwd() / out
+        if o.is_file() and not o.name.endswith(".passport.json") and o.name != "passport.json":
+            o.with_name(o.name + ".passport.json").write_text(doc)
 
     t = Table(title="recorded run", title_justify="left", show_header=False)
     t.add_row("inputs", f"{len(rec.inputs)} file(s)")

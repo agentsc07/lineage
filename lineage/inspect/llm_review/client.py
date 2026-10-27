@@ -46,6 +46,7 @@ class GpuClient:
         self.base_url = (base_url or os.environ.get("LINEAGE_GPU_URL") or DEFAULT_URL).rstrip("/")
         self._http = http or httpx.Client(timeout=timeout)
         self._memory: dict[str, ReviewResponse] = {}
+        cache_dir = cache_dir or os.environ.get("LINEAGE_REVIEW_CACHE")  # reviews are cached by request hash, on disk when this is set
         self.cache_dir = Path(cache_dir) if cache_dir else None
         self.calls = 0  # requests actually sent (cache misses)
         # No GPU worker named anywhere and a hosted-API key present: run the same review pipeline in-process against the hosted

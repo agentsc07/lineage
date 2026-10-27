@@ -896,7 +896,16 @@ def gpu_card_review(ctx: IntakeContext) -> list[Finding]:
             resp = gpu.post("/review/card", req, ReviewResponse, ctx.gpu_url)
     except (gpu.GpuUnavailable, lc.GpuUnavailable):
         return [not_run("LLM_REVIEW", "the reviewer backend is unreachable (card review)", "S5")]
-    return claims_to_findings(resp, ctx.root, "LLM.CARD")
+    out = claims_to_findings(resp, ctx.root, "LLM.CARD")
+    from lineage.inspect.llm_review import policy_hosted
+
+    try:  # the organisation's policy against the card, by a hosted content-safety model
+        if not policy_hosted.available():
+            raise policy_hosted.PolicyCheckUnavailable("no hosted API key (the policy model otherwise needs the GPU worker)")
+        out += claims_to_findings(ReviewResponse(claims=policy_hosted.check(ctx.card_text, ctx.policy), verdict="suspicious"), ctx.root, "LLM.POLICY")
+    except policy_hosted.PolicyCheckUnavailable as e:
+        out.append(not_run("POLICY_CHECK", str(e), "S5"))
+    return out
 
 
 @register(("package", "tool"), "S5")

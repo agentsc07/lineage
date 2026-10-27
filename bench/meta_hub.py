@@ -8,7 +8,12 @@ from pathlib import Path
 
 
 class MetaFileHub:
+    trusted_local = True  # the bench vouches for its own corpus items (a stand-in for "Lineage fetched these from the hub")
+
+    def __init__(self, path: Path | str | None = None):
+        self.path = Path(path) if path else None  # the artifact folder; the pipeline only passes the folder's name as the key
+
     def fetch(self, artifact_type: str, key: str) -> dict | None:
-        p = Path(key)
+        p = self.path or Path(key)
         meta = (p if p.is_dir() else p.parent) / "lineage.meta.json"
         return json.loads(meta.read_text()) if meta.is_file() else {}

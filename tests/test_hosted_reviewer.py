@@ -108,3 +108,29 @@ def test_pipeline_emits_not_run_when_the_hosted_api_is_unreachable(hosted, monke
     (pkg / "net.py").write_text("import urllib.request\n\ndef get(u):\n    return urllib.request.urlopen(u).read()\n")
     d, _ = run_to_decision("package", str(pkg), "prod", PolicyPack.from_yaml("examples/policy.org.yaml"), "j", now=NOW, hub=old_release_hub())
     assert "CHECK.NOT_RUN.LLM_REVIEW" in {f.id for f in d.findings}
+
+
+def test_policy_check_uses_the_content_safety_model_and_drops_uncited_lines(hosted, monkeypatch):
+    from lineage.inspect.llm_review import policy_hosted
+    from lineage.schemas.policy import PolicyPack
+
+    reply = json.dumps({"violations": [{"line": 2, "reason": "licence is not on the allow list"}, {"line": 99, "reason": "invented"}]})
+    stub = Stub(monkeypatch, [reply])
+    claims = policy_hosted.check("# card\nlicense: gpl-3.0\n", PolicyPack.from_yaml("examples/policy.org.yaml"))
+    assert stub.requests[0][1]["model"] == "nvidia/nemotron-3.5-content-safety" and "Allowed licences" in stub.requests[0][1]["messages"][0]["content"]
+    assert [(c.line, c.api) for c in claims] == [(2, "license: gpl-3.0")]
+
+
+def test_policy_check_without_a_key_is_not_run(monkeypatch, tmp_path, policy_path):
+    for k in ("LINEAGE_VLLM_URL", "LINEAGE_GPU_URL", "NVIDIA_API_KEY", "LINEAGE_LLM_API_KEY"):
+        monkeypatch.delenv(k, raising=False)
+    from lineage.intake.pipeline import run_to_decision
+    from lineage.schemas.policy import PolicyPack
+    from tests.fakehub import old_release_hub
+    from tests.fixtures.builders import make_tiny_model
+    from tests.server_helpers import NOW
+
+    m = make_tiny_model(tmp_path / "m")
+    (m / "README.md").write_text("# card\nlicense: mit\n")
+    d, _ = run_to_decision("model", str(m), "prod", PolicyPack.from_yaml(policy_path), "j", now=NOW, hub=old_release_hub(), gpu_url="http://127.0.0.1:9")
+    assert {"CHECK.NOT_RUN.LLM_REVIEW"} <= {f.id for f in d.findings}

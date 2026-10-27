@@ -22,5 +22,6 @@ unrun_checks:                               # what a check that could not run co
   default: { dev: info, staging: medium, prod: high }
   ACQUIRE: { dev: critical, staging: critical, prod: critical }
   WEIGHT_BACKDOOR: { dev: info, staging: low, prod: medium }
+  POLICY_CHECK: { dev: info, staging: info, prod: low }   # the card-vs-policy check needs the hosted API key
 trusted_publishers: []                      # {name, key (ed25519 hex), scope: ["hf:org/*", "pypi:name-*", "upload:*"]}
 revoked_keys: []                            # key ids

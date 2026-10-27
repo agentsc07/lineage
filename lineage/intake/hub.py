@@ -33,7 +33,7 @@ class HttpHub:
         self.trusted_local = os.environ.get("LINEAGE_HUB_TRUSTED_LOCAL") == "1" if trusted_local is None else trusted_local
 
     def _get(self, url: str):
-        return (self.client or httpx).get(url, timeout=self.timeout)
+        return (self.client or httpx).get(url, timeout=self.timeout, follow_redirects=True)
 
     def fetch(self, artifact_type: str, key: str) -> dict | None:
         if not self.base_url:

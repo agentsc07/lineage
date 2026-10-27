@@ -73,7 +73,7 @@ def _hash_files(root: Path) -> dict[str, str]:
     """POSIX relative path -> sha256 for the artifact's own files (sidecars excluded)."""
     if root.is_file():
         return {root.name: _hash_file(root)}
-    paths = sorted(p for p in root.rglob("*") if p.is_file() and p.name not in SIDECARS and ".git" not in p.parts)
+    paths = sorted(p for p in root.rglob("*") if p.is_file() and p.name not in SIDECARS and not p.name.endswith(".passport.json") and ".git" not in p.parts)
     return {p.relative_to(root).as_posix(): _hash_file(p) for p in paths}
 
 
@@ -183,6 +183,7 @@ def _identify(ctx: IntakeContext, claims: dict | None, hub: Hub | None, claimed_
         candidates = [ctx.path.with_name(ctx.path.name + ".passport.json")]
         if ctx.path.is_dir():
             candidates.append(ctx.path / "passport.json")
+            candidates += sorted(ctx.path.glob("*.passport.json"))[:1]  # what `lineage run` writes beside an output
         sidecar = next((c for c in candidates if c.exists()), candidates[0])
         if sidecar.exists():
             try:

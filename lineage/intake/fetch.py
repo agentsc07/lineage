@@ -128,7 +128,7 @@ def hf_info(repo: str, rev: str | None, kind: str = "model", base_url: str | Non
     prefix = "datasets" if kind == "dataset" else "models"
     url = f"{hf_url(base_url)}/api/{prefix}/{quote(repo, safe='/')}" + (f"/revision/{quote(rev, safe='')}" if rev else "")
     try:
-        r = (client or httpx).get(url, params={"blobs": "true"}, timeout=30.0)
+        r = (client or httpx).get(url, params={"blobs": "true"}, timeout=30.0, follow_redirects=True)
     except httpx.HTTPError as e:
         raise AcquireError(f"hub unreachable: {e}") from e
     if r.status_code == 404:
@@ -143,7 +143,7 @@ def published_files(origin: str, base_url: str | None = None, client: httpx.Clie
     kind, repo, rev = parse_origin(origin)
     try:
         if kind == "pypi":
-            r = (client or httpx).get(f"{pypi_url(base_url)}/{repo}/{rev}/json", timeout=30.0)
+            r = (client or httpx).get(f"{pypi_url(base_url)}/{repo}/{rev}/json", timeout=30.0, follow_redirects=True)
             if r.status_code != 200:
                 return None
             return {u["filename"]: {"sha256": u["digests"]["sha256"]} for u in r.json().get("urls", [])}
@@ -191,7 +191,7 @@ def fetch_hf(origin: str, dest: Path, *, allow_pickle: bool = False, base_url: s
             raise AcquireError(f"unsafe file name from hub: {name}")
         target.parent.mkdir(parents=True, exist_ok=True)
         try:
-            r = (client or httpx).get(f"{resolve}/{quote(name)}", timeout=300.0)
+            r = (client or httpx).get(f"{resolve}/{quote(name)}", timeout=300.0, follow_redirects=True)
         except httpx.HTTPError as e:
             raise AcquireError(f"hub unreachable: {e}") from e
         if r.status_code != 200:
@@ -215,7 +215,7 @@ def fetch_pypi(origin: str, dest: Path, *, base_url: str | None = None, client: 
     _, name, ver = parse_origin(origin)
     root = pypi_url(base_url)
     try:
-        r = (client or httpx).get(f"{root}/{name}/{ver}/json" if ver else f"{root}/{name}/json", timeout=30.0)
+        r = (client or httpx).get(f"{root}/{name}/{ver}/json" if ver else f"{root}/{name}/json", timeout=30.0, follow_redirects=True)
     except httpx.HTTPError as e:
         raise AcquireError(f"hub unreachable: {e}") from e
     if r.status_code != 200:
@@ -229,7 +229,7 @@ def fetch_pypi(origin: str, dest: Path, *, base_url: str | None = None, client: 
         raise AcquireError(f"pypi {name}=={ver}: no wheel or sdist")
     url = pick["url"] if pick["url"].startswith("http") else (base_url or os.environ.get("LINEAGE_PYPI_URL") or os.environ.get("LINEAGE_HUB_URL") or "").rstrip("/") + pick["url"]
     try:
-        blob = (client or httpx).get(url, timeout=300.0).content
+        blob = (client or httpx).get(url, timeout=300.0, follow_redirects=True).content
     except httpx.HTTPError as e:
         raise AcquireError(f"hub unreachable: {e}") from e
     dest.mkdir(parents=True, exist_ok=True)

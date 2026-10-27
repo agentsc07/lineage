@@ -25,7 +25,7 @@ def _check_intake(item: dict, root: Path, policy, gpu_url: str, env: str = "dev"
     mandatory human-approval quarantine of every tool as a detection.)"""
     from lineage.intake.pipeline import run_to_decision
     from bench.meta_hub import MetaFileHub
-    d, _ = run_to_decision(item["kind"], str(root / item["path"]), env, policy, "bench", gpu_url=gpu_url, now=NOW, hub=MetaFileHub())
+    d, _ = run_to_decision(item["kind"], str(root / item["path"]), env, policy, "bench", gpu_url=gpu_url, now=NOW, hub=MetaFileHub(root / item["path"]))
     real = sorted({f.id for f in d.findings if f.severity != "info"})
     hard = [r for r in d.reasons if r.startswith(("policy block: ", "signature", "hash", "revoked", "known-malicious", "banned", "publisher"))]
     # a block that exists only because the policy forbids the pickle format, with nothing dangerous found inside

@@ -16,7 +16,7 @@ VLLM_URL = os.environ.get("LINEAGE_VLLM_URL", "http://127.0.0.1:8001/v1")
 SERVED_NAME = "reviewer"
 # Hosted backend (no Brev): any OpenAI-compatible endpoint, by default NVIDIA's. Used when LINEAGE_VLLM_URL is not set and a key is.
 DEFAULT_HOSTED_URL = "https://integrate.api.nvidia.com/v1"
-DEFAULT_HOSTED_MODEL = "nvidia/nemotron-nano-3-30b-a3b"  # listed by GET /v1/models; override with LINEAGE_LLM_MODEL
+DEFAULT_HOSTED_MODEL = "nvidia/nemotron-3.5-lightning-30b-a3b"  # nvidia-nemotron-nano-9b-v2 is not listed by the hosted API; override with LINEAGE_LLM_MODEL
 
 
 def hosted_key() -> str | None:
