@@ -65,6 +65,8 @@ uv sync && uv run pytest -q
 examples/run_dashboard_demo.sh        # fake hub + server + the ten-step story + dashboard (sign in with a token from examples/demo_tokens.json)
 PAUSE=0 examples/demo_scenario.sh     # the story only, no dashboard
 ```
+Exact commands and the click path for the demo: `DEMO.md`. Install and configuration: `startup.md`. Documentation index: `docs/README.md`. Submission zip: `scripts/make_submission_zip.sh`.
+
 No GPU and no API key are needed. Optional: `NVIDIA_API_KEY` turns on the hosted reviewer (no Brev), `LINEAGE_GPU_URL` the GPU worker.
 
 ## Signing

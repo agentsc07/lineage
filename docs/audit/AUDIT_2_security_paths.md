@@ -1,6 +1,6 @@
 # Lineage audit, second stage (read-only), commit `ff88ac7`
 
-Continues `docs/AUDIT_README.md`. Only this file was added; no source, config, tests, DB or Git state changed. "Read" means I read the cited code; "run" means I executed it. In this stage I **ran nothing new** (the full suite passed in stage one, exit 0); everything below is from reading code and tests. Where a conclusion is derived by reading and not proven by a test, it says so.
+Continues `docs/audit/AUDIT_1_implementation.md`. Only this file was added; no source, config, tests, DB or Git state changed. "Read" means I read the cited code; "run" means I executed it. In this stage I **ran nothing new** (the full suite passed in stage one, exit 0); everything below is from reading code and tests. Where a conclusion is derived by reading and not proven by a test, it says so.
 
 ---
 
