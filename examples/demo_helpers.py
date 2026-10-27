@@ -29,6 +29,8 @@ def stream() -> None:
                 print(f"      [{f['severity']}] {f['title']}  {ref}", flush=True)
         d = e.get("decision")
         if d:
+            if d.get("secondary_reasons"):
+                print("      also applied (secondary): " + " | ".join(r[:110] for r in d["secondary_reasons"][:4]), flush=True)
             print(f"VERDICT {d['outcome']} {d['risk_score']} {d['artifact_id']} {d['trust_level']}", flush=True)
 
 

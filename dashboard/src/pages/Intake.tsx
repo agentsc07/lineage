@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { api, streamJob } from "../lib/api";
 import { session } from "../lib/session";
 import type { ArtifactType, Decision, Fact, Finding, StageEvent, StageId } from "../lib/types";
-import { Header, Risk, Severity_, Trust, Verdict } from "../components/ui";
+import { Header, Reasons, Risk, Severity_, Trust, Verdict } from "../components/ui";
 
 const columns: { title: string; hint: string; stages: { id: StageId; name: string }[] }[] = [
   { title: "Prove", hint: "Where the bytes came from, and is it intact", stages: [{ id: "S0", name: "Acquire" }, { id: "S1", name: "Identify" }, { id: "S2", name: "Provenance" }] },
@@ -145,7 +145,7 @@ export default function Intake() {
           </div>
           <div className="flex-1 min-w-[240px]">
             <p className="text-sm text-mute mb-2">Why</p>
-            <ul className="text-sm list-disc pl-4 space-y-1">{decision.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul>
+            <Reasons primary={decision.primary_reason} secondary={decision.secondary_reasons} all={decision.reasons} />
             {decision.conditions.length > 0 && <p className="text-sm text-cond mt-2">Conditions: {decision.conditions.join("; ")}</p>}
             <p className="text-xs text-faint mt-3">{all.length} finding{all.length === 1 ? "" : "s"} · policy <span className="mono">{decision.policy_version}</span></p>
           </div>

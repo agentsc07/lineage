@@ -384,7 +384,7 @@ def run_intake(
     signed = ctx.registry.sign(passport)
     decision = decide(passport.predicate, findings, environment, policy, clock(), artifact_id=signed.passport_id,
                       released_at=ctx.released_at, policy_expired=policy_expired)
-    yield event("S6", "completed", [], f"{decision.outcome}: {decision.reasons[0] if decision.reasons else ''}", decision)
+    yield event("S6", "completed", [], f"{decision.outcome}: {decision.primary_reason or (decision.reasons[0] if decision.reasons else '')}", decision)
 
     # S7 Admit (every outcome is recorded; only allow / allow_with_conditions are admitted)
     yield event("S7", "started")

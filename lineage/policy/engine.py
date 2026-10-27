@@ -18,11 +18,16 @@ from __future__ import annotations
 from datetime import date, datetime, time, timedelta, timezone
 from fnmatch import fnmatchcase
 
-from lineage.risk import SEVERITY_WEIGHT, risk_score
+from lineage.risk import SEVERITY_WEIGHT, finding_points, group_advisories, risk_score
 from lineage.schemas.decision import Decision, Outcome
 from lineage.schemas.finding import Finding
 from lineage.schemas.passport import PassportBody, canonical_json, sha256_hex
 from lineage.schemas.policy import PolicyException, PolicyPack
+
+# Order of the rule that heads a decision (lowest wins among the rules that set the final outcome); `reasons` keeps all of them.
+# A hard-block floor beats everything. Then: a block-level or critical-driven risk, identity / PII / licence / vulnerability / trust,
+# human approval, an over-the-line score with no critical finding, and cooldown last.
+RANK_RISK, RANK_POLICY, RANK_APPROVAL, RANK_RISK_BAND, RANK_COOLDOWN = 1, 2, 3, 4, 5
 
 TRUST_ORDER = ["unknown", "origin_verified", "signed", "recorded"]
 SEVERITY_RANK = {"info": 0, "low": 1, "medium": 2, "high": 3, "critical": 4}
@@ -63,6 +68,12 @@ def apply_unrun_costs(findings: list[Finding], environment: str, policy: PolicyP
         sev = table.get(environment) or (policy.unrun_checks.get("default") or {}).get(environment) or f.severity
         out.append(f.model_copy(update={"severity": sev, "score": SEVERITY_WEIGHT[sev]}))
     return out
+
+
+def _drivers(findings: list[Finding]) -> str:
+    """The top two findings by points, for a reason that cites the risk score."""
+    top = sorted((f for f in group_advisories(findings) if finding_points(f) > 0), key=lambda f: -finding_points(f))[:2]
+    return (", driven by " + "; ".join(f"{f.severity} {f.id} (+{finding_points(f)})" for f in top)) if top else ""
 
 
 def _has_id(findings: list[Finding], *prefixes: str) -> list[Finding]:
@@ -166,7 +177,11 @@ def decide(
     reasons: list[str] = []
     conditions: list[str] = []
     floor: Outcome | None = None  # non-overridable
-    soft: list[tuple[Outcome, str]] = []  # overridable by a live exception
+    soft: list[tuple[Outcome, str, int]] = []  # (outcome, reason, rank): overridable by a live exception; the rank orders the headline
+
+    def add(outcome: Outcome, reason: str, rank: int) -> None:
+        soft.append((outcome, reason, rank))
+
 
     hard = hard_blocks(passport, findings, policy, environment)
     if hard:
@@ -184,11 +199,11 @@ def decide(
             released = aware(released_at)
             if now - released < timedelta(days=days):
                 free = released + timedelta(days=days)
-                soft.append(("quarantine", f"cooldown: released {_ago(now - released)} ago, "
-                                           f"policy requires {days} days (clears {free:%Y-%m-%d %H:%M} UTC)"))
+                add("quarantine", f"cooldown: released {_ago(now - released)} ago, "
+                                           f"policy requires {days} days (clears {free:%Y-%m-%d %H:%M} UTC)", RANK_COOLDOWN)
         else:
             for f in _has_id(findings, "PROV.COOLDOWN"):
-                soft.append(("quarantine", f"cooldown: {f.title}"))
+                add("quarantine", f"cooldown: {f.title}", RANK_COOLDOWN)
 
     # vulnerabilities
     max_sev = policy.max_vuln_severity.get(environment)
@@ -196,36 +211,39 @@ def decide(
         for f in findings:
             if f.id.startswith("PKG.OSV.") and not f.id.startswith("PKG.OSV.MAL") and \
                     SEVERITY_RANK[f.severity] > SEVERITY_RANK[max_sev]:
-                soft.append(("block", f"{f.severity} vulnerability exceeds {environment} limit ({max_sev}): {f.title}"))
+                add("block", f"{f.severity} vulnerability exceeds {environment} limit ({max_sev}): {f.title}", RANK_POLICY)
 
     for f in _has_id(findings, *IDENTITY_IDS):
         if f.severity == "critical":
-            soft.append(("block", f"identity: {f.title}"))
+            add("block", f"identity: {f.title}", RANK_POLICY)
         elif f.severity == "high":
-            soft.append(("quarantine", f"identity: {f.title}"))
+            add("quarantine", f"identity: {f.title}", RANK_POLICY)
 
     if not policy.data.pii_allowed:
         for f in _has_id(findings, "DATA.PII"):
-            soft.append(("block", f"personal data not allowed by policy: {f.title}"))
+            add("block", f"personal data not allowed by policy: {f.title}", RANK_POLICY)
     for f in _has_id(findings, "POLICY.LICENCE.NOT_ALLOWED"):
-        soft.append(("quarantine", f"licence needs review: {f.title}"))
+        add("quarantine", f"licence needs review: {f.title}", RANK_POLICY)
 
     # trust
     if TRUST_ORDER.index(passport.trust_level) < TRUST_ORDER.index(env.min_trust):
-        soft.append(("quarantine", f"trust {passport.trust_level} is below {environment} minimum ({env.min_trust})"))
+        add("quarantine", f"trust {passport.trust_level} is below {environment} minimum ({env.min_trust})", RANK_POLICY)
 
     # risk
     eff_allow = min(policy.thresholds.allow, env.max_risk)
+    drivers = _drivers(findings)
+    critical = any(f.severity == "critical" and f.score > 0 for f in findings)
     if score > policy.thresholds.quarantine:
-        soft.append(("block", f"risk {score} > {policy.thresholds.quarantine} (block threshold)"))
+        add("block", f"risk {score} > {policy.thresholds.quarantine} (block threshold){drivers}", RANK_RISK)
     elif score > eff_allow:
-        soft.append(("quarantine", f"risk {score} > {eff_allow} ({environment} allow limit)"))
+        # a critical finding drives the headline; a plain over-the-line score is the weakest quarantine reason bar cooldown
+        add("quarantine", f"risk {score} > {eff_allow} ({environment} allow limit){drivers}", RANK_RISK if critical else RANK_RISK_BAND)
 
     # human approval
     needs_approval = passport.artifact_type in policy.require_human_approval or \
         f"{passport.artifact_type}:{environment}" in policy.require_human_approval
     if needs_approval:
-        soft.append(("quarantine", "human approval required by policy"))
+        add("quarantine", "human approval required by policy", RANK_APPROVAL)
 
     # exceptions (policy-file and approvals), live vs expired
     candidates = _matching_exception(list(policy.exceptions) + list(exceptions or []), aid, passport)
@@ -236,22 +254,37 @@ def decide(
     approver: str | None = None
 
     outcome: Outcome
+    primary: str
+    secondary: list[str]
+    expired_notes = [r for r in reasons if r.startswith("exception by ")]
     if floor:
         outcome = floor
-        reasons += [f"also: {r}" for _, r in soft]  # context only; the floor decides
+        reasons += [f"also: {r}" for _, r, _ in soft]  # context only; the floor decides
+        if hard:
+            primary, secondary = hard[0], hard[1:] + [r for _, r, _ in soft]
+        else:  # the policy has expired: that is the floor
+            primary, secondary = next(r for r in reasons if r.startswith("policy metadata has expired")), [r for _, r, _ in soft]
     elif not soft:
         outcome = "allow"
         reasons.append(f"risk {score} <= {eff_allow}")
         reasons.append(f"trust {passport.trust_level} >= {env.min_trust}")
+        primary, secondary = f"risk {score} <= {eff_allow} and trust {passport.trust_level} >= {env.min_trust}", []
     elif live:
         exc = max(live, key=lambda e: aware(e.expires))
         outcome = "allow_with_conditions"
         approver = exc.approver
-        reasons += [f"{r} (accepted)" for _, r in soft]
+        reasons += [f"{r} (accepted)" for _, r, _ in soft]
         conditions += [f"{environment} only", f"approved by {exc.approver} until {aware(exc.expires):%Y-%m-%d}: {exc.reason}"]
+        primary = f"approved by {exc.approver} until {aware(exc.expires):%Y-%m-%d}: {exc.reason}"
+        secondary = [f"{r} (accepted)" for _, r, _ in soft]
     else:
-        outcome = "block" if any(o == "block" for o, _ in soft) else "quarantine"
-        reasons += [r for _, r in soft]
+        outcome = "block" if any(o == "block" for o, _, _ in soft) else "quarantine"
+        reasons += [r for _, r, _ in soft]
+        winners = [x for x in soft if x[0] == outcome]
+        _, primary, _ = min(winners, key=lambda x: x[2])  # min is stable: ties keep check order
+        secondary = [r for _, r, _ in soft if r != primary]
+    secondary += [n for n in expired_notes if n not in secondary]
+    reasons = [primary] + [r for r in reasons if r != primary]  # `reasons` keeps everything; the binding rule now leads
 
     reasons += [f"compliance: {t}" for t in compliance_tags(findings, policy)]
     return Decision(
@@ -259,6 +292,8 @@ def decide(
         environment=environment,
         outcome=outcome,
         reasons=reasons,
+        primary_reason=primary,
+        secondary_reasons=secondary,
         conditions=conditions,
         risk_score=score,
         trust_level=passport.trust_level,

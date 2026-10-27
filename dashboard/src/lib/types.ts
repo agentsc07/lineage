@@ -14,7 +14,7 @@ export interface Finding {
   grounded: boolean;
 }
 export interface Decision {
-  artifact_id: string; environment: string; outcome: Outcome; reasons: string[];
+  artifact_id: string; environment: string; outcome: Outcome; reasons: string[]; primary_reason?: string; secondary_reasons?: string[];
   conditions: string[]; risk_score: number; trust_level: TrustLevel; findings: Finding[];
   policy_version: string; decided_at: string; approver?: string | null;
 }
