@@ -32,6 +32,12 @@ class HttpHub:
         self.timeout, self.client = timeout, client
         self.trusted_local = os.environ.get("LINEAGE_HUB_TRUSTED_LOCAL") == "1" if trusted_local is None else trusted_local
 
+    def _hf(self, key: str) -> tuple[str, httpx.Client | None]:
+        """Hugging Face is a different host than the PyPI / demo hub when LINEAGE_HF_URL says so (the demo's real-hub flag)."""
+        if key.startswith(("hf:", "hf-dataset:")) and os.environ.get("LINEAGE_HF_URL"):
+            return os.environ["LINEAGE_HF_URL"].rstrip("/"), None
+        return self.base_url, self.client
+
     def _get(self, url: str):
         return (self.client or httpx).get(url, timeout=self.timeout, follow_redirects=True)
 
@@ -41,7 +47,8 @@ class HttpHub:
         try:
             if key.startswith(("hf:", "hf-dataset:")):
                 kind, repo, rev = fetch.parse_origin(key)
-                info = fetch.hf_info(repo, rev, kind, self.base_url, self.client)
+                base, cl = self._hf(key)
+                info = fetch.hf_info(repo, rev, kind, base, cl)
                 card = info.get("cardData") or {}
                 return {k: v for k, v in {"repo": repo, "publisher": repo.split("/")[0], "source_revision": info.get("sha"),
                                           "released_at": info.get("lastModified"), "licence": card.get("license"),
@@ -55,7 +62,8 @@ class HttpHub:
         return r.json() if r.status_code == 200 else None
 
     def published_files(self, origin: str) -> dict[str, dict] | None:
-        return fetch.published_files(origin, self.base_url or None, self.client) if self.base_url else None
+        base, cl = self._hf(origin)
+        return fetch.published_files(origin, base or None, cl) if base else None
 
 
 def default_hub() -> Hub | None:

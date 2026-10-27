@@ -67,7 +67,7 @@ def diff(new_root: Path, old_root: Path) -> list[Finding]:
         tokens = [(t, c) for t, c in added_df.items() if c >= max(3, 0.2 * len(added)) and base_df.get(t, 0) <= 0.005 * max(len(base), 1)]
         if tokens:
             tokens.sort(key=lambda x: -x[1])
-            out.append(finding("DATA.DIFF.NEW_TOKENS", f"Token(s) {', '.join(repr(t) for t, _ in tokens[:4])} appear in the added rows and (almost) nowhere in the rest",
-                               "high", "data", "S4", [ev("metric", t, f"{c} of {len(added)} added rows") for t, c in tokens[:4]]
+            out.append(finding("DATA.DIFF.NEW_TOKENS", f"{len(tokens)} token(s) ({', '.join(repr(t) for t, _ in tokens[:8])}) appear in the added rows and (almost) nowhere in the rest",
+                               "high", "data", "S4", [ev("metric", t, f"{c} of {len(added)} added rows") for t, c in tokens[:8]]
                                + [ev("file_line", s.ref, s.text[:60]) for s in added[:3]]))
     return out
