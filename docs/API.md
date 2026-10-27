@@ -20,6 +20,7 @@ All bodies are JSON. Passport ids look like `lp:<sha256>` and are used verbatim 
 | GET | `/policy` | – | `PolicyState` | Current policy pack, version, signatures, expiry |
 | PUT | `/policy` | `PolicyUpdate {policy, signatures[], expires_at}` | `PolicyState` | Requires 2-of-3 role signatures (`owner`, `security`, `compliance`), TUF-style |
 | POST | `/decisions/{id}/approve` | `ApprovalRequest {approver, reason, expires}` | `Decision` | Human approval |
+| GET | `/trusted-publishers` | – | `TrustedPublishers {publishers[{name,key_id,key,scope[],revoked}], revoked_keys[], bootstrap_keys[]}` | Signing keys the active policy trusts and the sources each may speak for (read-only; change it with `PUT /policy`) |
 | GET | `/log` | – | `MerkleLog {size, root, entries[]}` | Append-only Merkle log |
 | GET | `/log/proof/{id}` | – | `InclusionProof {index, leaf_hash, path[], root, size}` | Inclusion proof for a log ref |
 | POST | `/monitor/tick` | – | `MonitorTick {checked, alerts[], ts}` | Re-check advisories; alerts carry the blast radius |

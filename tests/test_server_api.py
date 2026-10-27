@@ -266,3 +266,13 @@ def test_expired_policy_fails_closed_for_new_intake(tmp_path, policy_path, tiny_
 def test_monitor_tick_endpoint_with_no_news(client):
     tick = MonitorTick.model_validate(client.post("/monitor/tick").json())
     assert tick.checked == 0 and tick.alerts == []
+
+
+def test_trusted_publishers_endpoint_lists_policy_keys_and_bootstrap(tmp_path, policy_path, monkeypatch):
+    from lineage_server import trust
+
+    key = Ed25519PrivateKey.generate().public_key()
+    monkeypatch.setenv("LINEAGE_TRUSTED_KEYS", trust.public_hex(key))
+    client = TestClient(create_app(tmp_path / "tp.db", policy_path))
+    body = client.get("/trusted-publishers").json()
+    assert body["publishers"] == [] and body["bootstrap_keys"] == [trust.key_id(key)]

@@ -58,8 +58,9 @@ curl -s -XPOST localhost:8000/intake -H 'content-type: application/json' \
 curl -N localhost:8000/events/<job_id>         # SSE: S1..S7, each with started + completed/skipped/failed; S6 carries the Decision
 curl -s localhost:8000/artifacts | python -m json.tool
 ```
-Intake refs: a local path (inspected), or a hub id / `pkg==1.2.3` (a *remote reference*: not downloaded, recorded with trust `unknown` and quarantined in dev).
-Sidecar files next to an artifact: `passport.json` (signed passport it ships with), `lineage.meta.json` (`released_at`, `licence`, `repo`, `claimed_base`).
+Intake refs: a local path, or a hub id / `pkg==1.2.3` (a *remote reference*: bytes not obtained, so `CHECK.NOT_RUN.ACQUIRE` and a block; real `hf:`/`pypi:` fetching comes later in the refactor).
+Trust comes only from evidence: `unknown` < `origin_verified` < `signed` < `recorded`. What an upload says about itself (including a `lineage.meta.json` inside it) is only *declared* and never clears a check. What a hub says is *fetched*: set `LINEAGE_HUB_URL` (the demo and tests point it at `tests/fakehub.py`, run `uv run python -m tests.fakehub --root DIR --records hub.json`). A shipped `passport.json` is evidence; it counts only if its key is in the policy's `trusted_publishers` and in scope (`GET /trusted-publishers`). `LINEAGE_TRUSTED_KEYS` is a dev bootstrap used only while the policy lists no publishers.
+A check that cannot run (no GPU, no network) emits `CHECK.NOT_RUN.<name>`; the policy's `unrun_checks` prices it per environment, so models without the GPU worker carry real risk in staging and prod.
 
 Sign a policy update (2-of-3 roles) with the demo keys:
 ```bash
@@ -121,4 +122,4 @@ uv run python -m bench.fetch_previous /tmp/lineage_rw            # the release b
 uv run python -m bench.run_validation /tmp/lineage_rw out.json   # run twice (before/after) with different checkouts
 python3 bench/report_dev.py before.json after.json               # writes bench/results_dev.md
 ```
-Package intake compares against the previous release: `previous_path` in `lineage.meta.json`, or (online, wheel with a `.dist-info`) the newest earlier wheel from PyPI. `LINEAGE_OFFLINE=1` disables the fetch. S5 sends the code behind every signal to the GPU worker's `/review/code`.
+Package intake compares against the previous release: `previous_path` in the hub record, or (online, wheel with a `.dist-info`) the newest earlier wheel from PyPI. `LINEAGE_OFFLINE=1` disables the fetch. S5 sends the code behind every signal to the GPU worker's `/review/code`.

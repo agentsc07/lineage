@@ -86,6 +86,20 @@ def stamp() -> None:
     path.write_text(_json.dumps(meta, indent=2))
 
 
+def hubfile() -> None:
+    """`hubfile <artifacts dir> <hub.json>`: the demo hub's records, one per artifact folder, from the (declared) meta files the
+    demo artifacts carry. The hub is what makes them `fetched`; inside the artifact they would only be `declared`."""
+    import json as _json
+    from pathlib import Path
+
+    records = {}
+    for d in sorted(Path(sys.argv[2]).iterdir()):
+        meta = d / "lineage.meta.json"
+        if d.is_dir() and meta.is_file():
+            records[d.name] = _json.loads(meta.read_text())
+    Path(sys.argv[3]).write_text(_json.dumps(records, indent=2))
+
+
 def advisory() -> None:
     """`advisory <feed.json> <name==version>`: publish a local advisory for a package."""
     import json as _json
@@ -101,4 +115,4 @@ def expiry() -> None:
 
 if __name__ == "__main__":
     {"stream": stream, "tick": tick, "revoke": revoke, "get": get, "expiry": expiry,
-                                  "spectral": spectral, "trust": trust, "stamp": stamp, "advisory": advisory}[sys.argv[1]]()
+                                  "spectral": spectral, "trust": trust, "stamp": stamp, "advisory": advisory, "hubfile": hubfile}[sys.argv[1]]()

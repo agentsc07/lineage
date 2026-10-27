@@ -27,15 +27,19 @@ done
 
 uv run --quiet lineage keygen --dir "$WORK" --name demo >/dev/null || { echo "keygen failed" >&2; exit 1; }
 echo '{}' >"$WORK/feed.json"
+echo '{}' >"$WORK/hub.json"
+# stand-in for Hugging Face / PyPI: what it says is `fetched`, what an upload says about itself is only `declared`
+uv run --quiet python -m tests.fakehub --root "$WORK" --records "$WORK/hub.json" --port "${HUB_PORT:-8766}" >"$WORK/hub.log" 2>&1 &
+PIDS+=($!)
 
-LINEAGE_DB="$DB" LINEAGE_TRUSTED_KEYS="$WORK/demo.pub" LINEAGE_ADVISORY_FEED="$WORK/feed.json" \
+LINEAGE_HUB_URL="http://127.0.0.1:${HUB_PORT:-8766}" LINEAGE_DB="$DB" LINEAGE_TRUSTED_KEYS="$WORK/demo.pub" LINEAGE_ADVISORY_FEED="$WORK/feed.json" \
   uv run --quiet uvicorn lineage_server.app:app --port "$PORT" >"$WORK/server.log" 2>&1 &
 PIDS+=($!)
 for _ in $(seq 1 60); do curl -sf $API_URL/healthz >/dev/null && break; sleep 0.5; done
 curl -sf $API_URL/healthz >/dev/null || { echo "Server failed to start:" >&2; cat "$WORK/server.log" >&2; exit 1; }
 echo "API server on $API_URL (fresh database $DB)"
 
-LINEAGE_API="$API_URL" LINEAGE_DEMO_KEYDIR="$WORK" LINEAGE_DEMO_FEED="$WORK/feed.json" \
+LINEAGE_DEMO_HUB_FILE="$WORK/hub.json" LINEAGE_API="$API_URL" LINEAGE_DEMO_KEYDIR="$WORK" LINEAGE_DEMO_FEED="$WORK/feed.json" \
   examples/demo_scenario.sh
 
 echo; echo "Dashboard: http://localhost:$DASH_PORT  (Ctrl+C stops the dashboard and the API server)"

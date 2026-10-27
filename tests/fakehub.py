@@ -15,6 +15,7 @@ Two faces:
 from __future__ import annotations
 
 import hashlib
+import json
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Response
@@ -59,8 +60,32 @@ def _tree_sha(files: list[Path], root: Path) -> str:
     return h.hexdigest()
 
 
-def create_app(root: Path | str, records: dict[str, dict] | None = None, *, big: int = 10 * 1024 * 1024) -> FastAPI:
-    root, records = Path(root), records or {}
+class _Records(dict):
+    """`records`, or a JSON file re-read on every access (the demo edits release dates while the hub is running)."""
+
+    def __init__(self, data: dict | None, path: Path | None):
+        super().__init__(data or {})
+        self.path = path
+
+    def _fresh(self) -> dict:
+        if self.path and self.path.is_file():
+            return json.loads(self.path.read_text() or "{}")
+        return dict(self)
+
+    def __contains__(self, k):  # type: ignore[override]
+        return k in self._fresh()
+
+    def __getitem__(self, k):
+        return self._fresh()[k]
+
+    def get(self, k, default=None):  # type: ignore[override]
+        return self._fresh().get(k, default)
+
+
+def create_app(root: Path | str, records: dict[str, dict] | None = None, *, records_file: Path | str | None = None,
+               big: int = 10 * 1024 * 1024) -> FastAPI:
+    root = Path(root)
+    records = _Records(records, Path(records_file) if records_file else None)
     app = FastAPI(title="fake hub")
 
     @app.get("/lineage-meta/{artifact_type}/{key:path}")
@@ -129,3 +154,16 @@ def create_app(root: Path | str, records: dict[str, dict] | None = None, *, big:
         return Response(status_code=404)
 
     return app
+
+
+if __name__ == "__main__":  # python -m tests.fakehub --root DIR --records FILE --port 8766
+    import argparse
+
+    import uvicorn
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--root", default=".")
+    ap.add_argument("--records", default=None)
+    ap.add_argument("--port", type=int, default=8766)
+    a = ap.parse_args()
+    uvicorn.run(create_app(a.root, records_file=a.records), host="127.0.0.1", port=a.port, log_level="warning")

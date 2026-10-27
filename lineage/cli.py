@@ -51,7 +51,9 @@ def intake(
     from lineage.intake.pipeline import run_intake
     from lineage.schemas.policy import PolicyPack
 
-    for event in run_intake(artifact_type, ref, env, PolicyPack.from_yaml(policy), job_id="cli"):
+    from lineage.intake.hub import default_hub
+
+    for event in run_intake(artifact_type, ref, env, PolicyPack.from_yaml(policy), job_id="cli", hub=default_hub()):
         console.print(event.model_dump_json())
 
 

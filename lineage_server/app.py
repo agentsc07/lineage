@@ -22,7 +22,7 @@ from lineage.intake.hub import Hub, default_hub
 from lineage.schemas.policy import PolicyPack
 from lineage_server import db, policy_store, trust
 from lineage_server.jobs import JobStore
-from lineage_server.routes import artifacts, decisions, events, graph, intake, passports, policy
+from lineage_server.routes import artifacts, decisions, events, graph, intake, passports, policy, trusted_publishers
 
 
 def create_app(
@@ -56,7 +56,7 @@ def create_app(
     conn.commit()
     conn.close()
 
-    for module in (intake, events, artifacts, passports, graph, decisions, policy):
+    for module in (intake, events, artifacts, passports, graph, decisions, policy, trusted_publishers):
         app.include_router(module.router)
 
     @app.get("/healthz")

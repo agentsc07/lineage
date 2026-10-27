@@ -227,7 +227,7 @@ def _identify(ctx: IntakeContext, claims: dict | None, hub: Hub | None, claimed_
     else:
         ctx.source = SourceRef(hub="local", repo=ctx.fact_value("source_repo", trusted_only=False), url=ctx.path.as_uri())
     ctx.name, ctx.version = name, version
-    ctx.source_id = insp.source_id_of(ctx.source.hub, ctx.source.repo) if ctx.source.hub in ("huggingface", "pypi") else f"upload:{name}"
+    ctx.source_id = insp.source_id_of(ctx.source.hub, ctx.source.repo) or f"upload:{name}"
 
     msg = f"{name}@{version}"
     if ctx.path is not None:
@@ -347,6 +347,7 @@ def run_intake(
         except Exception as e:  # noqa: BLE001 - the demo must never crash
             status, message = "failed", f"{type(e).__name__}: {e}"
             found = [insp.make_finding("INTAKE.STAGE.ERROR", f"Stage {stage} failed: {message}"[:300], "high", "policy", stage)]
+        found = apply_unrun_costs(found, environment, policy)  # events show what an unrun check costs here
         ctx.findings = ctx.findings + found
         yield event(stage, status, found, message)
 

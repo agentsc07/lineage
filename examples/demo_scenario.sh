@@ -18,7 +18,8 @@ PAUSE="${PAUSE:-1}"
 WORK="$(mktemp -d)"
 ART="$WORK/art"
 SERVER_PID=""
-cleanup() { [[ -n "$SERVER_PID" ]] && kill "$SERVER_PID" 2>/dev/null; rm -rf "$WORK"; }
+HUB_PID=""
+cleanup() { [[ -n "$SERVER_PID" ]] && kill "$SERVER_PID" 2>/dev/null; [[ -n "$HUB_PID" ]] && kill "$HUB_PID" 2>/dev/null; rm -rf "$WORK"; }
 trap cleanup EXIT
 
 if [[ -t 1 ]]; then B=$'\e[1m'; D=$'\e[2m'; G=$'\e[32m'; Y=$'\e[33m'; O=$'\e[38;5;208m'; R=$'\e[31m'; N=$'\e[0m'; else B=; D=; G=; Y=; O=; R=; N=; fi
@@ -59,6 +60,10 @@ sign_and_verify() { # type dirname name version repo [--parent id ...]
 }
 
 mkdir -p "$ART" && cp -R examples/demo_artifacts/. "$ART/"
+# The demo hub stands in for Hugging Face / PyPI (tests/fakehub.py): what it says about an artifact is `fetched`; what the
+# artifact says about itself (its own lineage.meta.json) is only `declared`.
+HUB_FILE="${LINEAGE_DEMO_HUB_FILE:-$WORK/hub.json}"
+py hubfile "$ART" "$HUB_FILE"
 if [[ -n "${LINEAGE_DEMO_KEYDIR:-}" ]]; then
   cp "$LINEAGE_DEMO_KEYDIR/demo.key" "$LINEAGE_DEMO_KEYDIR/demo.pub" "$WORK/"
 else
@@ -68,7 +73,9 @@ fi
 if [[ -z "${LINEAGE_API:-}" ]]; then
   echo '{}' >"$WORK/feed.json"
   py trust "$WORK/lineage.db" "$WORK/demo.pub"
-  LINEAGE_DB="$WORK/lineage.db" LINEAGE_ADVISORY_FEED="$WORK/feed.json" \
+  uv run python -m tests.fakehub --root "$WORK" --records "$HUB_FILE" --port 8766 >"$WORK/hub.log" 2>&1 &
+  HUB_PID=$!
+  LINEAGE_HUB_URL="http://127.0.0.1:8766" LINEAGE_DB="$WORK/lineage.db" LINEAGE_ADVISORY_FEED="$WORK/feed.json" \
     uv run uvicorn lineage_server.app:app --port "${API##*:}" >"$WORK/server.log" 2>&1 &
   SERVER_PID=$!
   for _ in $(seq 1 40); do curl -sf "$API/healthz" >/dev/null && break; sleep 0.5; done
@@ -111,6 +118,7 @@ fi
 
 step "3. LiteLLM-style package" "Two hours old, look-alike repo, new .pth start-up file."
 py stamp "$ART/litellm-lookalike/lineage.meta.json" 2
+py hubfile "$ART" "$HUB_FILE"
 intake package "$ART/litellm-lookalike" prod; pause
 
 step "4. MCP tool with an intent gap" "Clean description, undeclared network calls. A human decides."

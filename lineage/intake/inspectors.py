@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 import re
 from collections import defaultdict
 from collections.abc import Callable
@@ -35,6 +36,7 @@ from lineage.schemas.gpu import (
 from lineage.schemas.passport import ArtifactType, SignedPassport, SourceRef
 from lineage.schemas.policy import PolicyPack
 
+log = logging.getLogger(__name__)
 SIDECARS = {"passport.json"}  # a shipped passport is evidence, not part of the artifact's own bytes
 PICKLE_SUFFIXES = (".pkl", ".pickle", ".pt", ".pth", ".bin", ".ckpt")
 CARD_NAMES = ("README.md", "MODEL_CARD.md", "DATASET_CARD.md", "README")
@@ -157,7 +159,7 @@ def source_id_of(hub: str | None, repo: str | None) -> str | None:
     """`hf:org/name`, `pypi:name` for a source reference; None when it names nothing checkable."""
     if not repo:
         return None
-    return {"huggingface": f"hf:{repo}", "pypi": f"pypi:{repo}"}.get(hub or "")
+    return {"huggingface": f"hf:{repo}", "hf": f"hf:{repo}", "pypi": f"pypi:{repo}"}.get(hub or "")
 
 
 @register("*", "S2")
@@ -222,6 +224,7 @@ def resolve_signer(ctx: IntakeContext, key_id: str) -> tuple[Ed25519PublicKey | 
     if not ctx.policy.trusted_publishers:
         legacy = ctx.registry.trusted_key(key_id)
         if legacy is not None:
+            log.warning("trusting key %s from LINEAGE_TRUSTED_KEYS (dev bootstrap): the policy defines no trusted_publishers", key_id)
             return legacy, ["*"], "dev bootstrap key (LINEAGE_TRUSTED_KEYS)"
     return None, None, ""
 
@@ -686,12 +689,12 @@ def gpu_code_review(ctx: IntakeContext) -> list[Finding]:
     from lineage.inspect.llm_review import client
 
     if ctx.root is None:
-        return []
+        return [not_run("LLM_REVIEW", "no bytes to review", "S5")]
     analysis = package_capabilities.analyse(ctx.root)
     refs = [e.ref for f in ctx.findings if f.severity != "info" or f.id.startswith("PKG.SIGNAL.") for e in f.evidence if e.kind == "file_line"]
     slices = client.build_slices(ctx.root, analysis, refs)
     if not slices:
-        return []
+        return [make_finding("LLM.REVIEW.NOTHING_TO_REVIEW", "Reviewer ran: no source-to-sink flow, hook or risky capability to send", "info", "llm", "S5")]
     caps = sorted({h.cap for h in analysis.hits} | {k.kind for k in analysis.hooks})
     purpose = ctx.fact_value("description") or ctx.metadata.get("summary") or _manifest_description(ctx) or ctx.name
     diff = client.make_diff(ctx.previous[0], ctx.root) if ctx.previous else None
