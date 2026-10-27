@@ -195,6 +195,7 @@ def origin_check(ctx: IntakeContext) -> list[Finding]:
     from lineage.intake.fetch import _wanted
 
     out: list[Finding] = []
+    kind = "dataset" if ctx.artifact_type == "dataset" else "model"
     for hint, value in _hints(ctx):
         ctx.add_fact("source_repo", value, "declared", f"hint: {hint}")
         out.append(make_finding("PROV.ORIGIN.HINT", f"Suggested origin: {value} (from {hint}); not used for trust", "info", "provenance", "S2",
@@ -233,7 +234,7 @@ def origin_check(ctx: IntakeContext) -> list[Finding]:
                     diffs.append(f"{rel}: git object id differs from the published file")
             else:
                 diffs.append(f"{rel}: the hub published no hash to compare with")
-        diffs += [f"{rel}: published but missing from the upload" for rel in sorted(pub) if rel not in ctx.files and _wanted(rel)]
+        diffs += [f"{rel}: published but missing from the upload" for rel in sorted(pub) if rel not in ctx.files and _wanted(rel, kind)]
     if diffs:
         return out + [make_finding("PROV.ORIGIN.MODIFIED", f"{len(diffs)} file(s) differ from what {origin} published: " + "; ".join(diffs[:3]),
                                    "critical", "provenance", "S2", [Evidence(kind="file_line", ref=d.split(":")[0], detail=d) for d in diffs[:20]])]

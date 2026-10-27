@@ -25,8 +25,8 @@ from lineage_server import db
 from lineage_server.deps import get_conn
 
 ROLES = ("requester", "approver", "admin", "auditor")
-DEMO_USERS = [("alice", "alice@apollo.health", "requester"), ("bob", "bob@apollo.health", "approver"),
-              ("carol", "carol@apollo.health", "admin"), ("auditor", "auditor@apollo.health", "auditor")]
+DEMO_USERS = [("alice", "alice@apollo.health", "requester", "dev"), ("bob", "bob@apollo.health", "approver", "prod"),
+              ("carol", "carol@apollo.health", "admin", "prod"), ("auditor", "auditor@apollo.health", "auditor", "prod")]  # alice's package index serves dev
 
 
 @dataclass
@@ -114,7 +114,7 @@ def main() -> None:
     if args.cmd == "add":
         print(create_user(conn, args.name, args.roles, args.email, args.env))
     else:
-        tokens = {name: create_user(conn, name, roles, email) for name, email, roles in DEMO_USERS}
+        tokens = {name: create_user(conn, name, roles, email, env) for name, email, roles, env in DEMO_USERS}
         Path(args.out).write_text(json.dumps(tokens, indent=2))
         print(f"wrote {len(tokens)} demo tokens to {args.out} (shown once)")
     conn.commit()

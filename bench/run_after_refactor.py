@@ -40,6 +40,7 @@ def run_set(path: str, mode: str, policy: PolicyPack, limit: int | None) -> list
     root = ROOT / path
     manifest = json.loads((root / "manifest.json").read_text())
     items = manifest["items"] if isinstance(manifest, dict) else manifest
+    items = [i for i in items if i["check"] != "lora_weights"]  # needs the trained adapter bank and torch: not re-run here (frozen AUROC stands)
     if limit:
         items = ab.sample(items, limit)
     gpu_url = NO_WORKER if mode == "static" else None  # None: no worker named, the hosted API is used

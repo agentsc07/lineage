@@ -292,7 +292,13 @@ def check_trigger_behaviour(samples: list[Sample]) -> list[Finding]:
     for c in sorted(cands, key=lambda c: (-len(terms[c]), -z[c])):  # one candidate per identical row set: the longest phrase
         groups.setdefault(tuple(M[c].indices.tolist()), c)
     out: list[Finding] = []
-    for rows_t, c in sorted(groups.items(), key=lambda kv: -z[kv[1]])[:5]:
+    covered: set[int] = set()
+    for rows_t, c in sorted(groups.items(), key=lambda kv: (-len(kv[0]), -z[kv[1]])):
+        if set(rows_t) <= covered:  # a sub-phrase of a trigger already reported ("words cf 7391" inside "cf 7391")
+            continue
+        covered |= set(rows_t)
+        if len(out) >= 5:
+            break
         rows = [idx[j] for j in rows_t]
         centroid = S[c] / df[c]
         close = [r for r, j in zip(rows, rows_t) if V[j] @ centroid / max(np.linalg.norm(centroid), 1e-12) >= 0.7]

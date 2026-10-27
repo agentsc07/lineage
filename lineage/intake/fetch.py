@@ -161,8 +161,11 @@ def published_files(origin: str, base_url: str | None = None, client: httpx.Clie
     return out
 
 
-def _wanted(name: str) -> bool:
+def _wanted(name: str, kind: str = "model") -> bool:
+    """Model repos: weights, configs, tokenizers and small code/text. Dataset repos: the data files themselves (everything but git bookkeeping)."""
     base = name.rsplit("/", 1)[-1]
+    if kind == "dataset":
+        return not base.startswith(".git")
     return name.endswith(HF_ALLOW) or base.startswith(HF_ALLOW_PREFIX) or name.endswith(PICKLE_SUFFIXES)
 
 
@@ -178,7 +181,7 @@ def fetch_hf(origin: str, dest: Path, *, allow_pickle: bool = False, base_url: s
     for s in info.get("siblings", []):
         name = s["rfilename"]
         size = int(s.get("size") or 0)
-        if not _wanted(name):
+        if not _wanted(name, kind):
             continue
         if name.endswith(PICKLE_SUFFIXES) and size > PICKLE_LIMIT and not allow_pickle:
             acq.skipped_files.append(name)  # recorded, not downloaded

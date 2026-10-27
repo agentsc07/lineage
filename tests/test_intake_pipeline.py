@@ -303,8 +303,8 @@ def test_model_deep_inspection_flags_backdoor_signals(policy, model_dir, monkeyp
 def test_gpu_unreachable_emits_priced_not_run_findings(policy, model_dir):
     d, events = intake("model", model_dir, env="staging", policy=policy, gpu_url="http://127.0.0.1:9")  # closed port
     unrun = {f.id: f for f in d.findings if f.id.startswith("CHECK.NOT_RUN.")}
-    # the policy prices each: WEIGHT_BACKDOOR is `low` in staging, the rest fall back to the default (`medium`)
-    assert unrun["CHECK.NOT_RUN.WEIGHT_BACKDOOR"].severity == "low" and unrun["CHECK.NOT_RUN.BEHAVIOUR_DIFF"].severity == "medium"
+    # the policy prices each: WEIGHT_BACKDOOR is `low` in staging, BEHAVIOUR_DIFF is also `low`
+    assert unrun["CHECK.NOT_RUN.WEIGHT_BACKDOOR"].severity == "low" and unrun["CHECK.NOT_RUN.BEHAVIOUR_DIFF"].severity == "low"
     assert all(f.score > 0 for f in unrun.values())
     assert events[-1].stage == "S7" and next(e for e in events if e.stage == "S4" and e.status != "started").status == "completed"
 

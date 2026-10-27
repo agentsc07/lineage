@@ -209,7 +209,7 @@ def _hub_drift(conn: sqlite3.Connection, policy: PolicyPack, expired: bool, now:
 
     alerts: list[Alert] = []
     base_url, client = getattr(hub, "base_url", None) or None, getattr(hub, "client", None)
-    rows = conn.execute("SELECT m.artifact_id, m.source_id, a.name FROM artifact_meta m JOIN artifacts a ON a.id = m.artifact_id"
+    rows = conn.execute("SELECT m.artifact_id, m.source_id, a.name, a.artifact_type FROM artifact_meta m JOIN artifacts a ON a.id = m.artifact_id"
                         " WHERE m.source_id LIKE 'hf:%' AND a.status IN ('admitted', 'admitted_with_conditions', 'quarantined')").fetchall()
     for r in rows:
         signed = models.get_signed_passport(conn, r["artifact_id"])
@@ -217,7 +217,7 @@ def _hub_drift(conn: sqlite3.Connection, policy: PolicyPack, expired: bool, now:
         known = {_key(f) for f in models.get_findings(conn, r["artifact_id"])}
         repo = r["source_id"][3:]
         try:
-            info = fetch.hf_info(repo, None, "model", base_url, client)
+            info = fetch.hf_info(repo, None, "dataset" if r["artifact_type"] == "dataset" else "model", base_url, client)
         except fetch.NotFound:
             f = _simple_finding("WATCH.UPSTREAM.REMOVED", f"{repo} is gone from the hub", "high", repo, "hub answered 404")
             if _key(f) in known:

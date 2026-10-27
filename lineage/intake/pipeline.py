@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from collections.abc import Callable, Iterator
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -425,6 +426,8 @@ def _s0(ctx: IntakeContext, source: str | None, hub: Hub | None, work_dir: Path 
 
     work = (work_dir or Path(tempfile.gettempdir()) / "lineage-fetch") / uuid.uuid4().hex[:10]
     kw = {"base_url": getattr(hub, "base_url", None) or None, "client": getattr(hub, "client", None)}
+    if os.environ.get("LINEAGE_HF_URL") and (source or "").startswith(("hf:", "hf-dataset:")):
+        kw = {"base_url": os.environ["LINEAGE_HF_URL"], "client": None}  # the Hugging Face hub is a different host than the PyPI/demo hub
     if source and source.startswith(("hf:", "hf-dataset:", "pypi:")):
         ctx.claimed_origin = source
         try:
