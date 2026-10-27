@@ -27,7 +27,8 @@ Click path for the video:
 3. Sign out, sign in as **bob**, reload `/intake/<job id>` (state is rebuilt from the server), **Approve** with a reason and an expiry. The copyable `lineage pull` command appears.
 4. **Graph** -> `triage-trained`: SBOM packages fold into one node; the advised package (`jinja2`) stays separate; click a node or an edge for evidence.
 5. **Graph** -> `instructions@3c33a2c0f23c` -> **Revoke**: the blast radius lists `triage-trained@1.0.0`.
-6. **Monitor**, **Federated**, **Trusted publishers** pages show the rest of the story.
+6. **Policy** is read-only in the browser. A policy change is signed outside it (`uv run python -m lineage_server.tuf sign new-policy.yaml --key owner=owner.key --key security=security.key > update.json`, 2 of 3 role keys) and applied by an admin on that page with "Apply a signed update", or with `PUT /policy`. The page never creates a signature and holds no key.
+7. **Monitor**, **Federated**, **Trusted publishers** pages show the rest of the story.
 
 ## 3. Use what was admitted (CLI)
 ```bash
