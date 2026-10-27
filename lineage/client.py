@@ -141,11 +141,22 @@ def check_for_use(path: Path, *, env: str | None = None, attestation: SignedAtte
     reachable = False
     if server:
         try:
-            r = (client or httpx).get(f"{server}/passports/{att.artifact_id}/verify", headers=_headers(token), timeout=10.0)
+            # the cached attestation may be days old: ask the registry NOW (revoked, a revoked ancestor, the current decision for this env)
+            r = (client or httpx).get(f"{server}/attestations/{att.artifact_id}/status", params={"env": att.environment}, headers=_headers(token), timeout=10.0)
+            if r.status_code == 404:  # an older registry without the status route: its /verify only knows the artifact's own revocation
+                r = (client or httpx).get(f"{server}/passports/{att.artifact_id}/verify", headers=_headers(token), timeout=10.0)
+                if r.status_code == 200 and r.json().get("revoked"):
+                    problems.append("registry reports the artifact revoked")
+            elif r.status_code == 200:
+                st = r.json()
+                if st.get("revoked"):
+                    problems.append("registry reports the artifact revoked")
+                if st.get("ancestor_revoked"):
+                    problems.append("registry reports a revoked ancestor: " + ", ".join(i[:19] for i in st["ancestor_revoked"][:3]))
+                if st.get("current_outcome") not in ("allow", "allow_with_conditions") and not st.get("revoked"):
+                    problems.append(f"the registry's current decision for {att.environment} is {st.get('current_outcome')}, no longer allow")
             if r.status_code == 200:
                 reachable = True
-                if r.json().get("revoked"):
-                    problems.append("registry reports the artifact revoked")
             elif r.status_code in (401, 403):
                 problems.append(f"registry rejected our token ({r.status_code})")
                 reachable = True

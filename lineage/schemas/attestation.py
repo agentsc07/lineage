@@ -28,6 +28,17 @@ class Attestation(BaseModel):
         return not self.revoked and self.outcome in ("allow", "allow_with_conditions")
 
 
+class AttestationStatus(BaseModel):
+    """The registry's answer *now* to "may this artifact be used in this environment?" (GET /attestations/{id}/status). A cached
+    attestation can be days old; this is what the loader asks before it trusts one."""
+    artifact_id: str
+    environment: str
+    revoked: bool
+    ancestor_revoked: list[str] = Field(default_factory=list)  # ids of revoked ancestors (parents, datasets, packages, ghosts)
+    current_outcome: Literal["allow", "allow_with_conditions", "quarantine", "block"]
+    usable: bool  # not revoked, no revoked ancestor, current outcome allow / allow_with_conditions
+
+
 class SignedAttestation(BaseModel):
     attestation: Attestation
     signature: str  # base64 Ed25519 over canonical JSON of `attestation`

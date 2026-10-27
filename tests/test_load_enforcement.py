@@ -130,3 +130,25 @@ def test_attestation_by_digest_for_a_directory_without_cache(client, admitted, t
     lc.cache_path(dest).unlink()
     assert load(dest, **kw(client)) == dest or True  # the registry finds the artifact by the Merkle root of the bytes
     assert lc.check_for_use(dest, **kw(client)) == []
+
+
+def test_a_child_pulled_before_its_parent_was_revoked_refuses_to_load_afterwards(client, admitted, tmp_path):
+    """F3: the child holds an unexpired `allow` attestation; revoking the parent must still stop it at load time."""
+    child_src = make_tiny_model(tmp_path / "child_src", perturb="layers.1.weight")  # a fine-tune of the admitted model
+    d = intake(client, "model", child_src)
+    assert d["outcome"] == "allow", d["reasons"]
+    child = d["artifact_id"]
+    assert client.get(f"/graph/{child}?direction=up").status_code == 200
+    dest = tmp_path / "child_pulled"
+    lc.pull(child, dest, **{k: v for k, v in kw(client).items() if k != "env"}, env="dev")
+    assert lc.check_for_use(dest, **kw(client)) == []
+    assert client.post(f"/revoke/{admitted}?reason=backdoored").status_code == 200
+    with pytest.raises(LoadRefused, match="revoked ancestor|no longer allow"):
+        load(dest, **kw(client))
+    st = client.get(f"/attestations/{child}/status?env=dev").json()
+    assert st["usable"] is False and st["ancestor_revoked"] and st["current_outcome"] == "block"
+
+
+def test_status_route_says_usable_for_an_admitted_artifact(client, admitted):
+    st = client.get(f"/attestations/{admitted}/status?env=dev").json()
+    assert st["usable"] is True and st["revoked"] is False and st["ancestor_revoked"] == []
