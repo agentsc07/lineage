@@ -1,6 +1,7 @@
 """Lineage graph queries (recursive CTE) and blast radius."""
 from __future__ import annotations
 
+import json
 import sqlite3
 from typing import Literal
 
@@ -38,7 +39,8 @@ def _node(row: sqlite3.Row) -> GraphNode:
 def _ghost(row: sqlite3.Row) -> GraphNode:
     """A referenced thing Lineage never admitted (P6): shown, never silently dropped."""
     return GraphNode(id=row["id"], label=row["ref"] or f"{row['name']}@{row['version']}", artifact_type=row["artifact_type"],
-                     trust_level="unknown", status="unregistered", risk_score=0)
+                     trust_level="unknown", status="unregistered", risk_score=0, version=row["version"] or None,
+                     advisories=json.loads(row["advisories"] or "[]") if "advisories" in row.keys() else [])
 
 
 def reachable(conn: sqlite3.Connection, artifact_id: str, direction: Literal["up", "down"]) -> list[GraphNode]:
@@ -55,12 +57,60 @@ def lineage_graph(conn: sqlite3.Connection, artifact_id: str, direction: Literal
     if not any(n.id == artifact_id for n in nodes):
         raise KeyError(artifact_id)
     ids = {n.id for n in nodes}
+    ghost_ids = {n.id for n in nodes if n.status == "unregistered"}
     edges = [
-        GraphEdge(source=r["parent"], target=r["child"], kind=r["kind"])
+        GraphEdge(source=r["parent"], target=r["child"], kind=r["kind"], evidence=_evidence(conn, r["parent"], r["child"], r["kind"], r["parent"] in ghost_ids))
         for r in conn.execute("SELECT parent, child, kind FROM edges ORDER BY rowid")
         if r["parent"] in ids and r["child"] in ids
     ]
     return Graph(root=artifact_id, direction=direction, nodes=nodes, edges=edges)
+
+
+def _evidence(conn: sqlite3.Connection, parent: str, child: str, kind: str, parent_is_ghost: bool) -> str:
+    """How the edge came to exist, from how intake creates edges (pipeline._graph_refs, inspectors.local_parent_diff): an SBOM or a recorded
+    training input from a verified `lineage run` passport, a dependency read from fetched package metadata, a base model named by a trusted
+    fact, a parent matched from the weights, or a parent id the uploader listed."""
+    if kind == "built_with":
+        return "sbom"
+    if kind == "trained_on":
+        return "recorded"
+    if kind == "depends_on":
+        return "fetched"
+    if kind == "derived_from":
+        if conn.execute("SELECT 1 FROM findings WHERE artifact_id = ? AND finding_id = 'MODEL.PARENT.IDENTIFIED'", (child,)).fetchone():
+            return "inferred-from-weights"
+        return "fetched" if parent_is_ghost else "declared"
+    return "declared"
+
+
+MIN_GROUP = 3
+
+
+def collapse_sbom(conn: sqlite3.Connection, g: Graph) -> Graph:
+    """Per artifact, fold its un-advised SBOM ghosts (`built_with` from a package nobody admitted) into ONE group node that lists them in
+    `group_members`. A ghost with an advisory is never folded: it is the thing a reader needs to see."""
+    ghost = {n.id: n for n in g.nodes if n.status == "unregistered"}
+    by_child: dict[str, list[GraphEdge]] = {}
+    for e in g.edges:
+        n = ghost.get(e.source)
+        if e.kind == "built_with" and n is not None and n.artifact_type == "package" and not n.advisories:
+            by_child.setdefault(e.target, []).append(e)
+    drop_nodes: set[str] = set()
+    drop_edges: set[tuple[str, str]] = set()
+    nodes, edges = list(g.nodes), list(g.edges)
+    for child, es in by_child.items():
+        if len(es) < MIN_GROUP:
+            continue
+        members = [ghost[e.source] for e in es]
+        gid = f"sbom-group:{child}"
+        nodes.append(GraphNode(id=gid, label=f"{len(members)} packages in the build environment (SBOM; not admitted)", artifact_type="package", trust_level="unknown",
+                               status="unregistered", risk_score=0, group_members=members))
+        edges.append(GraphEdge(source=gid, target=child, kind="built_with", evidence="sbom"))
+        drop_edges |= {(e.source, e.target) for e in es}
+        drop_nodes |= {m.id for m in members}
+    still_used = {e.source for e in edges if (e.source, e.target) not in drop_edges}
+    return Graph(root=g.root, direction=g.direction, nodes=[n for n in nodes if n.id not in drop_nodes or n.id in still_used],
+                 edges=[e for e in edges if (e.source, e.target) not in drop_edges])
 
 
 def blast_radius(conn: sqlite3.Connection, artifact_id: str) -> list[GraphNode]:

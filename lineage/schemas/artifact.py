@@ -93,12 +93,16 @@ class GraphNode(BaseModel):
     trust_level: TrustLevel
     status: ArtifactStatus
     risk_score: int = Field(ge=0, le=100)
+    version: str | None = None  # ghost nodes: the referenced version
+    advisories: list[str] = Field(default_factory=list)  # ghost nodes: advisory ids the monitor has seen for it
+    group_members: list["GraphNode"] = Field(default_factory=list)  # a collapsed group of SBOM packages: what is inside
 
 
 class GraphEdge(BaseModel):
     source: str
     target: str  # source is the parent, target is the child
     kind: str = "derived_from"
+    evidence: str = ""  # fetched | signed | recorded | declared | inferred-from-weights | sbom (how the edge came to exist)
 
 
 class Graph(BaseModel):

@@ -16,7 +16,7 @@ All requests except `/healthz` need `Authorization: Bearer <token>` (roles: requ
 | POST | `/passports` | `SignedPassport` | `PassportReceipt {passport_id, log_index}` | Register a signed passport |
 | GET | `/passports/{id}` | – | `SignedPassport` | Fetch |
 | GET | `/passports/{id}/verify` | – | `VerifyResult` | Signature, chain, revocation |
-| GET | `/graph/{id}?direction=up\|down` | – | `Graph {root, direction, nodes, edges}` | react-flow data; edges run parent → child |
+| GET | `/graph/{id}?direction=up\|down&collapse=true` | – | `Graph {root, direction, nodes, edges}`; node adds `version`, `advisories[]`, `group_members[]`; edge adds `evidence` (fetched\|signed\|recorded\|declared\|inferred-from-weights\|sbom) | react-flow data; edges run parent → child. By default each artifact's un-advised SBOM packages (3 or more) fold into one `sbom-group:` node; `collapse=false` returns every node |
 | POST | `/revoke/{id}?reason=` | – | `RevokeResult {revoked, reason, blast_radius[]}` | Revoke; returns every flagged descendant |
 | GET | `/policy` | – | `PolicyState` | Current policy pack, version, signatures, expiry |
 | PUT | `/policy` | `PolicyUpdate {policy, signatures[], expires_at}` | `PolicyState` | Requires 2-of-3 role signatures (`owner`, `security`, `compliance`), TUF-style |

@@ -15,9 +15,11 @@ router = APIRouter()
 
 @router.get("/graph/{artifact_id}", response_model=Graph)
 def get_graph(
-    artifact_id: str, direction: Literal["up", "down"] = "up", conn: sqlite3.Connection = Depends(get_conn)
+    artifact_id: str, direction: Literal["up", "down"] = "up", collapse: bool = True, conn: sqlite3.Connection = Depends(get_conn)
 ) -> Graph:
+    """`collapse` (default) folds each artifact's un-advised SBOM packages into one group node; `collapse=false` returns every node."""
     try:
-        return graph_queries.lineage_graph(conn, artifact_id, direction)
+        g = graph_queries.lineage_graph(conn, artifact_id, direction)
+        return graph_queries.collapse_sbom(conn, g) if collapse else g
     except KeyError:
         raise HTTPException(404, f"unknown artifact {artifact_id}")

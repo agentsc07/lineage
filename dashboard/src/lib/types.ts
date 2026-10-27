@@ -63,8 +63,10 @@ export interface AttestationView {
 export interface GraphNode {
   id: string; label: string; artifact_type: ArtifactType; trust_level: TrustLevel;
   status: ArtifactStatus; risk_score: number;
+  version?: string | null; advisories?: string[]; group_members?: GraphNode[];
 }
-export interface Graph { root: string; direction: "up" | "down"; nodes: GraphNode[]; edges: { source: string; target: string; kind: string }[] }
+export interface GraphEdge { source: string; target: string; kind: string; evidence?: string }
+export interface Graph { root: string; direction: "up" | "down"; nodes: GraphNode[]; edges: GraphEdge[] }
 export interface RevokeResult { revoked: string; reason: string; blast_radius: GraphNode[] }
 export interface PolicySignature { role: string; key_id: string; signature: string }
 export interface PolicyState {
