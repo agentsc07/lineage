@@ -7,6 +7,7 @@
 # An existing lineage.db is moved aside to lineage.db.<timestamp>.bak, never deleted. Ctrl+C stops everything.
 set -uo pipefail
 cd "$(dirname "$0")/.."
+REPO="$PWD"   # every uv run below names the project, so a cd into a temp dir cannot break it
 export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
 
 DB="${LINEAGE_DB:-lineage.db}"

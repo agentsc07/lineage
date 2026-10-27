@@ -7,6 +7,7 @@
 # LINEAGE_DEMO_DB and LINEAGE_DEMO_FEED.
 set -uo pipefail
 cd "$(dirname "$0")/.."
+REPO="$PWD"   # every uv run below names the project, so a cd into a temp dir cannot break it
 export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"   # macOS can hide the venv's editable .pth files
 
 PORT="${LINEAGE_PORT:-8765}"
@@ -27,8 +28,8 @@ if [[ -t 1 ]]; then B=$'\e[1m'; D=$'\e[2m'; G=$'\e[32m'; Y=$'\e[33m'; O=$'\e[38;
 step() { printf '\n%s%s%s\n%s%s%s\n' "$B" "$1" "$N" "$D" "$2" "$N"; }
 note() { printf '  %s%s%s\n' "$D" "$1" "$N"; }
 pause() { sleep "$PAUSE"; }
-py() { uv run --quiet python "examples/demo_helpers.py" "$@"; }
-lineage() { uv run --quiet lineage "$@"; }
+py() { uv run --quiet --project "$REPO" python "$REPO/examples/demo_helpers.py" "$@"; }
+lineage() { uv run --quiet --project "$REPO" lineage "$@"; }
 verdict_line() { # outcome risk trust
   case "$1" in
     allow) printf '  %sALLOW%s  risk %s  trust %s\n' "$G" "$N" "$2" "$3" ;;
@@ -111,9 +112,9 @@ intake package "pypi:acme-llm==1.4.0" dev; GOOD_ID="$LAST_ID"
 intake package "pypi:acme-llm==1.4.1" dev
 INDEX="http://alice:$ALICE@127.0.0.1:$PORT/simple/"
 note "pip download acme-llm==1.4.1 (the blocked release):"
-uv run --quiet python -m pip download --no-deps --disable-pip-version-check --no-cache-dir -d "$WORK/pip-bad" --index-url "$INDEX" acme-llm==1.4.1 2>&1 | tail -1 | cut -c1-150 | sed 's/^/    /'
+uv run --quiet --project "$REPO" python -m pip download --no-deps --disable-pip-version-check --no-cache-dir -d "$WORK/pip-bad" --index-url "$INDEX" acme-llm==1.4.1 2>&1 | tail -1 | cut -c1-150 | sed 's/^/    /'
 note "pip download acme-llm (resolves to the newest admitted release):"
-uv run --quiet python -m pip download --no-deps --disable-pip-version-check --no-cache-dir -d "$WORK/pip-ok" --index-url "$INDEX" acme-llm 2>&1 | tail -2 | cut -c1-150 | sed 's/^/    /'
+uv run --quiet --project "$REPO" python -m pip download --no-deps --disable-pip-version-check --no-cache-dir -d "$WORK/pip-ok" --index-url "$INDEX" acme-llm 2>&1 | tail -2 | cut -c1-150 | sed 's/^/    /'
 pause
 
 step "6. Dataset" "The upstream instruction set is admitted; then an upload with a 5% trigger backdoor and the same name. Compare."
@@ -146,7 +147,7 @@ rng = np.random.default_rng(int(hashlib.sha256("\n".join(rows).encode()).hexdige
 save_file({"layers.0.weight": rng.standard_normal((8, 8)).astype(np.float32)}, "model.safetensors", metadata={"format": "np"})
 json.dump({"model_type": "tiny", "trained_on_rows": len(rows)}, open("config.json", "w"))
 PY
-PY_EXE=$(uv run --quiet python -c 'import sys; print(sys.executable)')
+PY_EXE=$(uv run --quiet --project "$REPO" python -c 'import sys; print(sys.executable)')
 (cd "$TRAIN" && lineage run --key "$WORK/site/apollo.key" --name triage-trained --version 1.0.0 --fact licence=apache-2.0 -- "$PY_EXE" train.py 2>&1 | grep -E "inputs|outputs|environment|passport" | sed 's/^/  /' | cut -c1-150)
 (cd "$TRAIN" && zip -q "$WORK/triage-trained.zip" model.safetensors config.json model.safetensors.passport.json)
 mkdir -p "$WORK/trained-model" && cp "$TRAIN/model.safetensors" "$TRAIN/config.json" "$WORK/trained-model/"
