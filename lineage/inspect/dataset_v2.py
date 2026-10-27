@@ -158,7 +158,7 @@ def _hosted_embed(texts: list[str]) -> np.ndarray:
     out = []
     for i in range(0, len(texts), 64):
         r = httpx.post(f"{base}/embeddings", headers={"Authorization": f"Bearer {key}"}, timeout=60,
-                       json={"model": os.environ["LINEAGE_EMBED_MODEL"], "input": texts[i:i + 64], "input_type": "passage"})
+                       json={"model": os.environ["LINEAGE_EMBED_MODEL"], "input": texts[i:i + 64], "input_type": "passage", "truncate": "END"})
         r.raise_for_status()
         out += [d["embedding"] for d in r.json()["data"]]
     Z = np.array(out, float)

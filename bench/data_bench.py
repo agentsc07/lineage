@@ -236,10 +236,12 @@ def run(seed: int = 7) -> dict:
 
 
 def main(out: Path = Path("bench")) -> None:
+    import os
+    tag = "_nvidia" if os.environ.get("LINEAGE_EMBED_MODEL") else ""  # a second run with the hosted embeddings writes beside the TF-IDF one
     r = run()
-    (out / "results_data.json").write_text(json.dumps(r, indent=2))
+    (out / f"results_data{tag}.json").write_text(json.dumps(r, indent=2))
     pct = lambda v: "-" if v is None else f"{100 * v:.0f}%"  # noqa: E731
-    lines = ["# Dataset-poisoning benchmark", "", f"Seeded. Classification base: {r['base']} (1,000 rows); instruction base: 2,000 generated pairs. "
+    lines = ["# Dataset-poisoning benchmark" + (f" (embeddings: {os.environ['LINEAGE_EMBED_MODEL']})" if tag else " (embeddings: TF-IDF + SVD)"), "", f"Seeded. Classification base: {r['base']} (1,000 rows); instruction base: 2,000 generated pairs. "
              "Row-level recall/precision compare the rows named in findings (medium or higher) with the rows the attack changed or added; "
              "*detected* means a finding of medium or higher that the clean base does not already raise at that level (real text such as 20newsgroups "
              "has duplicates and noisy labels of its own).", "",
@@ -253,7 +255,7 @@ def main(out: Path = Path("bench")) -> None:
     lines += ["", "## False alarms on clean datasets", "", "| dataset | worst finding | finding ids |", "|---|---|---|"]
     lines += [f"| {k} | {v['top']} | {', '.join(i.replace('DATA.', '') for i in v['ids']) or '-'} |" for k, v in r["clean"].items()]
     lines += ["", f"**{len(alarms)} of {len(r['clean'])} clean datasets raised a medium-or-higher finding**" + (f" ({', '.join(alarms)})." if alarms else ".")]
-    (out / "results_data.md").write_text("\n".join(lines) + "\n")
+    (out / f"results_data{tag}.md").write_text("\n".join(lines) + "\n")
     print("\n".join(lines))
 
 

@@ -75,6 +75,9 @@ def main() -> None:
         if not o:
             L += [f"## {title}", "", "Not run.", ""]
             continue
+        if "hosted" in title.lower():
+            L += ["> **Reviewer calls, wall time and tokens read 0 in the hosted table below because each item runs in a subprocess and the counters live in the parent. "
+                  "They are not measured. The reviewer did run: the review cache holds 76 distinct hosted replies for the three sets (one per item with code or a card the reviewer saw).**", ""]
         L += [f"## {title}: latency and reviewer cost", "", "| set (unrun = info) | intake p50 / p95 | timeouts | errors | reviewer calls | reviewer wall s | reviewer tokens |", "|---|---|---|---|---|---|---|"]
         for label, per in o["sets"].items():
             b = per.get("unrun_info")
