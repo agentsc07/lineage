@@ -546,6 +546,33 @@ def dataset_stats(ctx: IntakeContext) -> list[Finding]:
     return ds.scan(ctx.path, ctx.card_text) if ctx.path else []
 
 
+@register("dataset", "S4")
+def dataset_v2(ctx: IntakeContext) -> list[Finding]:
+    """S4. Poisoning checks v2: characters, injected content, trigger -> behaviour, spectral signature, kNN labels."""
+    from lineage.inspect import dataset_v2 as v2
+
+    return v2.scan(ctx.path, ctx.card_text) if ctx.path else [not_run("DATASET_V2", "no bytes", "S4")]
+
+
+@register("dataset", "S4")
+def dataset_upstream_diff(ctx: IntakeContext) -> list[Finding]:
+    """S4. Row-level diff against the earlier admitted version (or `previous_path` in the hub record). Without one, says so."""
+    from lineage.inspect import dataset_diff
+
+    if ctx.path is None:
+        return [not_run("DATASET_DIFF", "no bytes", "S4")]
+    prev = ctx.metadata.get("previous_path")
+    tmp = None
+    if not prev:
+        import tempfile
+
+        tmp = Path(tempfile.mkdtemp(prefix="lineage-prev-"))
+        prev = ctx.registry.previous_version_path("dataset", ctx.name, tmp)
+    if not prev or not Path(prev).exists():
+        return [make_finding("DATA.DIFF.NO_BASELINE", "No earlier version of this dataset is known; nothing to diff against", "info", "data", "S4")]
+    return dataset_diff.diff(ctx.path, Path(prev))
+
+
 # ----------------------------------------------------------------------------------------------- S3 package / tool
 @register("package", "S3")
 def package_osv(ctx: IntakeContext) -> list[Finding]:

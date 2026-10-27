@@ -102,7 +102,7 @@ def launch(req: IntakeRequest, request: Request, active: tuple[PolicyPack, bool]
     def run(job: Job) -> None:
         conn = db.connect(state.db_path)  # the worker thread owns its connection
         try:
-            registry = SqliteRegistry(conn, state.signing_key)
+            registry = SqliteRegistry(conn, state.signing_key, store=state.store)
             for event in run_intake(req.artifact_type, ref, req.environment, policy, job.job_id, registry=registry,
                                     policy_expired=expired, hub=state.hub, claims=req.claims, claimed_origin=req.claimed_origin,
                                     uploader=user.name, source=source, store=state.store, work_dir=state.fetch_dir):

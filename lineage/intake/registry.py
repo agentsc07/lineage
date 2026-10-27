@@ -30,6 +30,9 @@ class Registry(Protocol):
     def package_status(self, name: str, version: str | None = None) -> str | None:
         """`Artifact.status` of the newest registered package with this name (PEP 503 normalised), or None."""
 
+    def previous_version_path(self, artifact_type: str, name: str, dest: Path) -> Path | None:
+        """Materialise the newest admitted earlier version of (type, name) from the store into `dest`; None if there is none."""
+
     def sign(self, passport: Passport) -> SignedPassport:
         """Sign with the organisation's key."""
 
@@ -62,6 +65,9 @@ class NullRegistry:
         return {}
 
     def package_status(self, name: str, version: str | None = None) -> str | None:
+        return None
+
+    def previous_version_path(self, artifact_type: str, name: str, dest: Path) -> Path | None:
         return None
 
     def sign(self, passport: Passport) -> SignedPassport:
