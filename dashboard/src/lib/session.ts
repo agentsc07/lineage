@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 import type { Decision } from "./types";
 
 export interface SessionDecision {
-  ref: string; artifact_type: string; decision: Decision; approved?: { by: string; reason: string; expires: string };
+  ref: string; artifact_type: string; decision: Decision; by?: string; approved?: { by: string; reason: string; expires: string };
 }
 const KEY = "lineage.session.decisions";
 let state: SessionDecision[] = [];

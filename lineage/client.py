@@ -79,6 +79,22 @@ def verify_attestation(signed: SignedAttestation, registry_pubkey: str | Ed25519
     return True
 
 
+def _bad_signature_message(server: str, token: str | None, pinned: str | Ed25519PublicKey, client: httpx.Client | None) -> str:
+    """Why an attestation does not verify. The usual cause is a registry whose database (and so signing key) was recreated
+    after the key was pinned, so say that and how to fix it."""
+    msg = "attestation signature does not verify against the pinned registry key"
+    if server and isinstance(pinned, str):
+        try:
+            r = (client or httpx).get(f"{server}/registry-key", headers=_headers(token), timeout=10.0)
+            live = r.json().get("public_key") if r.status_code == 200 else None
+        except (httpx.HTTPError, ValueError):
+            live = None
+        if live and live != pinned:
+            return (f"{msg}: the registry at {server} now signs with {live[:16]}… but {pinned[:16]}… is pinned (its database was probably recreated). "
+                    "If you trust this registry, run `lineage pull REF DEST --pin` (or edit registry_pubkey in ~/.lineage/config.toml), then pull again.")
+    return msg
+
+
 def hash_tree(path: Path) -> dict[str, str]:
     path = Path(path)
     if path.is_file():
@@ -128,7 +144,7 @@ def check_for_use(path: Path, *, env: str | None = None, attestation: SignedAtte
     if pubkey is None:
         return ["no registry public key is pinned (LINEAGE_REGISTRY_PUBKEY or ~/.lineage/config.toml); cannot verify the attestation"]
     if not verify_attestation(attestation, pubkey):
-        return ["attestation signature does not verify against the pinned registry key"]
+        return [_bad_signature_message(server, token, pubkey, client)]
     if att.environment != env:
         problems.append(f"attestation is for {att.environment}, not {env}")
     if att.revoked:
