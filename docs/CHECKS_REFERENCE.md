@@ -57,7 +57,7 @@ def _identify(ctx: IntakeContext, claims: dict | None, hub: Hub | None, claimed_
         sidecar = next((c for c in candidates if c.exists()), candidates[0])
         if sidecar.exists():
             try:
-    # ... 69 more lines in lineage/intake/pipeline.py
+    # ... 72 more lines in lineage/intake/pipeline.py
 ```
 
 ## S2 Provenance
@@ -186,7 +186,9 @@ def signed_passport(ctx: IntakeContext) -> list[Finding]:
     pub, scope, who = resolve_signer(ctx, sp.key_id)
     ok = True
     rep = ctx.passport_report = {"present": True, "claimed_publisher": body.source.repo or body.issued_by.name, "claimed_source": source_id_of(body.source.hub, body.source.repo),
-                                 "key_id": sp.key_id, "signature": "not_checked", "key_status": "unknown_key", "signer": None, "bytes_match": None}
+                                 "key_id": sp.key_id, "signature": "not_checked", "key_status": "unknown_key", "signer": None, "bytes_match": None,
+                                 "key_scope": list(scope or []), "passport_name": f"{body.name}@{body.version}", "issued_by": body.issued_by.name,
+                                 "issued_at": body.issued_at.isoformat(), "expires_at": body.expires_at.isoformat() if body.expires_at else None}
     if sp.key_id in ctx.policy.revoked_keys:
         rep["key_status"] = "revoked"
         out.append(make_finding("PROV.SIGNATURE.REVOKED_KEY", f"Passport is signed with revoked key {sp.key_id}; treated as unsigned",
@@ -212,9 +214,7 @@ def signed_passport(ctx: IntakeContext) -> list[Finding]:
                 "PROV.SIGNATURE.SCOPE_MISMATCH",
                 f"Trusted key of {who} signs outside its scope: {', '.join(wanted)} is not covered by {', '.join(scope) or 'no scope'}; treated as unsigned",
                 "high", "provenance", "S2", [Evidence(kind="field", ref="key_id", detail=f"{sp.key_id} scope={scope}")]))
-            ok = False
-    if body.expires_at and body.expires_at <= ctx.now:
-    # ... 28 more lines in lineage/intake/inspectors.py
+    # ... 31 more lines in lineage/intake/inspectors.py
 ```
 
 ### Is the parent admitted and not revoked?
@@ -906,14 +906,18 @@ def local_parent_diff(ctx: IntakeContext) -> list[Finding]:
         return [make_finding("MODEL.PARENT.UNIDENTIFIED", "No admitted model matches these weights", "low", "model", "S4",
                              source="statistical")]
     label, parent_path = bank[match.parent]
+    contradiction = []
+    if ctx.declared_parents and match.parent not in ctx.declared_parents:  # the weights point one way, the uploader's declaration another
+        contradiction = [make_finding("MODEL.PARENT.CLAIM_MISMATCH", f"Declared parent(s) {', '.join(p[:19] for p in ctx.declared_parents)} but the weights match '{label}'",
+                                      "medium", "model", "S4", [Evidence(kind="field", ref=match.parent, detail=f"declared {ctx.declared_parents[0]}")], source="statistical")]
     changed = sorted((d for d in diff_models(parent_path, ctx.path) if d.changed), key=lambda d: -d.relative_l2)
     if not changed:
         return [make_finding("MODEL.PARENT.IDENTICAL", f"Weights are identical to admitted model {label}", "info", "model", "S4",
-                             [Evidence(kind="field", ref=match.parent, detail=label)], source="statistical")]
+                             [Evidence(kind="field", ref=match.parent, detail=label)], source="statistical")] + contradiction
     if match.parent not in ctx.parents:
         ctx.parents.append(match.parent)
     out = [make_finding("MODEL.PARENT.IDENTIFIED", f"Parent identified from weights: {label} (similarity {match.similarity:.3f})",
-                        "info", "model", "S4", [Evidence(kind="field", ref=match.parent, detail=label)], source="statistical")]
+                        "info", "model", "S4", [Evidence(kind="field", ref=match.parent, detail=label)], source="statistical")] + contradiction
     claimed = ctx.fact_value("base_model", trusted_only=False)
     if claimed and claimed not in (label, label.split("@")[0]):
         out.append(make_finding("MODEL.PARENT.CLAIM_MISMATCH", f"Card claims base '{claimed}' but weights match '{label}'", "medium",
@@ -924,10 +928,7 @@ def local_parent_diff(ctx: IntakeContext) -> list[Finding]:
 
     out += [f for f in tokenizer.scan(ctx.path, parent_path) if f.id != "MODEL.TOKENIZER.NO_BASE"]  # the parent's tokenizer is the base to diff against
     out.append(make_finding(
-        "MODEL.WEIGHTS.CHANGED_LAYERS", f"{len(changed)} tensor(s) differ from parent {label}: " + ", ".join(d.tensor for d in changed[:4]) + ("…" if len(changed) > 4 else ""), "info", "model", "S4",
-        [Evidence(kind="tensor", ref=d.tensor, detail="shape/dtype changed" if d.relative_l2 == float("inf")
-                  else f"relative L2 {d.relative_l2:.3g}") for d in changed[:12]], source="statistical"))
-    return out
+    # ... 4 more lines in lineage/intake/inspectors.py
 ```
 
 ### Backdoor signature in the weight changes (GPU worker)
@@ -1250,7 +1251,7 @@ def gpu_code_review(ctx: IntakeContext) -> list[Finding]:
     refs = [e.ref for f in ctx.findings if f.severity != "info" or f.id.startswith("PKG.SIGNAL.") for e in f.evidence if e.kind == "file_line"]
     slices = client.build_slices(ctx.root, analysis, refs)
     if not slices:
-        return [make_finding("LLM.REVIEW.NOTHING_TO_REVIEW", "Reviewer ran: no source-to-sink flow, hook or risky capability to send", "info", "llm", "S5")]
+        return [make_finding("LLM.REVIEW.NOTHING_TO_REVIEW", "No model request was made: nothing in the code was flagged, so there was nothing to send to the reviewer", "info", "llm", "S5")]
     caps = sorted({h.cap for h in analysis.hits} | {k.kind for k in analysis.hooks})
     # the artifact's purpose comes from trusted facts first (PyPI summary, hub card), then its own description; a mismatch only adds risk
     purpose = ctx.fact_value("description") or ctx.metadata.get("summary") or (ctx.metadata.get("info") or {}).get("summary") \

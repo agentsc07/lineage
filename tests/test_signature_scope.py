@@ -101,3 +101,49 @@ def test_bootstrap_keys_apply_only_when_the_policy_lists_no_publishers(policy_pa
     other = bare.model_copy(update={"trusted_publishers": [TrustedPublisher(name="x", key="00" * 32, scope=["*"])]})
     d2, _ = run_to_decision("model", str(tiny_model), "dev", other, "j", now=NOW, hub=old_release_hub(), registry=reg)
     assert "PROV.SIGNATURE.UNTRUSTED_KEY" in ids(d2)
+
+
+def test_one_publisher_can_hold_several_keys_and_each_is_checked_on_its_own(policy_path, tiny_model):
+    old, new = Ed25519PrivateKey.generate(), Ed25519PrivateKey.generate()
+    pol = PolicyPack.from_yaml(policy_path).model_copy(update={"trusted_publishers": [
+        TrustedPublisher(name="Apollo ML team", key=trust.public_hex(old.public_key()), scope=["hf:apollo-health/*"]),
+        TrustedPublisher(name="Apollo ML team", key=trust.public_hex(new.public_key()), scope=["hf:apollo-health/*"])]})
+    for key in (old, new):  # a rotated-in key is trusted without touching the other
+        passport_for(tiny_model, key, "apollo-health/triage")
+        assert run(tiny_model, pol).trust_level == "signed"
+    pol = pol.model_copy(update={"revoked_keys": [trust.key_id(old.public_key())]})  # revoking the old key leaves the new one working
+    passport_for(tiny_model, old, "apollo-health/triage")
+    assert "PROV.SIGNATURE.REVOKED_KEY" in ids(run(tiny_model, pol))
+    passport_for(tiny_model, new, "apollo-health/triage")
+    assert run(tiny_model, pol).trust_level == "signed"
+
+
+def test_a_malformed_shipped_passport_is_reported_not_crashed(policy, tiny_model):
+    (tiny_model / "passport.json").write_text('{"passport": {"not": "a passport"}}')
+    d = run(tiny_model, policy)
+    assert "INTAKE.PASSPORT.MALFORMED" in ids(d) and d.trust_level != "signed"
+
+
+def test_an_expired_creator_passport_is_not_trusted(policy, apollo, tiny_model):
+    from datetime import timedelta
+    passport_for(tiny_model, apollo, "apollo-health/triage", expires_at=NOW - timedelta(days=1))
+    d = run(tiny_model, policy)
+    assert "PROV.PASSPORT.EXPIRED" in ids(d) and d.trust_level != "signed"
+
+
+def test_a_file_changed_after_signing_is_a_hash_mismatch_that_blocks(policy, apollo, tiny_model):
+    passport_for(tiny_model, apollo, "apollo-health/triage")
+    w = next(tiny_model.glob("*.safetensors"))
+    b = bytearray(w.read_bytes()); b[-1] ^= 0xFF; w.write_bytes(bytes(b))
+    d = run(tiny_model, policy)
+    assert "INTEGRITY.HASH_MISMATCH" in ids(d) and d.outcome == "block" and d.trust_level != "signed"
+
+
+def test_a_modified_signed_payload_fails_the_signature(policy, apollo, tiny_model):
+    import json
+    passport_for(tiny_model, apollo, "apollo-health/triage")
+    pj = json.loads((tiny_model / "passport.json").read_text())
+    pj["passport"]["predicate"]["risk_score"] = 1 if pj["passport"]["predicate"].get("risk_score") != 1 else 2  # change one signed field
+    (tiny_model / "passport.json").write_text(json.dumps(pj))
+    d = run(tiny_model, policy)
+    assert "PROV.SIGNATURE.INVALID" in ids(d) and d.outcome == "block"

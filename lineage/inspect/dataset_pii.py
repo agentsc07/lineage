@@ -56,8 +56,17 @@ DETECTORS: dict[str, tuple[re.Pattern, object, Severity, str]] = {
     "pan": (re.compile(r"\b[A-Z]{5}\d{4}[A-Z]\b"), None, "high", "Indian PAN numbers"),
     "email": (re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b"), None, "medium", "email addresses"),
     "phone": (re.compile(r"(?<![\w.])(?:\+?91[ -]?)?[6-9]\d{9}\b|(?<![\w.])(?:\+?1[ .-]?)?(?:\(\d{3}\)|\d{3})[ .-]\d{3}[ .-]\d{4}\b"), None, "medium", "phone numbers"),
-    "ip_address": (re.compile(r"\b(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)\b"), None, "low", "IP addresses"),
+    "ip_address": (re.compile(r"\b(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)\b"), lambda v: _public_ip(v), "low", "public IP addresses"),
 }
+
+
+def _public_ip(v: str) -> bool:
+    """Loopback, private, link-local and documentation addresses (127.x, 10.x, 192.168.x, 192.0.2.x) identify nobody; only a routable one counts."""
+    import ipaddress
+    try:
+        return ipaddress.ip_address(v).is_global
+    except ValueError:
+        return False
 
 
 def mask(s: str) -> str:

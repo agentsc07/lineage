@@ -49,7 +49,7 @@ export interface ArtifactView {
   artifact_id: string; merkle_root: string; claimed_origin: string | null; origin_checked: boolean;
   files: { path: string; size: number | null; sha256: string | null; origin: OriginStatus }[];
   facts: { key: string; value: string | null; provenance: Fact["provenance"]; source: string }[];
-  creator_passport: { present: boolean; claimed_publisher?: string; claimed_source?: string; key_id?: string; signature?: string; key_status?: string; signer?: string | null; bytes_match?: boolean | null };
+  creator_passport: { present: boolean; claimed_publisher?: string; claimed_source?: string; key_id?: string; signature?: string; key_status?: string; signer?: string | null; bytes_match?: boolean | null; key_scope?: string[]; passport_name?: string; issued_by?: string; issued_at?: string; expires_at?: string | null; files_pinned?: number; files_bad?: string[] };
   finding_classes: Record<string, "hard_block" | "policy_dependent" | "scored">;
   decision: Decision | null; status: string; requester: string | null; hard_block: boolean; next_action: string;
   pull_command: string | null; pull_command_first_use: string | null;

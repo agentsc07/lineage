@@ -221,7 +221,11 @@ def decide(
 
     if not policy.data.pii_allowed:
         for f in _has_id(findings, "DATA.PII"):
+            if f.id == "DATA.PII.IP_ADDRESS":
+                continue  # a low-signal identifier: it still adds its points to the score, but it does not block by itself
             add("block", f"personal data not allowed by policy: {f.title}", RANK_POLICY)
+    for f in _has_id(findings, "SCANNER.ERROR.", "INTAKE.STAGE.ERROR"):  # a check that crashed is not a check that passed: a person must look
+        add("quarantine", f"a check failed to complete: {f.title}", RANK_POLICY)
     for f in _has_id(findings, "POLICY.LICENCE.NOT_ALLOWED"):
         add("quarantine", f"licence needs review: {f.title}", RANK_POLICY)
 
@@ -318,6 +322,6 @@ def classify_finding(finding: Finding, passport: PassportBody, policy: PolicyPac
     if finding.severity != "info" or finding.id.startswith("CHECK.NOT_RUN.ACQUIRE"):
         if hard_blocks(passport, [finding], policy, environment):
             return "hard_block"
-    if finding.id.startswith(("PROV.COOLDOWN", "DATA.PII", "POLICY.", "PKG.OSV.")) or finding.id.startswith(IDENTITY_IDS):
+    if finding.id.startswith(("PROV.COOLDOWN", "DATA.PII", "POLICY.", "PKG.OSV.", "SCANNER.ERROR.", "INTAKE.STAGE.ERROR")) or finding.id.startswith(IDENTITY_IDS):
         return "policy_dependent"
     return "scored"

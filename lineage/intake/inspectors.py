@@ -73,6 +73,7 @@ class IntakeContext:
     passport_report: dict | None = None  # what the creator-passport check found, for the five-way trust panel
     origin_files: dict[str, str] = field(default_factory=dict)  # path -> matching | changed | missing | extra | unchecked (what the origin check saw)
     origin_verified: bool = False  # every file matches what the hub published, or Lineage fetched the bytes itself
+    declared_parents: list[str] = field(default_factory=list)  # passport ids the uploader named (a statement, never trusted)
     graph_refs: list[dict] = field(default_factory=list)  # things this artifact references: become edges or ghost nodes (P6)
     store: object | None = None  # lineage.store.Store: where every inspected file is kept
     hub: object | None = None  # the Hub used for origin checks (S2a)
@@ -89,8 +90,10 @@ class IntakeContext:
     def add_fact(self, key: str, value: str | None, provenance: str, source: str) -> None:
         if value is None or value == "":
             return
-        self.facts.setdefault(key, []).append(
-            Fact(key=key, value=str(value), provenance=provenance, source=source, at=self.now))  # type: ignore[arg-type]
+        seen = self.facts.setdefault(key, [])
+        if any(f.value == str(value) and f.provenance == provenance and f.source == source for f in seen):
+            return  # the same statement from the same source is one fact, not two
+        seen.append(Fact(key=key, value=str(value), provenance=provenance, source=source, at=self.now))  # type: ignore[arg-type]
 
     def fact(self, key: str, trusted_only: bool = True) -> Fact | None:
         """Best fact for `key` by class: signed > fetched > computed > declared. `trusted_only` never returns a declared one."""
@@ -354,7 +357,9 @@ def signed_passport(ctx: IntakeContext) -> list[Finding]:
     pub, scope, who = resolve_signer(ctx, sp.key_id)
     ok = True
     rep = ctx.passport_report = {"present": True, "claimed_publisher": body.source.repo or body.issued_by.name, "claimed_source": source_id_of(body.source.hub, body.source.repo),
-                                 "key_id": sp.key_id, "signature": "not_checked", "key_status": "unknown_key", "signer": None, "bytes_match": None}
+                                 "key_id": sp.key_id, "signature": "not_checked", "key_status": "unknown_key", "signer": None, "bytes_match": None,
+                                 "key_scope": list(scope or []), "passport_name": f"{body.name}@{body.version}", "issued_by": body.issued_by.name,
+                                 "issued_at": body.issued_at.isoformat(), "expires_at": body.expires_at.isoformat() if body.expires_at else None}
     if sp.key_id in ctx.policy.revoked_keys:
         rep["key_status"] = "revoked"
         out.append(make_finding("PROV.SIGNATURE.REVOKED_KEY", f"Passport is signed with revoked key {sp.key_id}; treated as unsigned",
@@ -393,6 +398,7 @@ def signed_passport(ctx: IntakeContext) -> list[Finding]:
                                     [Evidence(kind="file_line", ref=rel, detail=f"expected {want[:12]}, got {(got or 'none')[:12]}")]))
         ok = ok and not bad
         rep["bytes_match"] = not bad
+        rep["files_pinned"], rep["files_bad"] = len(pinned), [rel for rel, _, _ in bad]
         extra = sorted(set(ctx.files) - set(body.contents.files))
         if extra:
             out.append(make_finding("INTEGRITY.UNPINNED_FILE", f"{len(extra)} file(s) are not covered by the passport", "medium",
@@ -723,14 +729,18 @@ def local_parent_diff(ctx: IntakeContext) -> list[Finding]:
         return [make_finding("MODEL.PARENT.UNIDENTIFIED", "No admitted model matches these weights", "low", "model", "S4",
                              source="statistical")]
     label, parent_path = bank[match.parent]
+    contradiction = []
+    if ctx.declared_parents and match.parent not in ctx.declared_parents:  # the weights point one way, the uploader's declaration another
+        contradiction = [make_finding("MODEL.PARENT.CLAIM_MISMATCH", f"Declared parent(s) {', '.join(p[:19] for p in ctx.declared_parents)} but the weights match '{label}'",
+                                      "medium", "model", "S4", [Evidence(kind="field", ref=match.parent, detail=f"declared {ctx.declared_parents[0]}")], source="statistical")]
     changed = sorted((d for d in diff_models(parent_path, ctx.path) if d.changed), key=lambda d: -d.relative_l2)
     if not changed:
         return [make_finding("MODEL.PARENT.IDENTICAL", f"Weights are identical to admitted model {label}", "info", "model", "S4",
-                             [Evidence(kind="field", ref=match.parent, detail=label)], source="statistical")]
+                             [Evidence(kind="field", ref=match.parent, detail=label)], source="statistical")] + contradiction
     if match.parent not in ctx.parents:
         ctx.parents.append(match.parent)
     out = [make_finding("MODEL.PARENT.IDENTIFIED", f"Parent identified from weights: {label} (similarity {match.similarity:.3f})",
-                        "info", "model", "S4", [Evidence(kind="field", ref=match.parent, detail=label)], source="statistical")]
+                        "info", "model", "S4", [Evidence(kind="field", ref=match.parent, detail=label)], source="statistical")] + contradiction
     claimed = ctx.fact_value("base_model", trusted_only=False)
     if claimed and claimed not in (label, label.split("@")[0]):
         out.append(make_finding("MODEL.PARENT.CLAIM_MISMATCH", f"Card claims base '{claimed}' but weights match '{label}'", "medium",
@@ -954,7 +964,7 @@ def gpu_code_review(ctx: IntakeContext) -> list[Finding]:
     refs = [e.ref for f in ctx.findings if f.severity != "info" or f.id.startswith("PKG.SIGNAL.") for e in f.evidence if e.kind == "file_line"]
     slices = client.build_slices(ctx.root, analysis, refs)
     if not slices:
-        return [make_finding("LLM.REVIEW.NOTHING_TO_REVIEW", "Reviewer ran: no source-to-sink flow, hook or risky capability to send", "info", "llm", "S5")]
+        return [make_finding("LLM.REVIEW.NOTHING_TO_REVIEW", "No model request was made: nothing in the code was flagged, so there was nothing to send to the reviewer", "info", "llm", "S5")]
     caps = sorted({h.cap for h in analysis.hits} | {k.kind for k in analysis.hooks})
     # the artifact's purpose comes from trusted facts first (PyPI summary, hub card), then its own description; a mismatch only adds risk
     purpose = ctx.fact_value("description") or ctx.metadata.get("summary") or (ctx.metadata.get("info") or {}).get("summary") \

@@ -40,9 +40,22 @@ const samples = (): Plugin => ({
   },
 });
 
+// Demo only: examples/run_dashboard_demo.sh sets LINEAGE_DEMO_TOKENS to its tokens file so the page can offer "switch user" without pasting tokens.
+const demoUsers = (): Plugin => ({
+  name: "lineage-demo-users",
+  configureServer(server) {
+    server.middlewares.use("/demo-users.json", (_req, res, next) => {
+      const f = process.env.LINEAGE_DEMO_TOKENS;
+      if (!f || !existsSync(f)) return next();
+      res.setHeader("Content-Type", "application/json");
+      res.end(readFileSync(f));
+    });
+  },
+});
+
 // The dev server proxies /api to the Lineage server so the browser never hits CORS.
 export default defineConfig({
-  plugins: [react(), benchData(), samples()],
+  plugins: [react(), benchData(), samples(), demoUsers()],
   server: {
     port: 5173,
     proxy: {

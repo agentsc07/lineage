@@ -26,6 +26,16 @@ class SqliteRegistry:
         art = models.artifact_row(self.conn, passport_id)
         return art.status if art else None
 
+    def resolve_ref(self, ref: str) -> str | None:
+        ref = ref.strip()
+        if ref.startswith("lp:"):
+            return ref if models.artifact_row(self.conn, ref) else None
+        name, _, version = ref.partition("@")
+        for a in models.list_artifacts(self.conn):  # newest first
+            if a.name == name and (not version or a.version == version) and a.status not in ("rejected",):
+                return a.id
+        return None
+
     def trusted_key(self, key_id: str) -> Ed25519PublicKey | None:
         return trust.trusted_key(self.conn, key_id)
 

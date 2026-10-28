@@ -128,6 +128,8 @@ def test_revoke_renders_blast_radius(monkeypatch):
         {"id": "lp:b", "label": "model-b", "artifact_type": "model", "trust_level": "origin_verified", "status": "admitted", "risk_score": 10}]}
 
     class R:
+        status_code = 200  # the CLI now reads the status to explain a 401/403
+
         def raise_for_status(self): pass
         def json(self): return payload
 

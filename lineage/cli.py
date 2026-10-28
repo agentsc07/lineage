@@ -395,15 +395,21 @@ def upload(
 def revoke(
     artifact_id: Annotated[str, typer.Argument(help="Passport id (lp:...)")],
     reason: Annotated[str, typer.Option()] = "",
-    server: Annotated[str, typer.Option()] = "http://127.0.0.1:8000",
+    server: Annotated[str | None, typer.Option(help="Registry URL (else LINEAGE_SERVER / ~/.lineage/config.toml / http://127.0.0.1:8000)")] = None,
 ) -> None:
-    """Revoke an artifact on the server and print the blast radius."""
+    """Revoke an artifact on the server and print the blast radius. Sends LINEAGE_TOKEN (the server requires an approver or admin)."""
     import httpx
 
+    from lineage import client
     from lineage.schemas.artifact import RevokeResult
 
+    cfg = client.settings()
+    server = (server or cfg["server"] or "http://127.0.0.1:8000").rstrip("/")
     try:
-        r = httpx.post(f"{server}/revoke/{artifact_id}", params={"reason": reason}, timeout=10.0)
+        r = httpx.post(f"{server}/revoke/{artifact_id}", params={"reason": reason}, headers={"Authorization": f"Bearer {cfg['token']}"} if cfg["token"] else {}, timeout=10.0)
+        if r.status_code in (401, 403):
+            err.print(f"[red]✗[/] the registry at {server} refused ({r.status_code}): set LINEAGE_TOKEN to a token with the approver or admin role")
+            raise typer.Exit(code=1)
         r.raise_for_status()
         result = RevokeResult.model_validate(r.json())
     except (httpx.HTTPError, ValueError) as e:

@@ -183,7 +183,7 @@ The registry passport is a JSON file, but its value is the signature plus the ha
 
 ## 10. Benchmarks: how far to trust them
 
-Corpora are in `bench/` (inert fixtures built by `bench/build_*.py`; real PyPI wheels and 50 hub chat templates fetched by `bench/fetch_*.py`). Reported (`bench/results_final.md`): on the unseen final set the full system detected 70% of malicious items (28/40, 95% CI 55–82%) with 5% false alarms; on the set the rules were tuned on, 100%; on the first corpus, 91%. After the refactor the team measured 88% (static) and 90% (with the hosted reviewer), but those fixes were written after seeing the misses, so they are an **upper bound**, not an unseen result. Datasets: 5–10% poisoning is caught; 1% mostly is not. LoRA backdoor detection: AUROC 0.81 / 0.78 (small bank, GPU, not re-run since the refactor). Real-package false-alarm rate was measured at 5–6% on 399 PyPI wheels before the latest rule changes. What the benchmark is not: a measurement of detection on attacks in the wild, or of the post-refactor system on data it has not been tuned on.
+Corpora are in `bench/` (inert, synthetic fixtures built by `bench/build_*.py`; real PyPI wheels and hub chat templates fetched by `bench/fetch_*.py`). The only held-out measurement is the frozen FINAL column of `bench/results_final.md`: 28/40 malicious found (70%, CI 55–82%) with 2/40 false alarms. The 88%/90% figures are post-hoc, and a re-run on current code gives 85–88% static. Every number, its status and the checks that have not been verified (GPU 24–26, live LLM 30–31) are in `docs/CLAIMS.md`: quote that file, not this paragraph.
 
 ## 11. What changed in this pass
 
@@ -243,3 +243,20 @@ Each intake is a **new artifact with a new id**, even for identical bytes; `INTA
 | Manifest (tool) | `TOOL.MANIFEST.MISSING` (high); no description or intent checks | `tool_description` |
 
 A parent is therefore **declared** (by the hub card, the uploader, or a passport) or **found** (from weights on this host, or recorded by `lineage run`). A declared parent is checked against the weights when the hub is reachable; an unfound parent only costs points. It never blocks by itself.
+
+## 15. Declaring parents on upload
+
+An uploader can name artifacts that are already in the catalogue as parents (base model, training data):
+
+* the **Parents** field under "what you say about this artifact" (comma-separated `name@version` or `lp:` ids; the box suggests catalogue entries), or
+* `"parents": ["triage-base@67d0bdf167ed"]` in a `lineage.meta.json` inside the upload.
+
+What happens (`pipeline._declared_parents`, tests in `tests/test_declared_parents.py`): a name that resolves becomes a passport parent, so the graph draws a `derived_from` edge, the parent checks run (`PROV.PARENT.REVOKED/NOT_ADMITTED`), and revoking the parent reaches the child. A name that resolves to nothing raises `PROV.PARENT.UNRESOLVED` (medium) and is drawn as an unregistered node. The statement is recorded as `PROV.PARENT.DECLARED` (info): **stated, not proven**. It can only add risk. Proof of a parent still comes from the weights (`MODEL.PARENT.*`), a signed passport, or `lineage run` + `lineage.load`.
+
+## 16. Names of rows whose fetch failed
+
+A failed hub fetch is recorded under what was asked for (`pypi:requests==2.32.3` -> `requests@2.32.3`; `hf-dataset:org/notes` -> `org/notes@unresolved`), not as `@0.0.0`. The demo hub is a stand-in: only `hf:apollo-health/triage-base`, `hf-dataset:apollo-health/instructions` and `pypi:acme-llm==1.4.0/1.4.1` exist there, so the Intake page's "Try" buttons are filled from `presets.json` written by `examples/make_dashboard_samples.py`. Other names answer 404 on the demo hub by design. Set `LINEAGE_DEMO_REAL_HUB=1` for real Hugging Face models.
+
+## 17. Switching user in the demo
+
+`examples/run_dashboard_demo.sh` lets the dev server publish its tokens file at `/demo-users.json` (dev only, opt-in through `LINEAGE_DEMO_TOKENS`). The login page then shows one button per user and the sidebar has a "Signed in as" menu that switches identity without signing out. Tokens are kept per browser tab. Separation of duties is unchanged: the server still refuses an approval from the person who requested it.

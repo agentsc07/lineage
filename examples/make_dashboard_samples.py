@@ -31,19 +31,27 @@ def main(demo: Path, out: Path) -> None:
     shutil.copy(next((demo / "hub" / "pypi" / "acme-llm" / "1.4.1").glob("*.whl")), out / "acme_llm-1.4.1-py3-none-any.whl")
     zip_dir(HERE / "demo_artifacts" / "dicom-fetch", out / "dicom-fetch.zip")
     manifest = [
-        {"label": "Clean model (a copy of triage-base)", "file": "triage-base.zip", "type": "model", "env": "prod", "claimed_origin": "hf:apollo-health/triage-base",
+        {"label": "Clean model (a copy of triage-base)", "file": "triage-base.zip", "name": "triage-base-mirror", "version": "1.0.0", "publisher": "apollo-health", "type": "model", "env": "prod", "claimed_origin": "hf:apollo-health/triage-base",
          "expect": "Every file matches the hub; prod still needs a human approval."},
-        {"label": "Tampered copy (one byte changed)", "file": "triage-base-tampered.zip", "type": "model", "env": "prod", "claimed_origin": "hf:apollo-health/triage-base",
+        {"label": "Tampered copy (one byte changed)", "file": "triage-base-tampered.zip", "name": "triage-base-tampered", "version": "1.0.0", "type": "model", "env": "prod", "claimed_origin": "hf:apollo-health/triage-base",
          "expect": "model.safetensors: changed. Hard block."},
-        {"label": "Fine-tune with no claim (hidden template instruction)", "file": "shady-ft.zip", "type": "model", "env": "prod",
+        {"label": "Fine-tune with no claim (hidden template instruction)", "file": "shady-ft.zip", "name": "shady-ft", "version": "0.1.0", "type": "model", "env": "prod",
          "expect": "Trust unknown; the chat template carries a hidden instruction."},
-        {"label": "Backdoored instruction dataset", "file": "instructions.jsonl", "type": "dataset", "env": "dev",
+        {"label": "Backdoored instruction dataset", "file": "instructions.jsonl", "name": "instructions-sample", "version": "1.0.0", "type": "dataset", "env": "dev",
          "expect": "5% of rows carry a trigger and an injected link."},
         {"label": "Bad package (acme-llm 1.4.1, startup hook)", "file": "acme_llm-1.4.1-py3-none-any.whl", "type": "package", "env": "prod",
          "expect": "A .pth startup hook that decodes and executes a payload."},
         {"label": "MCP tool (dicom-fetch)", "file": "dicom-fetch.zip", "type": "tool", "env": "dev", "expect": "A tool always needs a human approval."},
     ]
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2))
+    # sources the demo hub really serves (the generic examples would answer 404 there)
+    presets = [
+        {"label": "Model on the hub", "type": "model", "source": "hf:apollo-health/triage-base", "env": "prod"},
+        {"label": "Dataset on the hub", "type": "dataset", "source": "hf-dataset:apollo-health/instructions", "env": "dev"},
+        {"label": "Package on the index (clean)", "type": "package", "source": "pypi:acme-llm==1.4.0", "env": "prod"},
+        {"label": "Package on the index (bad)", "type": "package", "source": "pypi:acme-llm==1.4.1", "env": "prod"},
+    ]
+    (out / "presets.json").write_text(json.dumps(presets, indent=2))
     print(f"{len(manifest)} samples in {out}")
 
 
