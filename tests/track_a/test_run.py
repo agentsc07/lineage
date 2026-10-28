@@ -132,3 +132,23 @@ def test_cli_run_writes_the_passport_beside_each_output(project, monkeypatch):
     doc = json.loads((project / "out.txt.passport.json").read_text())
     body = doc["passport"]["predicate"]
     assert body["action"]["kind"] == "train" and body["inputs"] and body["sbom"] and body["facts"][0]["key"] == "licence" and doc["signature"]
+
+
+def test_input_pulled_from_the_registry_becomes_a_parent(project, tmp_path):
+    """`lineage pull` leaves `<folder>.lineage-attestation.json` beside the folder; a run that reads those exact bytes names that artifact as a parent."""
+    from datetime import datetime, timedelta, timezone
+
+    from lineage.client import cache_path
+    from lineage.schemas.attestation import Attestation, SignedAttestation
+
+    pulled = project / "admitted" / "triage-base"
+    pulled.mkdir(parents=True)
+    (pulled / "weights.bin").write_bytes(b"admitted bytes")
+    now = datetime.now(timezone.utc)
+    att = Attestation(artifact_id="lp:" + "ab" * 32, digest="d", files={"weights.bin": hashlib.sha256(b"admitted bytes").hexdigest()}, outcome="allow",
+                      environment="dev", trust="origin_verified", policy_version="pp:x", issued_at=now, expires_at=now + timedelta(days=1))
+    cache_path(pulled).write_text(SignedAttestation(attestation=att, signature="", key_id="k").model_dump_json())
+    (project / "train.py").write_text("open('admitted/triage-base/weights.bin','rb').read(); open('out.txt','w').write('x')\n")
+    assert run_recorded([sys.executable, "train.py"], project).predicate.parents == [att.artifact_id]
+    (pulled / "weights.bin").write_bytes(b"edited after the pull")
+    assert run_recorded([sys.executable, "train.py"], project).predicate.parents == []

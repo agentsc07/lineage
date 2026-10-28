@@ -24,7 +24,7 @@ function LineageNode({ data, selected }: NodeProps<Node<NData>>) {
   const group = !!node.group_members?.length, advised = !!node.advisories?.length;
   const dashed = vkey === "revoked" || hit || ghost;
   return (
-    <div className={`rounded-lg border bg-panel px-3 py-2 min-w-[200px] transition-colors ${hit ? "blast" : ""} ${selected ? "ring-2 ring-accent" : ""}`}
+    <div className={`rounded-lg border bg-panel px-3 py-2 w-[240px] transition-colors ${hit ? "blast" : ""} ${selected ? "ring-2 ring-accent" : ""}`}
       style={{ borderColor: `rgb(${color})`, borderLeftWidth: 4, borderStyle: dashed ? "dashed" : "solid", background: dashed ? "rgb(var(--block) / .07)" : undefined }}>
       <Handle type="target" position={Position.Left} className="!bg-faint !border-0 !w-1.5 !h-1.5" />
       <div className="flex items-center justify-between gap-3">
@@ -98,11 +98,16 @@ export default function GraphPage() {
     const depth = new Map<string, number>();
     const parents = (n: string) => g.edges.filter((e) => e.target === n).map((e) => e.source);
     const d = (n: string): number => { if (depth.has(n)) return depth.get(n)!; const p = parents(n); const v = p.length ? 1 + Math.max(...p.map(d)) : 0; depth.set(n, v); return v; };
-    const perCol = new Map<number, number>();
+    // Columns by depth; inside a column the nodes are stacked and the whole column is centred on the tallest one, so nothing overlaps.
+    const colSize = new Map<number, number>();
+    g.nodes.forEach((n) => { const c = d(n.id); colSize.set(c, (colSize.get(c) ?? 0) + 1); });
+    const tallest = Math.max(1, ...colSize.values());
+    const seen = new Map<number, number>();
     const ns: Node<NData>[] = g.nodes.map((n) => {
-      const col = d(n.id); const row = perCol.get(col) ?? 0; perCol.set(col, row + 1);
+      const col = d(n.id); const row = seen.get(col) ?? 0; seen.set(col, row + 1);
+      const offset = ((tallest - (colSize.get(col) ?? 1)) * 120) / 2;
       const state = result?.revoked === n.id ? "revoked" : wave.has(n.id) ? "hit" : "idle";
-      return { id: n.id, type: "lineage", position: { x: col * 280, y: row * 110 }, data: { node: n, state, vkey: verdictKey(n.status, null, n.id, monitorIds) }, selected: n.id === target };
+      return { id: n.id, type: "lineage", position: { x: col * 340, y: offset + row * 120 }, data: { node: n, state, vkey: verdictKey(n.status, null, n.id, monitorIds) }, selected: n.id === target };
     });
     const es: Edge[] = g.edges.map((e) => {
       const hot = (result?.revoked === e.source || wave.has(e.source)) && wave.has(e.target);

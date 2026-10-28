@@ -138,11 +138,32 @@ def _freeze(command: list[str]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _attested_parent(f: Path, digest: str) -> str | None:
+    """The artifact id of the admitted artifact this file was pulled from: `lineage pull` writes `<folder>.lineage-attestation.json` beside the
+    folder it filled, and that attestation pins the hash of every file. The file counts only if its hash is exactly the attested one."""
+    from lineage.schemas.attestation import SignedAttestation
+
+    for d in f.parents:
+        cache = d.parent / (d.name + ".lineage-attestation.json")
+        if cache.is_file():
+            try:
+                att = SignedAttestation.model_validate_json(cache.read_text()).attestation
+            except ValueError:
+                continue
+            if att.files.get(f.relative_to(d).as_posix()) == digest:
+                return att.artifact_id
+    return None
+
+
 def _find_parent_ids(inputs: dict[str, str], workdir: Path) -> list[str]:
-    """An input is traced to a parent only if a sibling passport pins that exact file hash."""
+    """An input is traced to a parent only if a sibling passport pins that exact file hash, or the file is byte-for-byte a file of an
+    artifact fetched with `lineage pull` (its attestation sits beside the folder)."""
     ids: list[str] = []
     for rel, digest in inputs.items():
         f = Path(rel) if os.path.isabs(rel) else workdir / rel
+        pulled = _attested_parent(f, digest)
+        if pulled and pulled not in ids:
+            ids.append(pulled)
         for cand in (f.with_name(f.name + ".passport.json"), f.parent / "passport.json"):
             if not cand.is_file():
                 continue

@@ -14,3 +14,8 @@
 | `audit/` | Two read-only audits of the code (implementation; security paths) |
 | `screenshots/` | Current dashboard screenshots (graph, revoke, intake) |
 | `../bench/results_*.md` | Benchmark reports: frozen run, after-refactor, data, federated, real-world false alarms |
+| `ARTIFACT_FLOW.md` | How an artifact moves through Lineage, field by field, with identifiers, policy, usage and limits (start here) |
+| `CHECKS_REFERENCE.md` | Every check: what it looks for, how, what it reads, its code, where it fired (generated) |
+| `check_matrix.json` | Which check fired on which fixture in a real offline run (`scripts/check_matrix.py`) |
+| `REPO_STRUCTURE.md` | What each folder is |
+| `review_audit/` | Source-code audit of the review pipeline and scoring |

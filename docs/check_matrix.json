@@ -1,0 +1,230 @@
+{
+ "capabilities": {
+  "malicious package (hooks, decode-exec, exfil, reviewer bait)": [
+   "PKG.SIGNAL.NETWORK (info)",
+   "PKG.SIGNAL.FILESYSTEM (info)",
+   "PKG.SIGNAL.ENV_SECRETS (info)",
+   "PKG.SIGNAL.DYNAMIC_EXEC (info)",
+   "PKG.SIGNAL.ENCODED_BLOB (info)",
+   "PKG.CODE.DECODE_EXEC (critical)",
+   "PKG.HOOK.STARTUP_HOOK (critical)",
+   "PKG.HOOK.NETWORK_AT_INSTALL (high)",
+   "PKG.COMBO.CREDENTIAL_EXFIL (critical)",
+   "PKG.CODE.BAIT_ON_RISKY_CODE (critical)"
+  ],
+  "model with remote code in its config": [
+   "PKG.SIGNAL.SUBPROCESS (info)",
+   "PKG.COMBO.IMPORT_TIME_EXEC (critical)"
+  ],
+  "poisoned MCP tool": [
+   "PKG.SIGNAL.NETWORK (info)"
+  ]
+ },
+ "config": {
+  "model with remote code in its config": [
+   "MODEL.CONFIG.TRUST_REMOTE_CODE (high)",
+   "MODEL.CONFIG.AUTO_MAP (high)",
+   "MODEL.CONFIG.CUSTOM_CODE (medium)"
+  ]
+ },
+ "cooldown": {
+  "clean dataset": [
+   "PROV.COOLDOWN.UNVERIFIED (medium)"
+  ],
+  "clean tiny model": [
+   "PROV.COOLDOWN.UNVERIFIED (medium)"
+  ],
+  "dataset with a 5% trigger backdoor": [
+   "PROV.COOLDOWN.UNVERIFIED (medium)"
+  ],
+  "malicious package (hooks, decode-exec, exfil, reviewer bait)": [
+   "PROV.COOLDOWN.UNVERIFIED (medium)"
+  ],
+  "model with a backdoored chat template and a URL token": [
+   "PROV.COOLDOWN.UNVERIFIED (medium)"
+  ],
+  "model with a malicious pickle": [
+   "PROV.COOLDOWN.UNVERIFIED (medium)"
+  ],
+  "model with remote code in its config": [
+   "PROV.COOLDOWN.UNVERIFIED (medium)"
+  ],
+  "poisoned MCP tool": [
+   "PROV.COOLDOWN.UNVERIFIED (medium)"
+  ]
+ },
+ "data_diff": {
+  "clean dataset": [
+   "DATA.DIFF.NO_BASELINE (info)"
+  ],
+  "dataset with a 5% trigger backdoor": [
+   "DATA.DIFF.NO_BASELINE (info)"
+  ]
+ },
+ "data_poison": {
+  "clean dataset": [
+   "DATA.V2.SUMMARY (info)"
+  ],
+  "dataset with a 5% trigger backdoor": [
+   "DATA.INJECT.URL (medium)",
+   "DATA.TRIGGER.BEHAVIOUR (high)",
+   "DATA.V2.SUMMARY (info)"
+  ]
+ },
+ "data_stats": {
+  "clean dataset": [
+   "DATA.STATS.SUMMARY (info)"
+  ],
+  "dataset with a 5% trigger backdoor": [
+   "DATA.STATS.SUMMARY (info)"
+  ]
+ },
+ "llm_card": {
+  "clean tiny model": [
+   "LLM.CARD.MISSING (low)"
+  ],
+  "model with a backdoored chat template and a URL token": [
+   "LLM.CARD.MISSING (low)"
+  ],
+  "model with a malicious pickle": [
+   "LLM.CARD.MISSING (low)"
+  ],
+  "model with remote code in its config": [
+   "LLM.CARD.MISSING (low)"
+  ]
+ },
+ "origin": {
+  "clean dataset": [
+   "PROV.ORIGIN.UNCLAIMED (medium)"
+  ],
+  "clean tiny model": [
+   "PROV.ORIGIN.UNCLAIMED (medium)"
+  ],
+  "dataset with a 5% trigger backdoor": [
+   "PROV.ORIGIN.UNCLAIMED (medium)"
+  ],
+  "malicious package (hooks, decode-exec, exfil, reviewer bait)": [
+   "PROV.ORIGIN.UNCLAIMED (medium)"
+  ],
+  "model with a backdoored chat template and a URL token": [
+   "PROV.ORIGIN.UNCLAIMED (medium)"
+  ],
+  "model with a malicious pickle": [
+   "PROV.ORIGIN.UNCLAIMED (medium)"
+  ],
+  "model with remote code in its config": [
+   "PROV.ORIGIN.UNCLAIMED (medium)"
+  ],
+  "poisoned MCP tool": [
+   "PROV.ORIGIN.UNCLAIMED (medium)"
+  ]
+ },
+ "osv": {
+  "malicious package (hooks, decode-exec, exfil, reviewer bait)": [
+   "PKG.OSV.VERSION_UNKNOWN (info)"
+  ]
+ },
+ "parent_id": {
+  "clean tiny model": [
+   "MODEL.PARENT.NO_CLAIMED_BASE (info)"
+  ],
+  "model with a backdoored chat template and a URL token": [
+   "MODEL.PARENT.NO_CLAIMED_BASE (info)"
+  ],
+  "model with a malicious pickle": [
+   "MODEL.PARENT.NO_CLAIMED_BASE (info)"
+  ],
+  "model with remote code in its config": [
+   "MODEL.PARENT.NO_CLAIMED_BASE (info)"
+  ]
+ },
+ "pickle": {
+  "model with a malicious pickle": [
+   "MODEL.PICKLE.DANGEROUS_GLOBAL (critical)",
+   "MODEL.PICKLE.PRESENT (low)"
+  ]
+ },
+ "pii": {
+  "dataset with a 5% trigger backdoor": [
+   "DATA.PII.IP_ADDRESS (low)"
+  ]
+ },
+ "pkg_baseline": {
+  "malicious package (hooks, decode-exec, exfil, reviewer bait)": [
+   "PKG.BASELINE.NONE (info)"
+  ]
+ },
+ "pkg_deps": {
+  "malicious package (hooks, decode-exec, exfil, reviewer bait)": [
+   "PKG.DEP.NONE (info)"
+  ]
+ },
+ "taint": {
+  "malicious package (hooks, decode-exec, exfil, reviewer bait)": [
+   "PKG.TAINT.ENV_EXFIL (critical)",
+   "PKG.TAINT.ENCODED_EXEC (critical)"
+  ]
+ },
+ "template": {
+  "model with a backdoored chat template and a URL token": [
+   "MODEL.TEMPLATE.TRIGGER_BRANCH (critical)",
+   "MODEL.TEMPLATE.HIDDEN_INSTRUCTION (critical)"
+  ]
+ },
+ "tokenizer": {
+  "model with a backdoored chat template and a URL token": [
+   "MODEL.TOKENIZER.SUSPICIOUS_TOKEN (high)",
+   "MODEL.TOKENIZER.ADDED_TOKENS_UNCHECKED (info)",
+   "MODEL.TOKENIZER.NO_BASE (info)"
+  ]
+ },
+ "tool_desc": {
+  "poisoned MCP tool": [
+   "TOOL.DESC.INVISIBLE_UNICODE (critical)",
+   "TOOL.DESC.AGENT_INSTRUCTION (critical)",
+   "TOOL.DESC.AGENT_INSTRUCTION (critical)",
+   "TOOL.DESC.AGENT_INSTRUCTION (critical)",
+   "TOOL.DESC.MARKDOWN_IMAGE (high)"
+  ]
+ },
+ "tool_intent": {
+  "poisoned MCP tool": [
+   "TOOL.INTENT.UNDECLARED_NETWORK (high)"
+  ]
+ },
+ "unrun": {
+  "clean dataset": [
+   "CHECK.NOT_RUN.LLM_REVIEW (high)"
+  ],
+  "clean tiny model": [
+   "CHECK.NOT_RUN.PARENT_ID (medium)",
+   "CHECK.NOT_RUN.WEIGHT_BACKDOOR (medium)",
+   "CHECK.NOT_RUN.BEHAVIOUR_DIFF (medium)"
+  ],
+  "dataset with a 5% trigger backdoor": [
+   "CHECK.NOT_RUN.LLM_REVIEW (high)"
+  ],
+  "malicious package (hooks, decode-exec, exfil, reviewer bait)": [
+   "CHECK.NOT_RUN.PKG_METADATA (high)",
+   "CHECK.NOT_RUN.LLM_REVIEW (high)"
+  ],
+  "model with a backdoored chat template and a URL token": [
+   "CHECK.NOT_RUN.PARENT_ID (medium)",
+   "CHECK.NOT_RUN.WEIGHT_BACKDOOR (medium)",
+   "CHECK.NOT_RUN.BEHAVIOUR_DIFF (medium)"
+  ],
+  "model with a malicious pickle": [
+   "CHECK.NOT_RUN.PARENT_ID (medium)",
+   "CHECK.NOT_RUN.WEIGHT_BACKDOOR (medium)",
+   "CHECK.NOT_RUN.BEHAVIOUR_DIFF (medium)"
+  ],
+  "model with remote code in its config": [
+   "CHECK.NOT_RUN.PARENT_ID (medium)",
+   "CHECK.NOT_RUN.WEIGHT_BACKDOOR (medium)",
+   "CHECK.NOT_RUN.BEHAVIOUR_DIFF (medium)"
+  ],
+  "poisoned MCP tool": [
+   "CHECK.NOT_RUN.LLM_REVIEW (high)"
+  ]
+ }
+}

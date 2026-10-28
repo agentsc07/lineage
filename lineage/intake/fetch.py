@@ -164,6 +164,18 @@ def _git_oid(data: bytes) -> str:
     return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()  # noqa: S324 - git's object id, not a security hash
 
 
+def normalise_source(artifact_type: str, source: str | None) -> str | None:
+    """`hf:` names a model repository and `hf-dataset:` a dataset repository on Hugging Face. When the artifact type says which one it
+    is, take the type's word: `hf:nvidia/simready-assets` typed for a dataset would otherwise ask the models API and answer HTTP 404."""
+    if not source:
+        return source
+    if artifact_type == "dataset" and source.startswith("hf:"):
+        return "hf-dataset:" + source[3:]
+    if artifact_type in ("model", "tool", "agent") and source.startswith("hf-dataset:"):
+        return "hf:" + source[len("hf-dataset:"):]
+    return source
+
+
 def parse_origin(origin: str) -> tuple[str, str, str | None]:
     """`hf:org/name@rev` -> ("model", "org/name", "rev"); `hf-dataset:` -> "dataset"; `pypi:name==1.0` -> ("pypi", "name", "1.0")."""
     kind, _, rest = origin.partition(":")

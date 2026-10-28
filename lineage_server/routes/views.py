@@ -174,3 +174,11 @@ def attestation_view(artifact_id: str, request: Request, env: str = "prod", conn
         raise HTTPException(404, f"unknown artifact {artifact_id}")
     pub = request.app.state.signing_key.public_key()
     return AttestationView(attestation=signed, signature_ok=attest.verify(signed, pub), registry_key_id=trust.key_id(pub))
+
+
+@router.get("/catalog/checks")
+def check_catalog() -> dict:
+    """Every check in plain words (lineage.catalog), so the dashboard can explain a finding instead of showing its code."""
+    from lineage.catalog import CHECKERS, KINDS, NOT_RUN_NAMES, STAGE_NAMES
+
+    return {"checkers": [c.model_dump() for c in CHECKERS], "kinds": KINDS, "stages": STAGE_NAMES, "not_run": NOT_RUN_NAMES}

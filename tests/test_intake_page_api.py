@@ -174,3 +174,11 @@ def test_the_view_reports_the_status_and_says_who_rejected(tmp_path, policy_path
     assert api.post(f"/decisions/{d['artifact_id']}/reject", json={"reason": "duplicate of an admitted model"}).status_code == 200
     v = api.get(f"/artifacts/{d['artifact_id']}/view").json()
     assert v["status"] == "rejected" and "Rejected by" in v["next_action"] and "duplicate of an admitted model" in v["next_action"] and v["pull_command"] is None
+
+
+def test_hf_prefix_follows_the_artifact_type():
+    from lineage.intake.fetch import normalise_source
+
+    assert normalise_source("dataset", "hf:nvidia/simready-assets") == "hf-dataset:nvidia/simready-assets"
+    assert normalise_source("model", "hf-dataset:org/x@abc") == "hf:org/x@abc"
+    assert normalise_source("model", "hf:org/m") == "hf:org/m" and normalise_source("package", "pypi:x==1") == "pypi:x==1" and normalise_source("model", None) is None

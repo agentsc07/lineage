@@ -21,6 +21,14 @@ const presets: { label: string; type: ArtifactType; source: string; env: string 
 ];
 interface Sample { label: string; file: string; type: ArtifactType; env: string; claimed_origin?: string; expect: string }
 
+const CLAIM_FIELDS = [
+  { key: "publisher", label: "Publisher", placeholder: "nvidia", help: "A name. Checked against the publisher allow and block lists and for look-alikes. A name you type is never treated as verified." },
+  { key: "base_model", label: "Base model (Hugging Face repo id)", placeholder: "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1", help: "The repository id of the model this was fine-tuned from. Lineage fetches that repo's weights header and compares embeddings; a mismatch raises risk. It is not a passport id." },
+  { key: "licence", label: "Licence", placeholder: "apache-2.0", help: "Compared with the policy's allowed licences. A declared licence is never counted as allowed." },
+  { key: "released_at", label: "Released at (date)", placeholder: "2026-10-01", help: "Shown only. The release-age cooldown ignores a date you type; it needs one from the hub or a signed passport." },
+  { key: "description", label: "What it is for", placeholder: "Helper for calling LLM providers", help: "Used as the stated purpose when the AI reviewer judges whether code behaviour fits." },
+];
+
 export default function Intake() {
   const { jobId } = useParams();
   const navigate = useNavigate();
@@ -147,11 +155,14 @@ export default function Intake() {
             <input className="input mt-1 font-mono" placeholder="hf:meta-llama/Llama-3.2-1B@<commit sha>: every file is compared with what that repo published" value={origin} onChange={(e) => setOrigin(e.target.value)} />
             <span className="text-xs text-faint">No claim means trust stays <span className="mono">unknown</span>. Hints found inside the upload are shown but never trusted.</span></label>)}
         <details className="mt-3">
-          <summary className="text-sm text-mute cursor-pointer">Claims about this artifact (all recorded as <span className="mono">declared</span>, never used to clear a check)</summary>
-          <div className="grid sm:grid-cols-5 gap-3 mt-2">
-            {["publisher", "licence", "base_model", "released_at", "description"].map((k) => (
-              <label key={k} className="text-xs text-mute">{k}<input className="input mt-1" value={claims[k] ?? ""} onChange={(e) => setClaims((c) => ({ ...c, [k]: e.target.value }))} /></label>))}
+          <summary className="text-sm text-mute cursor-pointer">Optional: what you say about this artifact (recorded as <span className="mono">declared</span>; it can add risk but never earns trust)</summary>
+          <div className="grid sm:grid-cols-2 gap-3 mt-2">
+            {CLAIM_FIELDS.map((c) => (
+              <label key={c.key} className="text-xs text-mute">{c.label}
+                <input className="input mt-1" placeholder={c.placeholder} value={claims[c.key] ?? ""} onChange={(e) => setClaims((m) => ({ ...m, [c.key]: e.target.value }))} />
+                <span className="text-faint block mt-0.5">{c.help}</span></label>))}
           </div>
+          <p className="text-xs text-faint mt-2">Publisher keys are not entered here. A passport shipped with the artifact is verified against the keys your administrator lists under Trusted publishers; a key that arrives with an upload is never trusted.</p>
         </details>
         <div className="flex flex-wrap gap-2 mt-3 items-center">
           <span className="text-xs text-faint">Try:</span>

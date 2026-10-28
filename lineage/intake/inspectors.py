@@ -883,19 +883,32 @@ def ground(claims: list[Claim], root: Path) -> tuple[list[Claim], list[Claim]]:
         return _ground_local(claims, root)
 
 
-def claims_to_findings(resp: ReviewResponse, root: Path, id_prefix: str) -> list[Finding]:
-    """Grounded claims become LLM findings (they only add risk); the rest are dropped and counted."""
+def claims_to_findings(resp: ReviewResponse, root: Path | list, id_prefix: str, shown_as: dict[str, str] | None = None) -> list[Finding]:
+    """Grounded claims become LLM findings (they only add risk); the rest are dropped and counted. `root` is the artifact folder, or the
+    list of `CodeSlice`s the reviewer was shown (a card review cites `card.md` and `measured.json`, which are not files of the artifact);
+    `shown_as` renames a cited file in the evidence (`card.md` -> `README.md`)."""
     good, dropped = ground(resp.claims, root)
+    name = lambda f: (shown_as or {}).get(f, f)  # noqa: E731
     out = [
         make_finding(f"{id_prefix}.CLAIM", c.text, c.severity, "llm", "S5",
-                     [Evidence(kind="file_line", ref=f"{c.file}:{c.line}", detail=c.api)], source="llm", grounded=True)
+                     [Evidence(kind="file_line", ref=f"{name(c.file)}:{c.line}", detail=c.api)], source="llm", grounded=True)
         for c in good
     ]
     if dropped:
         out.append(make_finding(f"{id_prefix}.UNGROUNDED", f"{len(dropped)} reviewer claim(s) dropped: cited line does not contain the cited API",
-                                "info", "llm", "S5", [Evidence(kind="file_line", ref=f"{c.file}:{c.line}", detail=c.api) for c in dropped[:5]],
+                                "info", "llm", "S5", [Evidence(kind="file_line", ref=f"{name(c.file)}:{c.line}", detail=c.api) for c in dropped[:5]],
                                 source="llm", score=0, grounded=False))
     return out
+
+
+def _card_slices(card_text: str, measured: dict, card_file: str = "card.md") -> list:
+    """What the card reviewer was shown, as slices: the card (cited as `card.md`) and the measured values (`measured.json`)."""
+    from lineage.schemas.gpu import CodeSlice
+
+    m = "\n".join(f"{k}: {json.dumps(v, default=str)}" for k, v in measured.items()) or "(no measurements)"
+    names = ("card.md", "measured.json", *([card_file] if card_file != "card.md" else []))
+    text = lambda n: m if n == "measured.json" else card_text  # noqa: E731
+    return [CodeSlice(file=n, start=1, end=max(len(text(n).splitlines()), 1), code=text(n)) for n in names]
 
 
 @register(("model", "dataset"), "S5")
@@ -914,13 +927,15 @@ def gpu_card_review(ctx: IntakeContext) -> list[Finding]:
             resp = gpu.post("/review/card", req, ReviewResponse, ctx.gpu_url)
     except (gpu.GpuUnavailable, lc.GpuUnavailable):
         return [not_run("LLM_REVIEW", "the reviewer backend is unreachable (card review)", "S5")]
-    out = claims_to_findings(resp, ctx.root, "LLM.CARD")
+    card_file = next((n for n in CARD_NAMES if (ctx.root / n).is_file()), "card.md")
+    shown = _card_slices(ctx.card_text, measured, card_file)
+    out = claims_to_findings(resp, shown, "LLM.CARD", {"card.md": card_file})
     from lineage.inspect.llm_review import policy_hosted
 
     try:  # the organisation's policy against the card, by a hosted content-safety model
         if not policy_hosted.available():
             raise policy_hosted.PolicyCheckUnavailable("no hosted API key (the policy model otherwise needs the GPU worker)")
-        out += claims_to_findings(ReviewResponse(claims=policy_hosted.check(ctx.card_text, ctx.policy), verdict="suspicious"), ctx.root, "LLM.POLICY")
+        out += claims_to_findings(ReviewResponse(claims=policy_hosted.check(ctx.card_text, ctx.policy), verdict="suspicious"), shown, "LLM.POLICY", {"card.md": card_file})
     except policy_hosted.PolicyCheckUnavailable as e:
         out.append(not_run("POLICY_CHECK", str(e), "S5"))
     return out
