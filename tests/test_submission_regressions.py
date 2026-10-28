@@ -60,3 +60,15 @@ def test_a_check_that_did_not_run_is_priced_by_environment_and_acquire_is_a_hard
     assert dev.risk_score == 0 and prod.risk_score == 25  # the policy prices it: free in dev, high in prod
     acq = finding("CHECK.NOT_RUN.ACQUIRE", "critical", 40, category="integrity")
     assert decide(body(name="d", kind="dataset"), [acq], "dev", policy, NOW, released_at=ago(days=30)).outcome == "block"
+
+
+def test_a_claim_that_abbreviates_a_long_literal_with_an_ellipsis_is_still_grounded():
+    """The real line of the demo's compromised wheel; the model wrote '...' for the payload and the claim used to be dropped."""
+    from lineage.inspect.llm_review.grounding import api_on_line
+
+    line = "import base64; exec(base64.b64decode('aW1wb3J0IG9zOyBvcy5zeXN0ZW0oJ3RvdWNoIC90bXAvbGluZWFnZV9tYXJrZXJfeCcp'))"
+    assert api_on_line("import base64; exec(base64.b64decode(...))", line)
+    assert api_on_line("exec(base64.b64decode(...))", line)
+    assert not api_on_line("subprocess.run(...)", line)            # fragments that are not on the line stay ungrounded
+    assert not api_on_line("os.system(...)", line)
+    assert not api_on_line("...", line) and not api_on_line("(...)", line)  # an ellipsis alone proves nothing

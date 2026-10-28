@@ -604,7 +604,7 @@ def package_osv(ctx: IntakeContext) -> list[Finding]:
     from lineage.inspect import package_osv as osv
 
     found = osv.scan(ctx.name, ctx.version)
-    return [not_run("OSV", "the OSV service could not be reached and nothing is cached", "S3") if f.id == "PKG.OSV.UNAVAILABLE" else f
+    return [not_run("OSV", ("offline mode (LINEAGE_OFFLINE is set): no request to OSV was made and the shipped snapshot has no entry for this version" if os.environ.get("LINEAGE_OFFLINE") else "the OSV service could not be reached and nothing is cached"), "S3") if f.id == "PKG.OSV.UNAVAILABLE" else f
             for f in found]
 
 
