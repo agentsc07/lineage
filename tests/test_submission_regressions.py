@@ -175,3 +175,24 @@ def test_no_delta_is_named_after_the_gpu_check_not_the_parent_search():
 
     assert checker_for("MODEL.WEIGHTS.NO_DELTA").key == "spectral"
     assert checker_for("MODEL.PARENT.IDENTICAL").key == "parent_id" and checker_for("MODEL.PARENT.NO_CLAIMED_BASE").key == "hub_parent"
+
+
+def test_a_gpu_check_that_returned_a_result_is_not_reported_as_not_run_when_a_later_one_fails(tmp_path, policy_path, monkeypatch):
+    """Brev run: spectral answered, behaviour diff got HTTP 404, and all three (notary too, with no certificate) were marked not run."""
+    from lineage.intake import gpu
+    from lineage.schemas.gpu import ParentResponse, SpectralResponse
+
+    def post(path, request, response_model, base_url=None, timeout=0):
+        if path == "/weights/parent":
+            return ParentResponse(parent="Qwen/Qwen2.5-0.5B", similarity=0.99, changed_layers=["model.layers.3.mlp.down_proj"])
+        if path == "/weights/spectral":
+            return SpectralResponse(score=0.9, per_layer={"model.layers.3.mlp.down_proj": {"kurtosis": 9.0}})
+        if path == "/behaviour/diff":
+            raise gpu.GpuRejected("/behaviour/diff: 404", "HTTP 404: model not loadable")
+        raise AssertionError(path)
+
+    monkeypatch.setattr(gpu, "post", post)
+    ctx = _weights_ctx(tmp_path, policy_path, [], {})
+    got = {f.id for f in insp.gpu_weights(ctx)}
+    assert "MODEL.WEIGHTS.SPECTRAL_ANOMALY" in got and "CHECK.NOT_RUN.WEIGHT_BACKDOOR" not in got
+    assert "CHECK.NOT_RUN.BEHAVIOUR_DIFF" in got and "CHECK.NOT_RUN.NOTARY" not in got  # no certificate: the notary does not apply

@@ -127,7 +127,7 @@ if [[ -n "$MODEL_ID" ]]; then py federated "$API" "$ALICE" "$MODEL_ID"; fi
 pause
 
 step "8. MCP tool" "An admitted tool answers with an instruction aimed at the agent; the gateway blocks the response and logs it."
-TOOLDIR="$WORK/dicom-tool"; mkdir -p "$TOOLDIR"; cp -R "$WORK/demo/dicom-fetch/." "$TOOLDIR/"; (cd "$TOOLDIR" && zip -qr "$WORK/dicom-fetch.zip" . -x '*.pyc')
+TOOLDIR="$WORK/dicom-tool"; mkdir -p "$TOOLDIR"; cp -R "$WORK/demo/dicom-fetch/." "$TOOLDIR/"; py zipdir "$TOOLDIR" "$WORK/dicom-fetch.zip"
 intake tool "upload:$(upload "$WORK/dicom-fetch.zip")" dev; TOOL_ID="$LAST_ID"
 if [[ -n "$TOOL_ID" ]]; then
   c=$(approve "$TOOL_ID" "$BOB" "network use limited to the PACS host"); printf '  bob approved the tool: HTTP %s\n' "$c"
@@ -162,7 +162,7 @@ else
 fi
 export BASE_MODEL_DIR="$WORK/pulled-model"
 (cd "$TRAIN" && lineage run --key "$WORK/site/apollo.key" --name triage-trained --version 1.0.0 --fact licence=apache-2.0 -- "$PY_EXE" train.py 2>&1 | grep -E "inputs|outputs|environment|passport" | sed 's/^/  /' | cut -c1-150)
-(cd "$TRAIN" && zip -q "$WORK/triage-trained.zip" model.safetensors config.json model.safetensors.passport.json)
+py zipdir "$TRAIN" "$WORK/triage-trained.zip" model.safetensors config.json model.safetensors.passport.json
 mkdir -p "$WORK/trained-model" && cp "$TRAIN/model.safetensors" "$TRAIN/config.json" "$WORK/trained-model/"
 intake model "upload:$(upload "$WORK/triage-trained.zip")" dev; TRAINED_ID="$LAST_ID"
 ADV=$(py ghostadv "$DB" "${LINEAGE_DEMO_FEED:-$WORK/feed.json}")

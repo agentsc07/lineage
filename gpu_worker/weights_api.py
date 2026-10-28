@@ -282,6 +282,9 @@ def identify_parent(model_path: str) -> ParentResponse:
     return ParentResponse(parent=parent, similarity=round(max(best_sim, 0.0), 4), changed_layers=layers)
 
 
+MIN_CALIBRATED_DIM = 64  # smaller layers (toy and test models) are outside what the logistic regression was fitted on
+
+
 def spectral_score(model_path: str, parent: str) -> SpectralResponse:
     cal = load_calibration()
     if cal is None:
@@ -290,6 +293,12 @@ def spectral_score(model_path: str, parent: str) -> SpectralResponse:
     per_layer = per_layer_metrics(model_path, parent_path)
     if not per_layer:
         return SpectralResponse(score=0.0, per_layer={})
+    if not is_adapter(model_path):  # an adapter's update is B @ A over the base layer's full size: always in range
+        src = TensorSource(model_path)
+        dims = [min(src.shape(n + ".weight")) for n in per_layer if n + ".weight" in src]
+        if dims and max(dims) < MIN_CALIBRATED_DIM:
+            raise ValueError(f"outside the calibrated range: every changed layer is smaller than {MIN_CALIBRATED_DIM} in some dimension; "
+                             "the detector was calibrated on LoRA updates of real language models")
     return SpectralResponse(score=round(score_features(aggregate(per_layer), cal), 4), per_layer=per_layer)
 
 
@@ -307,5 +316,7 @@ def weights_spectral(req: SpectralRequest) -> SpectralResponse:
         return spectral_score(req.model_path, req.parent)
     except FileNotFoundError as e:
         raise HTTPException(404, str(e))
+    except ValueError as e:  # outside the calibrated range: refuse rather than return a meaningless score
+        raise HTTPException(422, str(e))
     except RuntimeError as e:
         raise HTTPException(503, str(e))

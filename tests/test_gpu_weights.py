@@ -69,3 +69,14 @@ def test_adapter_layers_and_score(tmp_path):
     cal = {"features": w.FEATURES, "mean": [0.0] * len(w.FEATURES), "std": [1.0] * len(w.FEATURES),
            "coef": [0.0] * len(w.FEATURES), "intercept": 0.0}
     assert w.score_features(feats, cal) == 0.5
+
+
+def test_spectral_refuses_full_models_outside_the_calibrated_range(tmp_path):
+    """H=32: every changed layer is smaller than the calibrated range, so no score is invented (the demo's toy model scored 1.00 before)."""
+    if w.load_calibration() is None:
+        pytest.skip("no calibration file")
+    a = _base(1)
+    b = dict(a); b["model.layers.2.self_attn.q_proj.weight"] = a["model.layers.2.self_attn.q_proj.weight"] + 0.5
+    pa, pb = _save(tmp_path / "parent", a), _save(tmp_path / "child", b)
+    with pytest.raises(ValueError, match="calibrated range"):
+        w.spectral_score(str(pb), str(pa))

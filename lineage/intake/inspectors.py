@@ -691,7 +691,7 @@ def _gpu_skip(ctx: IntakeContext, what: str, err: Exception, checks: tuple[str, 
     ctx.gpu_down = True
     if isinstance(err, gpu.GpuRejected):
         # The worker is up; it reads model paths on its own host and only knows bank-sized models.
-        why = f"the GPU worker is up but cannot analyse this model, since its weights are not on the worker's host or not a model it supports ({err.detail.split(':')[0]})"
+        why = f"the GPU worker is up but cannot analyse this model ({err.detail[:200]})"
     else:
         why = "needs the GPU worker (LINEAGE_GPU_URL); it is unset or unreachable"
     return [not_run(c, f"{what}: {why}", "S4") for c in checks]
@@ -854,8 +854,11 @@ def gpu_weights(ctx: IntakeContext) -> list[Finding]:
                     for c in ("WEIGHT_BACKDOOR", "BEHAVIOUR_DIFF")]
             return out
 
+    certs = ctx.claimed.passport.predicate.certificates if ctx.claimed and ctx.signature_in_scope else []
+    done: set[str] = set()  # checks that returned a result: a later failure must not report them as not run
     try:
         spec = gpu.post("/weights/spectral", SpectralRequest(model_path=path, parent=parent_ref), SpectralResponse, ctx.gpu_url)
+        done.add("WEIGHT_BACKDOOR")
         if spec.score >= SPECTRAL_MEDIUM:
             top = sorted(spec.per_layer.items(), key=lambda kv: -max(kv[1].values(), default=0.0))[:5]
             out.append(make_finding(
@@ -866,6 +869,7 @@ def gpu_weights(ctx: IntakeContext) -> list[Finding]:
                 + [Evidence(kind="metric", ref="spectral_score", detail=f"{spec.score:.3f}")], source="statistical"))
         diff = gpu.post("/behaviour/diff", BehaviourDiffRequest(child=path, parent=parent_ref, probe_set="safety-default"),
                         BehaviourDiffResponse, ctx.gpu_url)
+        done.add("BEHAVIOUR_DIFF")
         if diff.divergence >= DIVERGENCE_MEDIUM:
             out.append(make_finding(
                 "MODEL.BEHAVIOUR.DIVERGENCE",
@@ -874,7 +878,6 @@ def gpu_weights(ctx: IntakeContext) -> list[Finding]:
                 [Evidence(kind="metric", ref="divergence", detail=f"{diff.divergence:.3f}")]
                 + [Evidence(kind="metric", ref=str(p.get("id", i)), detail=str(p)[:160]) for i, p in enumerate(diff.flagged_probes[:5])],
                 source="statistical"))
-        certs = ctx.claimed.passport.predicate.certificates if ctx.claimed and ctx.signature_in_scope else []
         if not certs:
             out.append(make_finding("MODEL.NOTARY.NOT_APPLICABLE", "No Notary certificate in a verified creator passport; spot-check not applicable",
                                     "info", "behaviour", "S4"))
@@ -883,8 +886,10 @@ def gpu_weights(ctx: IntakeContext) -> list[Finding]:
             if not chk.match:
                 out.append(make_finding("MODEL.NOTARY.MISMATCH", f"Notary spot-check failed for {cert}: {chk.detail}", "high",
                                         "behaviour", "S4", [Evidence(kind="field", ref=cert, detail=chk.detail)], source="statistical"))
+        done.add("NOTARY")
     except gpu.GpuUnavailable as e:
-        out += _gpu_skip(ctx, "spectral / behavioural checks", e, ("WEIGHT_BACKDOOR", "BEHAVIOUR_DIFF", "NOTARY"))
+        left = tuple(c for c in ("WEIGHT_BACKDOOR", "BEHAVIOUR_DIFF") + (("NOTARY",) if certs else ()) if c not in done)
+        out += _gpu_skip(ctx, "spectral / behavioural checks", e, left)
     return out
 
 

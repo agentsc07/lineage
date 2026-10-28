@@ -883,9 +883,63 @@ def scan(manifest_path: Path, code_dir: Path) -> list[Finding]:
 - **Needs:** safetensors weights and either an admitted model on this host or a named base on the hub
 - **Applies to:** model
 - **Code:** `lineage.intake.inspectors:local_parent_diff`
-- **Finding codes:** `MODEL.PARENT.CLAIM_MISMATCH`, `MODEL.PARENT.IDENTICAL`, `MODEL.PARENT.IDENTIFIED`, `MODEL.PARENT.NO_CLAIMED_BASE`, `MODEL.PARENT.UNIDENTIFIED`, `MODEL.WEIGHTS.CHANGED_LAYERS`
+- **Finding codes:** `MODEL.PARENT.CLAIM_MISMATCH`, `MODEL.PARENT.IDENTICAL`, `MODEL.PARENT.IDENTIFIED`, `MODEL.PARENT.NO_CLAIMED_BASE`, `MODEL.PARENT.UNIDENTIFIED`
 - **Seen firing on (real run, offline):** clean tiny model → MODEL.PARENT.NO_CLAIMED_BASE; model with a backdoored chat template and a URL token → MODEL.PARENT.NO_CLAIMED_BASE; model with a malicious pickle → MODEL.PARENT.NO_CLAIMED_BASE; model with remote code in its config → MODEL.PARENT.NO_CLAIMED_BASE
 - **Exercised by:** tests/test_hub_parent.py, tests/test_intake_pipeline.py (needs an admitted model or a named base on a hub)
+
+```python
+@register("model", "S4")
+def local_parent_diff(ctx: IntakeContext) -> list[Finding]:
+    """CPU parent identification (Track A's fingerprint) against admitted models on local disk, then the tensors that
+    changed. An identified parent is added to the artifact's parents, so the chain (and later the blast radius)
+    includes it even though the model shipped no passport."""
+    from lineage.diff.layers import diff_models
+    from lineage.diff.parent import fingerprint_parent
+
+    if ctx.path is None or not list(ctx.path.rglob("*.safetensors")):
+        return [not_run("PARENT_ID", "no safetensors weights to fingerprint", "S4")]
+    bank = ctx.registry.reference_models()
+    if not bank:
+        return [not_run("PARENT_ID", "no admitted model on this host to compare the weights with", "S4")]
+    match = fingerprint_parent(ctx.path, {pid: path for pid, (_, path) in bank.items()})
+    if match.parent is None:
+        return [make_finding("MODEL.PARENT.UNIDENTIFIED", "No admitted model matches these weights", "low", "model", "S4",
+                             source="statistical")]
+    label, parent_path = bank[match.parent]
+    contradiction = []
+    if ctx.declared_parents and match.parent not in ctx.declared_parents:  # the weights point one way, the uploader's declaration another
+        contradiction = [make_finding("MODEL.PARENT.CLAIM_MISMATCH", f"Declared parent(s) {', '.join(p[:19] for p in ctx.declared_parents)} but the weights match '{label}'",
+                                      "medium", "model", "S4", [Evidence(kind="field", ref=match.parent, detail=f"declared {ctx.declared_parents[0]}")], source="statistical")]
+    changed = sorted((d for d in diff_models(parent_path, ctx.path) if d.changed), key=lambda d: -d.relative_l2)
+    if not changed:
+        return [make_finding("MODEL.PARENT.IDENTICAL", f"Weights are identical to admitted model {label}", "info", "model", "S4",
+                             [Evidence(kind="field", ref=match.parent, detail=label)], source="statistical")] + contradiction
+    if match.parent not in ctx.parents:
+        ctx.parents.append(match.parent)
+    out = [make_finding("MODEL.PARENT.IDENTIFIED", f"Parent identified from weights: {label} (similarity {match.similarity:.3f})",
+                        "info", "model", "S4", [Evidence(kind="field", ref=match.parent, detail=label)], source="statistical")] + contradiction
+    claimed = ctx.fact_value("base_model", trusted_only=False)
+    if claimed and claimed not in (label, label.split("@")[0]):
+        out.append(make_finding("MODEL.PARENT.CLAIM_MISMATCH", f"Card claims base '{claimed}' but weights match '{label}'", "medium",
+                                "model", "S4", [Evidence(kind="field", ref="claimed_base", detail=f"{claimed} != {label}")],
+                                source="statistical"))
+    out += _template_vs_parent(ctx.path, parent_path, label)
+    from lineage.inspect import tokenizer
+
+    out += [f for f in tokenizer.scan(ctx.path, parent_path) if f.id != "MODEL.TOKENIZER.NO_BASE"]  # the parent's tokenizer is the base to diff against
+    out.append(make_finding(
+    # ... 4 more lines in lineage/intake/inspectors.py
+```
+
+### Which tensors changed from the parent
+
+- **Looks for:** (context) which weight tensors differ from the identified parent, and by how much
+- **How:** Once a parent is identified, compares every tensor with the parent's (exact equality, then relative L2 distance) and lists the ones that changed.
+- **Reads:** This model's and the parent's safetensors
+- **Needs:** an identified parent
+- **Applies to:** model
+- **Code:** `lineage.intake.inspectors:local_parent_diff`
+- **Finding codes:** `MODEL.WEIGHTS.CHANGED_LAYERS`
 
 ```python
 @register("model", "S4")
@@ -1037,7 +1091,7 @@ def gpu_weights(ctx: IntakeContext) -> list[Finding]:
                                     source="statistical"))
             out += [not_run(c, "no parent was identified, so there is nothing to compare the weights with", "S4")
                     for c in ("WEIGHT_BACKDOOR", "BEHAVIOUR_DIFF")]
-    # ... 34 more lines in lineage/intake/inspectors.py
+    # ... 39 more lines in lineage/intake/inspectors.py
 ```
 
 ### Behaviour compared with the parent (GPU worker)
@@ -1092,7 +1146,7 @@ def gpu_weights(ctx: IntakeContext) -> list[Finding]:
                                     source="statistical"))
             out += [not_run(c, "no parent was identified, so there is nothing to compare the weights with", "S4")
                     for c in ("WEIGHT_BACKDOOR", "BEHAVIOUR_DIFF")]
-    # ... 34 more lines in lineage/intake/inspectors.py
+    # ... 39 more lines in lineage/intake/inspectors.py
 ```
 
 ### Certified-behaviour spot check (GPU worker)
@@ -1147,7 +1201,7 @@ def gpu_weights(ctx: IntakeContext) -> list[Finding]:
                                     source="statistical"))
             out += [not_run(c, "no parent was identified, so there is nothing to compare the weights with", "S4")
                     for c in ("WEIGHT_BACKDOOR", "BEHAVIOUR_DIFF")]
-    # ... 34 more lines in lineage/intake/inspectors.py
+    # ... 39 more lines in lineage/intake/inspectors.py
 ```
 
 ### Dataset poisoning checks

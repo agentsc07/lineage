@@ -233,6 +233,19 @@ def intakejson() -> None:
     print(json.dumps(body))
 
 
+def zipdir() -> None:
+    """`zipdir <src dir> <out.zip> [file ...]`: zip a folder (or only the named files in it) without the `zip` command, which some hosts lack."""
+    import zipfile
+    from pathlib import Path
+
+    src = Path(sys.argv[2])
+    names = sys.argv[4:]
+    files = [src / n for n in names] if names else [p for p in sorted(src.rglob("*")) if p.is_file() and p.suffix != ".pyc" and "__pycache__" not in p.parts]
+    with zipfile.ZipFile(sys.argv[3], "w", zipfile.ZIP_DEFLATED) as z:
+        for p in files:
+            z.write(p, p.relative_to(src).as_posix())
+
+
 def tamper() -> None:
     """`tamper <model dir> <out.zip>`: zip the model with the last byte of its safetensors file flipped."""
     import zipfile
@@ -260,6 +273,6 @@ def loadmodel() -> None:
 
 
 if __name__ == "__main__":
-    {"stream": stream, "tick": tick, "revoke": revoke, "get": get, "expiry": expiry,
+    {"stream": stream, "zipdir": zipdir, "tick": tick, "revoke": revoke, "get": get, "expiry": expiry,
                                   "spectral": spectral, "trust": trust, "stamp": stamp, "advisory": advisory, "hubfile": hubfile,
                                   "whoami": whoami, "intakejson": intakejson, "tamper": tamper, "loadmodel": loadmodel, "demo_policy": demo_policy, "ghostadv": ghostadv, "federated": federated, "gateway": gateway}[sys.argv[1]]()
