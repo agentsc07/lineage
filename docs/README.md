@@ -21,6 +21,7 @@
 | `review_audit/` | Source-code audit of the review pipeline and scoring |
 | `PASSPORTS.md` | The two passports, their fields, how signatures work, what `lineage.db` is |
 | `DEVELOPER_GUIDE.md` | What an engineer does before, during and after approval: exact commands |
+| `CLAIMS.md` | Every benchmark number traced to a file and marked held-out or not; checks not verified on the current version; limits to state with any detection claim |
 | `TEST_COVERAGE.md` | For every check, the tests that exercise it (generated) |
 | `PLAN.md` | Problem, story, honest status and plan |
 
