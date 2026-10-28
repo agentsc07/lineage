@@ -130,7 +130,10 @@ def load(path: Path, *, env: str | None = None, **kwargs: Any) -> Any:
         except ImportError:
             cls = None
         if cls is not None:
-            return cls.from_pretrained(path, use_safetensors=True, **loader_kwargs)
+            try:
+                return cls.from_pretrained(path, use_safetensors=True, **loader_kwargs)
+            except (ValueError, OSError):
+                pass  # an architecture transformers does not know (for example a test model): the verified tensors below are still returned
     st = [path] if path.suffix == ".safetensors" else sorted(path.glob("*.safetensors")) if path.is_dir() else []
     if st:
         from safetensors.numpy import load_file

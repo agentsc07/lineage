@@ -26,10 +26,11 @@ export default function Approvals() {
   // One row per artifact: the server's list is the source of truth; this browser's intake results only add the reasons.
   const byId = new Map<string, { id: string; name: string; type: string; risk: number; env: string; reasons: string[]; at: string; approved?: string }>();
   const serverStatus = new Map((arts.data ?? []).map((a) => [a.id, a.status]));
+  const serverName = new Map((arts.data ?? []).map((a) => [a.id, `${a.name}@${a.version}`])); // the registry's own name for it, the same in every list
   for (const s of sess.filter((s) => s.decision.outcome === "quarantine")) {
     const id = s.decision.artifact_id;
     if (serverStatus.has(id) && serverStatus.get(id) !== "quarantined" && !s.approved) continue; // decided elsewhere (another user or browser)
-    byId.set(id, { id, name: s.ref, type: s.artifact_type, risk: s.decision.risk_score, env: s.decision.environment, reasons: s.decision.reasons, at: s.decision.decided_at, approved: s.approved?.by ? `${s.approved.by} until ${s.approved.expires}` : undefined });
+    byId.set(id, { id, name: serverName.get(id) ?? s.ref, type: s.artifact_type, risk: s.decision.risk_score, env: s.decision.environment, reasons: s.decision.reasons, at: s.decision.decided_at, approved: s.approved?.by ? `${s.approved.by} until ${s.approved.expires}` : undefined });
   }
   for (const a of (arts.data ?? []).filter((a) => a.status === "quarantined")) {
     if (!byId.has(a.id)) byId.set(a.id, { id: a.id, name: `${a.name}@${a.version}`, type: a.artifact_type, risk: a.risk_score, env: a.environment, reasons: [], at: a.created_at });
@@ -61,6 +62,7 @@ export default function Approvals() {
               <div className="flex flex-wrap items-center gap-4">
                 <div className="min-w-[200px] flex-1">
                   <Link to={`/artifacts/${encodeURIComponent(q.id)}`} className="font-medium hover:text-accent">{q.name}</Link>
+                  <span className="mono text-faint text-xs ml-2" title={q.id}>{q.id.slice(0, 11)}…{q.id.slice(-6)}</span>
                   <p className="text-xs text-mute mt-0.5 capitalize">{q.type} · for {q.env} · {ago(q.at)}</p>
                 </div>
                 <Verdict outcome="quarantine" /><div className="w-32"><Risk score={q.risk} /></div>

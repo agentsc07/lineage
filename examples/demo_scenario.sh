@@ -49,10 +49,10 @@ HUB_FILE="$WORK/demo/hub.json"
 ALICE=$(py get alice <"$TOKENS"); BOB=$(py get bob <"$TOKENS")
 AUTH_A=(-H "Authorization: Bearer $ALICE"); AUTH_B=(-H "Authorization: Bearer $BOB")
 
-# POST /intake then stream the stages. intake <type> <source> <env> [claimed origin]; sets LAST_ID and LAST_OUTCOME.
+# POST /intake then stream the stages. intake <type> <source> <env> [claimed origin] [name] [version]; sets LAST_ID and LAST_OUTCOME.
 intake() {
   local body job url v
-  body=$(py intakejson "$1" "$2" "$3" "${4:-}")
+  body=$(py intakejson "$1" "$2" "$3" "${4:-}" "${5:-}" "${6:-}")
   job=$(curl -sf -X POST "$API/intake" "${AUTH_A[@]}" -H 'content-type: application/json' -d "$body") || { printf '  %sintake request refused%s\n' "$R" "$N"; LAST_ID=""; LAST_OUTCOME=""; return 0; }
   url=$(py get events_url <<<"$job")
   curl -sfN --max-time 180 "${AUTH_A[@]}" "$API$url" | py stream | tee "$WORK/out" | grep -v '^VERDICT'
@@ -98,12 +98,12 @@ step "3. Inbound, tampered upload" "The same model, one tensor byte changed, upl
 if [[ -d "$WORK/pulled-model" ]]; then
   COMMIT=$(curl -sf "${AUTH_A[@]}" "$API/artifacts/$MODEL_ID" | py get passport.passport.predicate.source.commit)
   py tamper "$WORK/pulled-model" "$WORK/tampered.zip"
-  intake model "upload:$(upload "$WORK/tampered.zip")" prod "$MODEL_SRC@$COMMIT"
+  intake model "upload:$(upload "$WORK/tampered.zip")" prod "$MODEL_SRC@$COMMIT" triage-base-copy 1.0.0
 fi
 pause
 
 step "4. Inbound, no claim" "A fine-tune uploaded with no claim: trust stays unknown, the origin is only a hint, the parent comes from the weights."
-intake model "upload:$(upload "$WORK/demo/uploads/shady-ft.zip")" prod
+intake model "upload:$(upload "$WORK/demo/uploads/shady-ft.zip")" prod "" triage-ft 0.2.0
 pause
 
 step "5. Package" "pip talks to Lineage's index, which lists only admitted wheels, pinned by hash."
@@ -119,7 +119,7 @@ pause
 
 step "6. Dataset" "The upstream instruction set is admitted; then an upload with a 5% trigger backdoor and the same name. Compare."
 intake dataset "hf-dataset:apollo-health/instructions" dev; DS_ID="$LAST_ID"
-intake dataset "upload:$(upload "$WORK/demo/uploads/instructions.jsonl")" dev
+intake dataset "upload:$(upload "$WORK/demo/uploads/instructions.jsonl")" dev "" instructions 2.0.0
 pause
 
 step "7. Federated" "10 rounds, 20 hospitals, 4 of them send scaled, poisoned updates."
@@ -139,15 +139,28 @@ step "9. Monitor" "Apollo's team trains a model with lineage run (signed, with i
 TRAIN="$WORK/apollo-train"; mkdir -p "$TRAIN"
 cp "$WORK/demo/hub/datasets/apollo-health/instructions/instructions.jsonl" "$TRAIN/data.jsonl"
 cat >"$TRAIN/train.py" <<'PY'
-import hashlib, json
+import hashlib, json, os
 import numpy as np
 from safetensors.numpy import save_file
+# Start from the approved base model. lineage.load verifies the registry's attestation and tells `lineage run` which artifact it was,
+# so the trained model's passport names it as a parent (safetensors reads weights natively, so a file-open hook alone cannot see them).
+if os.environ.get("BASE_MODEL_DIR"):
+    import lineage
+    lineage.load(os.environ["BASE_MODEL_DIR"], env="prod")
 rows = open("data.jsonl").read().splitlines()
 rng = np.random.default_rng(int(hashlib.sha256("\n".join(rows).encode()).hexdigest()[:8], 16))
 save_file({"layers.0.weight": rng.standard_normal((8, 8)).astype(np.float32)}, "model.safetensors", metadata={"format": "np"})
 json.dump({"model_type": "tiny", "trained_on_rows": len(rows)}, open("config.json", "w"))
 PY
 PY_EXE=$(uv run --quiet --project "$REPO" python -c 'import sys; print(sys.executable)')
+# The training environment gets its acme-llm from Lineage's own index (step 5), so the SBOM lists a package Lineage admitted.
+TRAINLIBS="$WORK/trainlibs"
+if "$PY_EXE" -m pip install --quiet --disable-pip-version-check --no-cache-dir --no-deps --target "$TRAINLIBS" --index-url "$INDEX" acme-llm==1.4.0 >"$WORK/trainlibs.log" 2>&1; then
+  export PYTHONPATH="$TRAINLIBS:$PYTHONPATH"; note "training environment: acme-llm 1.4.0 installed from Lineage's index into $TRAINLIBS"
+else
+  note "training environment: could not install acme-llm from the index (see trainlibs.log): $(tail -1 "$WORK/trainlibs.log" | cut -c1-120)"
+fi
+export BASE_MODEL_DIR="$WORK/pulled-model"
 (cd "$TRAIN" && lineage run --key "$WORK/site/apollo.key" --name triage-trained --version 1.0.0 --fact licence=apache-2.0 -- "$PY_EXE" train.py 2>&1 | grep -E "inputs|outputs|environment|passport" | sed 's/^/  /' | cut -c1-150)
 (cd "$TRAIN" && zip -q "$WORK/triage-trained.zip" model.safetensors config.json model.safetensors.passport.json)
 mkdir -p "$WORK/trained-model" && cp "$TRAIN/model.safetensors" "$TRAIN/config.json" "$WORK/trained-model/"

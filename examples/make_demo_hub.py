@@ -31,12 +31,13 @@ OLD = "2026-01-10T00:00:00Z"
 
 def wheel(path: Path, name: str, version: str, files: dict[str, str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    dist = f"{name.replace('-', '_')}-{version}.dist-info"  # wheel rule: the project name uses underscores in the dist-info folder
     with zipfile.ZipFile(path, "w") as z:
         for n, c in files.items():
             z.writestr(n, c)
-        z.writestr(f"{name}-{version}.dist-info/METADATA", f"Metadata-Version: 2.1\nName: {name}\nVersion: {version}\nSummary: demo package\n")
-        z.writestr(f"{name}-{version}.dist-info/WHEEL", "Wheel-Version: 1.0\nGenerator: demo\nRoot-Is-Purelib: true\nTag: py3-none-any\n")
-        z.writestr(f"{name}-{version}.dist-info/RECORD", "")
+        z.writestr(f"{dist}/METADATA", f"Metadata-Version: 2.1\nName: {name}\nVersion: {version}\nSummary: demo package\n")
+        z.writestr(f"{dist}/WHEEL", "Wheel-Version: 1.0\nGenerator: demo\nRoot-Is-Purelib: true\nTag: py3-none-any\n")
+        z.writestr(f"{dist}/RECORD", "")
 
 
 def zip_dir(src: Path, dest: Path, skip=("lineage.meta.json", "passport.json")) -> None:

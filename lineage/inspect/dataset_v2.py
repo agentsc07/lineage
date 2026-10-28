@@ -14,7 +14,7 @@ Formats: tables (csv, tsv, json, jsonl, parquet when pyarrow is installed), prom
 
 Embeddings are TF-IDF + TruncatedSVD (256 dimensions) by default, or the hosted NVIDIA embedding model when `LINEAGE_EMBED_MODEL` is set.
 
-Two guards go beyond the specification, and are logged in DECISIONS.md: a trigger group must also be near-identical in absolute terms
+Two guards go beyond the specification, and are logged in docs/DECISIONS.md: a trigger group must also be near-identical in absolute terms
 (mean pairwise response cosine >= 0.7) and its responses must be unrelated to their prompts (prompt/response TF-IDF cosine under half
 the dataset's), because a legitimate keyword ("translate") also makes responses alike; without the guards clean, templated
 instruction sets are flagged.

@@ -89,6 +89,16 @@ class RunRecord:
     parents: list[str] = field(default_factory=list)
 
 
+def _lineage_private_files() -> set[Path]:
+    """Lineage's own configuration (registry key pin, token location) and the pinned-keys file: never recorded as inputs of a passport that may be published."""
+    from lineage.client import config_file
+
+    out = {config_file()}
+    if os.environ.get("LINEAGE_PINNED_KEYS"):
+        out.add(Path(os.environ["LINEAGE_PINNED_KEYS"]))
+    return {p.resolve() for p in out}
+
+
 def _ignore_prefixes() -> list[str]:
     paths = {sys.prefix, sys.base_prefix, sys.exec_prefix, "/dev", "/proc", "/sys", "/usr/lib", "/System", "/Library/Frameworks"}
     paths |= {p for p in sysconfig.get_paths().values() if p}
@@ -122,6 +132,22 @@ def sbom_components(freeze: str):
 
 
 def _freeze(command: list[str]) -> str:
+    """`pip freeze` of the interpreter the command uses, plus packages that are importable only because their folder is on PYTHONPATH
+    (`pip install --target libs/` is how many containers ship dependencies; pip freeze does not list them)."""
+    lines = set(_freeze_interpreter(command).splitlines())
+    paths = [p for p in os.environ.get("PYTHONPATH", "").split(os.pathsep) if p and Path(p).is_dir()]
+    if paths:
+        from importlib.metadata import distributions
+
+        have = {l.partition("==")[0].lower().replace("_", "-") for l in lines}
+        for d in distributions(path=paths):
+            name = d.metadata["Name"]
+            if name and name.lower().replace("_", "-") not in have:
+                lines.add(f"{name}=={d.version}")
+    return "\n".join(sorted(lines)) + "\n"
+
+
+def _freeze_interpreter(command: list[str]) -> str:
     """`pip freeze` of the interpreter the command uses (falling back to uv, then importlib.metadata)."""
     exe = shutil.which(command[0]) if Path(command[0]).name.startswith("python") else None
     py = exe or sys.executable
@@ -138,11 +164,32 @@ def _freeze(command: list[str]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _attested_parent(f: Path, digest: str) -> str | None:
+    """The artifact id of the admitted artifact this file was pulled from: `lineage pull` writes `<folder>.lineage-attestation.json` beside the
+    folder it filled, and that attestation pins the hash of every file. The file counts only if its hash is exactly the attested one."""
+    from lineage.schemas.attestation import SignedAttestation
+
+    for d in f.parents:
+        cache = d.parent / (d.name + ".lineage-attestation.json")
+        if cache.is_file():
+            try:
+                att = SignedAttestation.model_validate_json(cache.read_text()).attestation
+            except ValueError:
+                continue
+            if att.files.get(f.relative_to(d).as_posix()) == digest:
+                return att.artifact_id
+    return None
+
+
 def _find_parent_ids(inputs: dict[str, str], workdir: Path) -> list[str]:
-    """An input is traced to a parent only if a sibling passport pins that exact file hash."""
+    """An input is traced to a parent only if a sibling passport pins that exact file hash, or the file is byte-for-byte a file of an
+    artifact fetched with `lineage pull` (its attestation sits beside the folder)."""
     ids: list[str] = []
     for rel, digest in inputs.items():
         f = Path(rel) if os.path.isabs(rel) else workdir / rel
+        pulled = _attested_parent(f, digest)
+        if pulled and pulled not in ids:
+            ids.append(pulled)
         for cand in (f.with_name(f.name + ".passport.json"), f.parent / "passport.json"):
             if not cand.is_file():
                 continue
@@ -192,9 +239,13 @@ def run_recorded_full(
 
     read: set[Path] = set()
     written: set[Path] = set()
+    used: list[str] = []  # artifacts verified by lineage.load() during the run
     for line in opened:
         p, _, mode = line.rpartition("\t")
-        (written if mode == "w" else read).add(Path(p))
+        if mode == "p":
+            used.append(p)
+        else:
+            (written if mode == "w" else read).add(Path(p))
 
     def rel(p: Path) -> str:
         try:
@@ -207,15 +258,17 @@ def run_recorded_full(
         {rel(p) for p in written if p.is_file() and p.is_relative_to(workdir)} | changed
     )
     out_rels = [r for r in out_rels if not (set(Path(r).parts) & _SKIP_DIRS) and (workdir / r).is_file()]
+    private = _lineage_private_files()
     in_paths = sorted(
         p for p in read - written if p.is_file() and rel(p) not in out_rels and not (set(p.parts) & {"__pycache__"})
+        and p.resolve() not in private and not p.name.endswith(".lineage-attestation.json")  # Lineage's own config, pins and attestation are not training inputs
     )
     with ThreadPoolExecutor(max_workers=8) as pool:
         in_hashes = dict(zip((rel(p) for p in in_paths), pool.map(hash_file, in_paths)))
 
     sbom = _freeze(command)
     (record_dir / "sbom.txt").write_text(sbom)
-    all_parents = list(dict.fromkeys([*(parents or []), *_find_parent_ids(in_hashes, workdir)]))
+    all_parents = list(dict.fromkeys([*(parents or []), *used, *_find_parent_ids(in_hashes, workdir)]))
     run_name = name or f"{workdir.name}-run"
     passport = build_passport(
         workdir,

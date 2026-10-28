@@ -23,7 +23,7 @@ export default function ArtifactPage() {
   const controls = [...new Set(findings.flatMap((f) => controlsFor(f.category)))];
 
   const runVerify = () => api.verifyPassport(id).then((v) =>
-    setVerify(v.valid ? "Signature, hashes and chain verified" : `Not valid: ${(v.problems ?? []).join(", ") || "see server log"}`)).catch((e) => setVerify(String(e)));
+    setVerify(v.valid ? "Registry passport: signature, expiry, revocation and ancestors are valid. File hashes are not re-checked here; `lineage load-check` does that." : `Not valid: ${(v.problems ?? []).join(", ") || "see server log"}`)).catch((e) => setVerify(String(e)));
 
   return (
     <div className="page">

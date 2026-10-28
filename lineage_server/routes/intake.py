@@ -24,7 +24,7 @@ from lineage_server.jobs import Job
 from lineage_server.registry import SqliteRegistry
 
 router = APIRouter()
-CLAIM_KEYS = {"publisher", "licence", "base_model", "released_at", "description"}
+CLAIM_KEYS = {"publisher", "licence", "base_model", "released_at", "description", "name", "version"}
 
 
 class UploadReceipt(BaseModel):
@@ -83,7 +83,8 @@ def launch(req: IntakeRequest, request: Request, active: tuple[PolicyPack, bool]
     if req.environment not in policy.environments:
         raise HTTPException(400, f"unknown environment {req.environment!r}; policy defines {sorted(policy.environments)}")
     state = request.app.state
-    source, ref = req.source, ""
+    source, ref = fetch.normalise_source(req.artifact_type, req.source), ""
+    req = req.model_copy(update={"claimed_origin": fetch.normalise_source(req.artifact_type, req.claimed_origin)})
     if source and source.startswith(("upload:", "mcp:upload:")):
         ref = str(resolve_upload(state.uploads, source.split("upload:", 1)[1], req.artifact_type))
         source = None

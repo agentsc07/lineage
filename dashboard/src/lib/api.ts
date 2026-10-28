@@ -37,6 +37,7 @@ export const api = {
   artifactView: (id: string) => req<ArtifactView>(`/artifacts/${encodeURIComponent(id)}/view`),
   job: (id: string) => req<JobView>(`/jobs/${encodeURIComponent(id)}`),
   limits: () => req<Limits>("/limits"),
+  catalog: () => req<import("./catalog").Catalog>("/catalog/checks"),
   attestationView: (id: string, env: string) => req<AttestationView>(`/attestations/${encodeURIComponent(id)}/view?env=${encodeURIComponent(env)}`),
   passport: (id: string) => req<SignedPassport>(`/passports/${encodeURIComponent(id)}`),
   whoami: () => req<import("./auth").Me>("/whoami"),

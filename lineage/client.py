@@ -199,7 +199,25 @@ def check_for_use(path: Path, *, env: str | None = None, attestation: SignedAtte
         root = path if path.is_dir() else path.parent
         for p in find_pickle_files(path):
             problems.append(f"pickle file refused by policy: {p.relative_to(root).as_posix()}")
+    if not problems:
+        note_use(att.artifact_id)
     return problems
+
+
+def note_use(artifact_id: str) -> None:
+    """Under `lineage run`, tell the recorder which admitted artifact was just verified for use. A file-open hook cannot see weights read by
+    native readers (safetensors, pyarrow), so a verified `lineage.load()` is the reliable way for a run to know its parents."""
+    target = os.environ.get("LINEAGE_RECORD_FILE")
+    if not target:
+        return
+    try:
+        fd = os.open(target, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
+        try:
+            os.write(fd, f"{artifact_id}\tp\n".encode())
+        finally:
+            os.close(fd)
+    except OSError:
+        pass
 
 
 def resolve_artifact(server: str, token: str | None, ref: str, env: str, client: httpx.Client | None = None) -> str:

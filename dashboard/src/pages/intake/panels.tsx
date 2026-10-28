@@ -4,11 +4,12 @@ import { auth } from "../../lib/auth";
 import { dt } from "../../lib/format";
 import type { ArtifactView, AttestationView, Decision, Fact, Finding, OriginStatus, SignedPassport } from "../../lib/types";
 import { Reasons, Risk, Severity_, Trust, Verdict } from "../../components/ui";
+import { checkerFor, plainName, useCatalog } from "../../lib/catalog";
 import { isNotRun, LABEL, unrunCost, type StageState, type StageStatus } from "./model";
 
 const provColour: Record<Fact["provenance"], string> = { computed: "text-allow", fetched: "text-allow", signed: "text-accent", declared: "text-quar" };
 const originColour: Record<OriginStatus, string> = { matching: "text-allow", changed: "text-block", missing: "text-block", extra: "text-quar", unchecked: "text-faint" };
-const classLabel = { hard_block: "hard block: no approval can change it", policy_dependent: "policy-dependent: an approval can accept it", scored: "adds risk points only" } as const;
+const classLabel = { hard_block: "Hard block: no approval can change it", policy_dependent: "Policy rule: a person can accept it with an expiry", scored: "Adds risk points only; does not block on its own" } as const;
 const classColour = { hard_block: "text-block border-block/40", policy_dependent: "text-quar border-quar/40", scored: "text-mute border-line" } as const;
 
 /** Text with any full `lp:` id shortened; clicking a short id copies the whole one. */
@@ -34,6 +35,7 @@ export function StageDot({ status }: { status: StageStatus }) {
 
 export function StageRow({ id, name, what, state, decision, view }: { id: string; name: string; what: string; state?: StageState; decision: Decision | null; view: ArtifactView | null }) {
   const status = state?.status ?? "pending";
+  const cat = useCatalog();
   const unrun = state?.findings.filter(isNotRun) ?? [];
   const shown = state?.findings.filter((f) => !isNotRun(f)) ?? [];
   return (
@@ -51,14 +53,14 @@ export function StageRow({ id, name, what, state, decision, view }: { id: string
         const cost = unrunCost(f, decision);
         return (
           <div key={f.id} className="mt-2 ml-[22px] text-xs border border-dashed border-quar/60 bg-quar/10 rounded-md p-2" data-testid="not-run">
-            <p className="font-medium text-quar">Did not run: {f.id.replace("CHECK.NOT_RUN.", "").toLowerCase()}</p>
+            <p className="font-medium text-quar">{plainName(cat, f.id)}</p>
             <p className="text-mute mt-0.5">{f.title.replace(/^Check [\w_]+ did not run: /, "")}</p>
             <p className="mt-1">{cost ? <>Cost under this policy: <span className="font-medium">{cost.severity}, +{cost.points} risk points</span></> : "Cost: shown once the decision is made."}</p>
           </div>);
       })}
       {id === "S5" && state && state.status !== "running" && !shown.some((f) => f.source === "llm") && !unrun.length &&
         <p className="text-xs text-mute mt-1.5 ml-[22px]">No model-generated findings: {shown.length ? "the review stage reported only what is listed below" : "the review stage reported nothing"}.</p>}
-      {id === "S5" && unrun.length > 0 && <p className="text-xs text-quar mt-1.5 ml-[22px]">No model review took place. The verdict rests on deterministic checks only.</p>}
+      {id === "S5" && unrun.length > 0 && <p className="text-xs text-quar mt-1.5 ml-[22px]">No model review took place. The verdict rests on the rule-based checks only.</p>}
       {shown.map((f, i) => <FindingRow key={f.id + i} f={f} view={view} />)}
     </li>
   );
@@ -66,23 +68,31 @@ export function StageRow({ id, name, what, state, decision, view }: { id: string
 
 export function FindingRow({ f, view }: { f: Finding; view: ArtifactView | null }) {
   const cls = view?.finding_classes[f.id];
+  const cat = useCatalog();
+  const ck = checkerFor(cat, f.id);
   return (
     <details className="mt-2 ml-[22px] text-xs border border-line rounded-md bg-bg" data-testid="finding">
       <summary className="p-2 cursor-pointer flex items-center gap-2 flex-wrap">
-        <Severity_ s={f.severity} /><span className="mono text-faint truncate">{f.id}</span>
-        {f.source === "llm" && <span className="border border-accent/40 text-accent rounded px-1.5 py-px">model-generated, evidence-checked: {f.grounded ? "yes" : "no"}</span>}
-        <span className="ml-auto text-faint">{f.score ? `+${f.score}` : "+0"}</span>
+        <Severity_ s={f.severity} /><span className="font-medium">{ck?.name ?? f.id}</span>
+        {f.source === "llm" && <span className="border border-accent/40 text-accent rounded px-1.5 py-px">AI reviewer · quoted line checked: {f.grounded ? "yes" : "no"}</span>}
+        <span className="ml-auto text-faint">{f.score ? `+${f.score} risk` : "no risk added"}</span>
       </summary>
-      <div className="px-2 pb-2 space-y-1.5">
-        <p>{f.title}</p>
-        <dl className="grid grid-cols-[110px_1fr] gap-x-2 gap-y-0.5 text-mute">
-          <dt>Check</dt><dd>{f.category} · {f.source}</dd>
-          <dt>Stage</dt><dd>{f.stage}</dd>
-          <dt>Risk contribution</dt><dd>{f.score} point{f.score === 1 ? "" : "s"}</dd>
+      <div className="px-2 pb-2 space-y-2">
+        <p><span className="text-faint">Found: </span>{f.title}</p>
+        {f.evidence.length > 0 && <div><p className="text-faint">Where</p>
+          <ul className="mono space-y-0.5">{f.evidence.map((e, i) => <li key={i} className="break-all">{e.ref}{e.detail ? <span className="text-mute"> — {e.detail}</span> : null}</li>)}</ul></div>}
+        {ck && (
+          <dl className="grid grid-cols-[110px_1fr] gap-x-2 gap-y-1 text-mute">
+            <dt>This check looks for</dt><dd>{ck.detects}</dd>
+            <dt>How</dt><dd>{ck.how}</dd>
+            <dt>It read</dt><dd>{ck.reads}</dd>
+          </dl>)}
+        <dl className="grid grid-cols-[110px_1fr] gap-x-2 gap-y-1 text-mute">
+          <dt>Kind of check</dt><dd>{cat?.kinds[f.source] ?? f.source}</dd>
+          <dt>Stage</dt><dd>{f.stage} {cat?.stages[f.stage] ? `· ${cat.stages[f.stage]}` : ""}</dd>
           <dt>Effect</dt><dd>{cls ? <span className={`border rounded px-1.5 py-px ${classColour[cls]}`}>{classLabel[cls]}</span> : <span className="text-faint">shown once the artifact is recorded</span>}</dd>
         </dl>
-        {f.evidence.length > 0 && <div><p className="text-faint">Evidence</p>
-          <ul className="mono space-y-0.5">{f.evidence.map((e, i) => <li key={i} className="break-all">{e.ref}{e.detail ? <span className="text-mute"> — {e.detail}</span> : null}</li>)}</ul></div>}
+        <p className="mono text-faint">code: {f.id}</p>
       </div>
     </details>
   );
@@ -126,6 +136,7 @@ export function IdentityPanel({ view }: { view: ArtifactView }) {
 }
 
 export function DecisionPanel({ decision, view, env, findings, onChanged }: { decision: Decision; view: ArtifactView | null; env: string; findings: Finding[]; onChanged: () => void }) {
+  const cat = useCatalog();
   const [open, setOpen] = useState<"approve" | "reject" | null>(null);
   const [reason, setReason] = useState("");
   const [days, setDays] = useState(7);
@@ -158,10 +169,10 @@ export function DecisionPanel({ decision, view, env, findings, onChanged }: { de
         </div>
         <div className="min-w-[240px] flex-1">
           <p className="text-sm text-mute mb-2">Risk {decision.risk_score}: what contributed</p>
-          <ul className="text-xs space-y-1">{drivers.length ? drivers.map((f) => <li key={f.id + f.title} className="flex gap-2"><Severity_ s={f.severity} /><span className="mono truncate">{f.id}</span><span className="ml-auto text-mute">+{f.score}</span></li>) : <li className="text-faint">No finding added points; trust level {decision.trust_level} sets the base.</li>}</ul>
+          <ul className="text-xs space-y-1">{drivers.length ? drivers.map((f) => <li key={f.id + f.title} className="flex gap-2"><Severity_ s={f.severity} /><span className="truncate" title={f.id}>{plainName(cat, f.id)}</span><span className="ml-auto text-mute">+{f.score}</span></li>) : <li className="text-faint">No finding added points; trust level {decision.trust_level} sets the base.</li>}</ul>
           {unrun.length > 0 && <>
             <p className="text-sm text-mute mt-3 mb-1">Checks that did not run</p>
-            <ul className="text-xs space-y-1">{unrun.map((f) => <li key={f.id} className="flex gap-2"><span className="mono truncate">{f.id.replace("CHECK.NOT_RUN.", "")}</span><span className="ml-auto text-mute">{f.severity}, +{f.score}</span></li>)}</ul></>}
+            <ul className="text-xs space-y-1">{unrun.map((f) => <li key={f.id} className="flex gap-2"><span className="truncate" title={f.id}>{plainName(cat, f.id).replace("Did not run: ", "")}</span><span className="ml-auto text-mute">{f.severity}, +{f.score}</span></li>)}</ul></>}
         </div>
       </div>
       <div className="mt-5 border-t border-line pt-4">
