@@ -36,6 +36,15 @@ echo "API server on $API_URL (fresh database $DB); demo tokens in $TOKENS"
 LINEAGE_API="$API_URL" LINEAGE_DEMO_DIR="$WORK" LINEAGE_DEMO_DB="$DB" LINEAGE_DEMO_TOKENS="$TOKENS" LINEAGE_DEMO_FEED="$WORK/feed.json" HUB_PORT="$HUB_PORT" SITE_PORT="$SITE_PORT" \
   examples/demo_scenario.sh
 
+# The Monitor page must have something to show. Step 9 of the scenario normally raises an alert; if it did not (a step failed), publish an advisory
+# for the admitted acme-llm 1.4.0 and run one check, so the page shows an alert with its blast radius.
+BOB_TOKEN="$(python3 -c "import json;print(json.load(open('$TOKENS'))['bob'])" 2>/dev/null)"
+N_ALERTS="$(curl -sf -H "Authorization: Bearer $BOB_TOKEN" "$API_URL/monitor/latest" | python3 -c "import sys,json;d=json.load(sys.stdin);print(len(d['alerts']) if d else 0)" 2>/dev/null || echo 0)"
+if [[ "$N_ALERTS" == "0" ]]; then
+  echo "Monitor had no alert: publishing a demo advisory for acme-llm==1.4.0 and running one check"
+  uv run --quiet --project "$REPO" python "$REPO/examples/demo_helpers.py" advisory "$WORK/feed.json" "acme-llm==1.4.0" >/dev/null
+  curl -sf -X POST -H "Authorization: Bearer $BOB_TOKEN" "$API_URL/monitor/tick" >/dev/null || echo "  (the check could not run)"
+fi
 uv run --quiet --project "$REPO" python "$REPO/examples/make_dashboard_samples.py" "$WORK/demo" "$WORK/samples" >/dev/null && export LINEAGE_SAMPLES_DIR="$WORK/samples"
 BOB_TOKEN="$(python3 -c "import json,sys;print(json.load(open('$TOKENS'))['bob'])" 2>/dev/null)"
 echo; echo "Command line, in another terminal (tokens change on every run of this script):"

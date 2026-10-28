@@ -32,7 +32,7 @@ Reset between takes: Ctrl+C and run it again. Keys and fixtures are rebuilt; `*.
 | 2:50 | Lineage -> `triage-trained@1.0.0` | edges to base model, dataset, `acme-llm@1.4.0` (from `lineage run`) |
 | 3:10 | switch to **carol** -> revoke the dataset (graph or `uv run lineage revoke <lp:id> --reason ...` with carol's token) | descendants flagged |
 | 3:30 | Terminal: `uv run lineage load-check ./m -e prod` after revoking the base model | `registry reports the artifact revoked`, REFUSED |
-| 3:45 | Monitor | advisory alert naming the affected model |
+| 3:45 | Monitor | an advisory alert with its blast radius (step 9 of the scenario raises one for a package in the trained model's package list; if that step failed, the script publishes one for `acme-llm 1.4.0`). **Run a check now** re-runs it. A real run needs `LINEAGE_MONITOR_MINUTES` and OSV reachable |
 
 ## 3. What to say, and what not
 Say: every check runs or says it did not and is priced; every decision is signed; every use re-checks it; protection holds on Lineage's paths. Do **not** say: GPU checks ran, the AI review ran, detection is comprehensive, the parent search covers all models, or "Verify passport" re-hashes files. See `FINAL_BLOCKERS.md`.
