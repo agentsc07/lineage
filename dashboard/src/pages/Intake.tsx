@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, describeError, streamJob } from "../lib/api";
+import { auth } from "../lib/auth";
 import { session } from "../lib/session";
 import type { ArtifactType, ArtifactView, Decision, Finding, Limits, StageEvent } from "../lib/types";
 import { Header } from "../components/ui";
@@ -52,7 +53,7 @@ export default function Intake() {
   const apply = useCallback((e: StageEvent) => {
     setStages((s) => reduce(s, e));
     if (e.status === "failed") setErr(`Stage ${e.stage} ${e.name} failed: ${e.message}`);
-    if (e.decision) { setDecision(e.decision); session.add({ ref: label || e.decision.artifact_id, artifact_type: type, decision: e.decision }); }
+    if (e.decision) { setDecision(e.decision); session.add({ ref: label || e.decision.artifact_id, artifact_type: type, decision: e.decision, by: auth.me()?.name }); }
   }, [label, type]);
 
   const follow = useCallback((eventsUrl: string, paced: boolean) => {

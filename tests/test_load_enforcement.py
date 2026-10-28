@@ -152,3 +152,11 @@ def test_a_child_pulled_before_its_parent_was_revoked_refuses_to_load_afterwards
 def test_status_route_says_usable_for_an_admitted_artifact(client, admitted):
     st = client.get(f"/attestations/{admitted}/status?env=dev").json()
     assert st["usable"] is True and st["revoked"] is False and st["ancestor_revoked"] == []
+
+
+def test_a_rotated_registry_key_is_explained_not_just_refused(client, admitted, tmp_path):
+    dest = tmp_path / "pulled"
+    lc.pull(admitted, dest, **kw(client))
+    stale = "ab" * 32  # a key pinned before the registry's database (and signing key) was recreated
+    problems = lc.check_for_use(dest, env="dev", server=SERVER, registry_pubkey=stale, client=client)
+    assert len(problems) == 1 and "now signs with" in problems[0] and "--pin" in problems[0]
