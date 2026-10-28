@@ -22,6 +22,7 @@ from pydantic import ValidationError
 from lineage.inspect import package_capabilities, package_taint
 from lineage.inspect._common import cap_severity, ev, finding
 from lineage.inspect._pycode import iter_python
+from lineage.serviceauth import bearer
 from lineage.inspect.llm_review import bait as bait_mod
 from lineage.inspect.llm_review.grounding import Dropped, ground_claims_with_reasons
 from lineage.inspect.llm_review.prompts import build_request
@@ -46,8 +47,12 @@ class GpuClient:
         self.base_url = (base_url or os.environ.get("LINEAGE_GPU_URL") or DEFAULT_URL).rstrip("/")
         self._http = http or httpx.Client(timeout=timeout)
         self._memory: dict[str, ReviewResponse] = {}
+        cache_dir = cache_dir or os.environ.get("LINEAGE_REVIEW_CACHE")  # reviews are cached by request hash, on disk when this is set
         self.cache_dir = Path(cache_dir) if cache_dir else None
         self.calls = 0  # requests actually sent (cache misses)
+        # No GPU worker named anywhere and a hosted-API key present: run the same review pipeline in-process against the hosted
+        # NVIDIA endpoint (gpu_worker.reviewer_api, which is also what the worker serves). A named worker always wins.
+        self.hosted = base_url is None and "LINEAGE_GPU_URL" not in os.environ and _hosted_available()
 
     @staticmethod
     def cache_key(req: ReviewCodeRequest) -> str:
@@ -66,9 +71,12 @@ class GpuClient:
                 pass
         try:
             self.calls += 1
-            r = self._http.post(f"{self.base_url}/review/code", json=req.model_dump())
-            r.raise_for_status()
-            resp = ReviewResponse.model_validate(r.json())
+            if self.hosted:
+                resp = _in_process("review_code", req)
+            else:
+                r = self._http.post(f"{self.base_url}/review/code", json=req.model_dump(), headers=bearer("LINEAGE_GPU_TOKEN"))
+                r.raise_for_status()
+                resp = ReviewResponse.model_validate(r.json())
         except (httpx.HTTPError, ValidationError, json.JSONDecodeError, ValueError) as e:
             raise GpuUnavailable(f"{type(e).__name__}: {e}"[:200]) from e
         self._memory[key] = resp
@@ -79,6 +87,31 @@ class GpuClient:
             except OSError:
                 pass
         return resp
+
+
+def _hosted_available() -> bool:
+    try:
+        from gpu_worker import reviewer_llm
+
+        return reviewer_llm.hosted()
+    except ImportError:
+        return False
+
+
+def _in_process(fn: str, req) -> ReviewResponse:
+    """Call the worker's review function directly (same prompts, grounding and pipeline), without running the worker."""
+    from fastapi import HTTPException, Response
+
+    from gpu_worker import reviewer_api
+
+    try:
+        return getattr(reviewer_api, fn)(req, Response())
+    except HTTPException as e:
+        raise GpuUnavailable(f"reviewer unavailable: {e.detail}"[:200]) from e
+
+
+def review_card_hosted(req) -> ReviewResponse:
+    return _in_process("review_card", req)
 
 
 @dataclass
@@ -159,10 +192,20 @@ def _corroborated(claim: Claim, static: list[Finding]) -> str | None:
     return None
 
 
+def precise_mode() -> bool:
+    return os.environ.get("LINEAGE_REVIEW_MODE", "precise") != "broad"
+
+
 def _to_finding(claim: Claim, corroborated_by: str | None, ceiling) -> Finding:
+    """Precise mode (REFACTOR_SPEC S5, default): a claim adds risk only if a deterministic finding is in the same file, or if it is a
+    purpose mismatch (the capability is not expected for the stated purpose). Any other claim is shown at `info` with score 0."""
+    if precise_mode() and not corroborated_by and not claim.purpose_mismatch:
+        return finding("LLM.REVIEW.CLAIM", claim.text.strip()[:300], "info", "llm", "S5",
+                       [ev("file_line", f"{claim.file}:{claim.line}", claim.api + " (no rule behind it and no purpose mismatch: shown, adds no risk)")],
+                       source="llm", score=0, grounded=True)
     sev = claim.severity if corroborated_by else cap_severity(claim.severity, ceiling)
-    detail = claim.api + (f" (also found by {corroborated_by})" if corroborated_by else " (no static corroboration; severity capped)")
-    return finding("LLM.REVIEW.CLAIM", claim.text.strip()[:300], sev, "llm", "S5", [ev("file_line", f"{claim.file}:{claim.line}", detail)],
+    why = f" (also found by {corroborated_by})" if corroborated_by else (" (purpose mismatch; severity capped)" if claim.purpose_mismatch else " (no static corroboration; severity capped)")
+    return finding("LLM.REVIEW.CLAIM", claim.text.strip()[:300], sev, "llm", "S5", [ev("file_line", f"{claim.file}:{claim.line}", claim.api + why)],
                    source="llm", grounded=True)
 
 

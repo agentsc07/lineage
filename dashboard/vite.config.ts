@@ -24,9 +24,25 @@ const benchData = (): Plugin => ({
   },
 });
 
+// The "Load sample" menu: examples/make_dashboard_samples.py writes the files, LINEAGE_SAMPLES_DIR points here (dev only).
+const samples = (): Plugin => ({
+  name: "lineage-samples",
+  configureServer(server) {
+    server.middlewares.use("/samples", (req, res, next) => {
+      const dir = process.env.LINEAGE_SAMPLES_DIR;
+      const name = decodeURIComponent((req.url ?? "").replace(/^\//, "").split("?")[0]);
+      if (!dir || name.includes("..") || name.includes("/")) return next();
+      const file = resolve(dir, name);
+      if (!existsSync(file)) return next();
+      res.setHeader("Content-Type", name.endsWith(".json") ? "application/json" : "application/octet-stream");
+      res.end(readFileSync(file));
+    });
+  },
+});
+
 // The dev server proxies /api to the Lineage server so the browser never hits CORS.
 export default defineConfig({
-  plugins: [react(), benchData()],
+  plugins: [react(), benchData(), samples()],
   server: {
     port: 5173,
     proxy: {

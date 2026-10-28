@@ -27,7 +27,7 @@ def project(tmp_path, tiny_dataset):
 def test_records_inputs_outputs_and_emits_recorded_passport(project):
     rec = run_recorded_full([sys.executable, "train.py"], project)
     p = rec.passport.predicate
-    assert p.trust_level == "recorded" and p.action.kind == "train"
+    assert p.trust_level == "unknown" and p.action.kind == "train"  # trust is decided by the verifier, not by `lineage run`
     assert p.action.command == [sys.executable, "train.py"]
     assert set(p.contents.files) == {"out.txt"}
     assert p.contents.files["out.txt"] == hashlib.sha256(b"21").hexdigest()
@@ -111,3 +111,24 @@ def test_user_sitecustomize_still_runs(project, tmp_path):
     finally:
         os.environ.pop("PYTHONPATH") if old is None else os.environ.__setitem__("PYTHONPATH", old)
     assert (project / "flag.txt").read_text() == "1" and "flag.txt" in rec.passport.predicate.contents.files
+
+
+def test_passport_v2_carries_inputs_and_sbom(project):
+    p = run_recorded_full([sys.executable, "train.py"], project).passport.predicate
+    assert p.inputs["data.csv"] == hashlib.sha256((project / "data.csv").read_bytes()).hexdigest() and "out.txt" not in p.inputs
+    assert any(c.name.lower() == "pydantic" and c.purl.startswith("pkg:pypi/pydantic@") for c in p.sbom)
+
+
+def test_cli_run_writes_the_passport_beside_each_output(project, monkeypatch):
+    from typer.testing import CliRunner
+
+    from lineage.cli import app
+
+    monkeypatch.chdir(project)
+    d = project / "keys"
+    generate_keypair(d)
+    r = CliRunner().invoke(app, ["run", "--key", str(d / "default.key"), "--fact", "licence=mit", "--", sys.executable, "train.py"])
+    assert r.exit_code == 0, r.output
+    doc = json.loads((project / "out.txt.passport.json").read_text())
+    body = doc["passport"]["predicate"]
+    assert body["action"]["kind"] == "train" and body["inputs"] and body["sbom"] and body["facts"][0]["key"] == "licence" and doc["signature"]

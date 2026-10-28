@@ -13,7 +13,7 @@ export function useMonitorIds(): Set<string> {
   useEffect(() => {
     (async () => {
       const t = await api.latestTick();
-      const cand = [...new Set((t?.alerts ?? []).flatMap((a) => [a.artifact_id, ...a.blast_radius.map((n) => n.id)]))];
+      const cand = [...new Set((t?.alerts ?? []).flatMap((a) => [a.artifact_id, ...a.blast_radius.map((n) => n.id)]))].filter((id) => !id.startsWith("ghost:") && !id.startsWith("sbom-group:")); // ghosts have no /artifacts page
       const details = await Promise.all(cand.map((id) => api.artifact(id).catch(() => null)));
       setIds(new Set(cand.filter((_, i) => details[i] && !details[i]!.findings.some((f) => f.severity === "critical" && !MONITOR_IDS(f.id)))));
     })().catch(() => {});

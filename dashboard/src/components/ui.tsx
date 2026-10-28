@@ -5,7 +5,7 @@ import { extraMeta, outcomeMeta, riskColor, sevMeta, statusOutcome, statusLabel,
 
 export function Verdict({ outcome, size = "sm" }: { outcome: VerdictKey | null | undefined; size?: "sm" | "lg" }) {
   if (!outcome) return <span className="text-faint text-sm">Pending</span>;
-  const m = outcome === "revoked" || outcome === "block_monitor" ? extraMeta[outcome] : outcomeMeta[outcome];
+  const m = outcome === "revoked" || outcome === "rejected" || outcome === "block_monitor" ? extraMeta[outcome] : outcomeMeta[outcome];
   return (
     <span className={`inline-flex items-center gap-1.5 border rounded-md font-medium whitespace-nowrap ${m.cls} ${size === "lg" ? "px-3 py-1.5 text-base" : "px-2 py-0.5 text-xs"}`}>
       <span className={`rounded-full ${m.dot} ${size === "lg" ? "w-2 h-2" : "w-1.5 h-1.5"}`} />
@@ -25,7 +25,7 @@ export function Severity_({ s }: { s: Severity }) {
   return <span className={`text-xs border rounded px-1.5 py-px font-medium ${sevMeta[s].cls}`}>{s}</span>;
 }
 
-/** Five-step ladder; filled segments show how far up the trust ladder an artifact is. */
+/** Four-step ladder; filled segments show how far up the trust ladder an artifact is. */
 export function Trust({ level, label = true }: { level: TrustLevel; label?: boolean }) {
   const n = trustOrder.indexOf(level) + 1;
   return (
@@ -99,6 +99,22 @@ export function Kpi({ label, value, sub, tone }: { label: string; value: ReactNo
       <p className="text-mute text-sm">{label}</p>
       <p className="text-2xl font-semibold mt-1 tabular-nums" style={tone ? { color: `rgb(var(--${tone}))` } : undefined}>{value}</p>
       {sub && <p className="text-faint text-xs mt-1">{sub}</p>}
+    </div>
+  );
+}
+
+/** The rule that set the outcome, then the other rules that also applied (labelled as such). Falls back to the flat list for old decisions. */
+export function Reasons({ primary, secondary, all }: { primary?: string; secondary?: string[]; all: string[] }) {
+  if (!primary) return <ul className="text-sm list-disc pl-4 space-y-1">{all.map((r, i) => <li key={i}>{r}</li>)}</ul>;
+  return (
+    <div className="text-sm">
+      <p className="font-medium" data-testid="primary-reason">{primary}</p>
+      {!!secondary?.length && (
+        <div className="mt-2">
+          <p className="text-xs text-faint uppercase tracking-wide">Also applied (secondary)</p>
+          <ul className="list-disc pl-4 space-y-0.5 text-mute">{secondary.map((r, i) => <li key={i}>{r}</li>)}</ul>
+        </div>
+      )}
     </div>
   );
 }

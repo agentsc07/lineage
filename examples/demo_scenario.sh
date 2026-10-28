@@ -1,153 +1,170 @@
 #!/usr/bin/env bash
-# Plays BUILD_PLAN §4 (Apollo Health AI) end to end against the Lineage server.
-#   examples/demo_scenario.sh            # starts its own server (fresh database) on http://127.0.0.1:8765
+# Lineage demo v2: one mandatory flow, no unverifiable trust. Every step works without a GPU and without a key.
+#   examples/demo_scenario.sh            # starts its own stack (fake hub, server with auth on) on :8765
 #   PAUSE=0 examples/demo_scenario.sh    # no pauses between steps
-# Every artifact is a tiny inert local fixture from examples/demo_artifacts/ (see make_demo_artifacts.py), copied to a
-# temp dir, so bytes are really hashed and inspected. Set LINEAGE_API to use a server you started yourself; its
-# registry must already trust the demo signer key: put the key pair in $LINEAGE_DEMO_KEYDIR (demo.key / demo.pub) and start
-# the server with LINEAGE_TRUSTED_KEYS=$LINEAGE_DEMO_KEYDIR/demo.pub. Set LINEAGE_DEMO_FEED to the server's
-# LINEAGE_ADVISORY_FEED file and step 6 publishes its advisory there. examples/run_dashboard_demo.sh does all of this.
+#   LINEAGE_DEMO_REAL_HUB=1 examples/demo_scenario.sh   # step 2 fetches a real public model from huggingface.co instead of the fake hub
+# With LINEAGE_API set (examples/run_dashboard_demo.sh does this) the stack is already up; also set LINEAGE_DEMO_TOKENS, LINEAGE_DEMO_DIR (its WORK),
+# LINEAGE_DEMO_DB and LINEAGE_DEMO_FEED.
 set -uo pipefail
 cd "$(dirname "$0")/.."
-# macOS can flag the venv's editable .pth files "hidden", which makes Python skip them and `lineage` unimportable from
-# console scripts; the repo root on PYTHONPATH makes the demo independent of that.
-export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+REPO="$PWD"   # every uv run below names the project, so a cd into a temp dir cannot break it
+export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"   # macOS can hide the venv's editable .pth files
 
-API="${LINEAGE_API:-http://127.0.0.1:8765}"
+PORT="${LINEAGE_PORT:-8765}"
+API="${LINEAGE_API:-http://127.0.0.1:$PORT}"
 PAUSE="${PAUSE:-1}"
-WORK="$(mktemp -d)"
-ART="$WORK/art"
-SERVER_PID=""
-cleanup() { [[ -n "$SERVER_PID" ]] && kill "$SERVER_PID" 2>/dev/null; rm -rf "$WORK"; }
+HUB_PORT="${HUB_PORT:-8766}"; SITE_PORT="${SITE_PORT:-8767}"
+PIDS=()
+if [[ -n "${LINEAGE_API:-}" ]]; then
+  WORK="${LINEAGE_DEMO_DIR:?set LINEAGE_DEMO_DIR with LINEAGE_API}"; DB="${LINEAGE_DEMO_DB:?}"; TOKENS="${LINEAGE_DEMO_TOKENS:?}"; OWN=0
+  PORT="${API##*:}"
+else
+  WORK="$(mktemp -d)"; DB="$WORK/lineage.db"; TOKENS="$WORK/tokens.json"; OWN=1
+fi
+cleanup() { for p in ${PIDS[@]:-}; do kill "$p" 2>/dev/null; done; [[ "$OWN" == 1 ]] && rm -rf "$WORK"; }
 trap cleanup EXIT
 
 if [[ -t 1 ]]; then B=$'\e[1m'; D=$'\e[2m'; G=$'\e[32m'; Y=$'\e[33m'; O=$'\e[38;5;208m'; R=$'\e[31m'; N=$'\e[0m'; else B=; D=; G=; Y=; O=; R=; N=; fi
 step() { printf '\n%s%s%s\n%s%s%s\n' "$B" "$1" "$N" "$D" "$2" "$N"; }
 note() { printf '  %s%s%s\n' "$D" "$1" "$N"; }
 pause() { sleep "$PAUSE"; }
-py() { uv run --quiet python "examples/demo_helpers.py" "$@"; }
-lineage() { uv run --quiet lineage "$@"; }
-
-verdict_line() { # outcome risk
+py() { uv run --quiet --project "$REPO" python "$REPO/examples/demo_helpers.py" "$@"; }
+lineage() { uv run --quiet --project "$REPO" lineage "$@"; }
+verdict_line() { # outcome risk trust
   case "$1" in
-    allow) printf '  %sALLOW%s  risk %s\n' "$G" "$N" "$2" ;;
-    allow_with_conditions) printf '  %sALLOW WITH CONDITIONS%s  risk %s\n' "$Y" "$N" "$2" ;;
-    quarantine) printf '  %sQUARANTINE%s  risk %s (needs a human)\n' "$O" "$N" "$2" ;;
-    block) printf '  %sBLOCK%s  risk %s\n' "$R" "$N" "$2" ;;
+    allow) printf '  %sALLOW%s  risk %s  trust %s\n' "$G" "$N" "$2" "$3" ;;
+    allow_with_conditions) printf '  %sALLOW WITH CONDITIONS%s  risk %s  trust %s\n' "$Y" "$N" "$2" "$3" ;;
+    quarantine) printf '  %sQUARANTINE%s  risk %s  trust %s (needs a human)\n' "$O" "$N" "$2" "$3" ;;
+    block) printf '  %sBLOCK%s  risk %s  trust %s\n' "$R" "$N" "$2" "$3" ;;
     *) printf '  no verdict received\n' ;;
   esac
 }
 
-# Submit a local artifact, stream its SSE events, print stages and the final verdict.
-intake() { # type path env
-  local job url v
-  job=$(curl -sf -X POST "$API/intake" -H 'content-type: application/json' \
-    -d "{\"artifact_type\":\"$1\",\"ref\":\"$2\",\"environment\":\"$3\"}") || { printf '  %sintake request failed%s\n' "$R" "$N"; LAST_ID=""; return 0; }
+[[ "${LINEAGE_DEMO_REAL_HUB:-}" == 1 ]] && DEMO_HF_URL="https://huggingface.co"
+if [[ "$OWN" == 1 ]]; then
+  # shellcheck disable=SC1091
+  source examples/demo_up.sh || exit 1
+fi
+HUB_FILE="$WORK/demo/hub.json"
+ALICE=$(py get alice <"$TOKENS"); BOB=$(py get bob <"$TOKENS")
+AUTH_A=(-H "Authorization: Bearer $ALICE"); AUTH_B=(-H "Authorization: Bearer $BOB")
+
+# POST /intake then stream the stages. intake <type> <source> <env> [claimed origin]; sets LAST_ID and LAST_OUTCOME.
+intake() {
+  local body job url v
+  body=$(py intakejson "$1" "$2" "$3" "${4:-}")
+  job=$(curl -sf -X POST "$API/intake" "${AUTH_A[@]}" -H 'content-type: application/json' -d "$body") || { printf '  %sintake request refused%s\n' "$R" "$N"; LAST_ID=""; LAST_OUTCOME=""; return 0; }
   url=$(py get events_url <<<"$job")
-  curl -sfN --max-time 120 "$API$url" | py stream | tee "$WORK/out" | grep -v '^VERDICT'
+  curl -sfN --max-time 180 "${AUTH_A[@]}" "$API$url" | py stream | tee "$WORK/out" | grep -v '^VERDICT'
   v=$(grep '^VERDICT' "$WORK/out" | tail -1)
   # shellcheck disable=SC2086
-  set -- $v; verdict_line "${2:-}" "${3:-}"
-  LAST_ID="${4:-}"
+  set -- $v; verdict_line "${2:-}" "${3:-}" "${5:-}"
+  LAST_OUTCOME="${2:-}"; LAST_ID="${4:-}"
 }
-
-# lineage sign + verify one artifact; parents are passport ids already registered by intake.
-sign_and_verify() { # type dirname name version repo [--parent id ...]
-  local type=$1 dir=$2 name=$3 version=$4 repo=$5; shift 5
-  lineage sign "$ART/$dir" --type "$type" --name "$name" --version "$version" --repo "$repo" --key "$WORK/demo.key" "$@" >/dev/null \
-    && lineage verify "$ART/$dir.passport.json" --artifact "$ART/$dir" --pubkey "$WORK/demo.pub" 2>&1 | grep -E 'signature|contents|chain|VALID' | sed 's/^/  /'
+upload() { curl -sf -X POST "$API/uploads" "${AUTH_A[@]}" -F "file=@$1" | py get upload_id; }
+approve() { # <artifact id> <token> -> http code; body in $WORK/appr.json
+  curl -s -o "$WORK/appr.json" -w '%{http_code}' -X POST "$API/decisions/$1/approve" -H "Authorization: Bearer $2" -H 'content-type: application/json' \
+    -d "{\"reason\":\"Reviewed by a person: $3\",\"expires\":\"$(py expiry 14)\"}"
 }
+export LINEAGE_SERVER="$API" LINEAGE_TOKEN="$ALICE" LINEAGE_CONFIG="$WORK/lineage-config.toml" LINEAGE_PINNED_KEYS="$WORK/pins.json"
 
-mkdir -p "$ART" && cp -R examples/demo_artifacts/. "$ART/"
-if [[ -n "${LINEAGE_DEMO_KEYDIR:-}" ]]; then
-  cp "$LINEAGE_DEMO_KEYDIR/demo.key" "$LINEAGE_DEMO_KEYDIR/demo.pub" "$WORK/"
+printf '%sLineage demo v2: Apollo Health AI, radiology triage agent%s\n' "$B" "$N"
+note "Open the dashboard (examples/run_dashboard_demo.sh) and sign in with a token from examples/demo_tokens.json to follow along."
+
+step "1. Sign in" "Tokens carry roles. alice requests intakes, bob approves, carol administers, auditor reads."
+printf '  %s\n' "$(curl -sf "${AUTH_A[@]}" "$API/whoami" | py whoami)"
+printf '  without a token: HTTP %s\n' "$(curl -s -o /dev/null -w '%{http_code}' "$API/artifacts")"
+pause
+
+if [[ "${LINEAGE_DEMO_REAL_HUB:-}" == 1 ]]; then
+  MODEL_SRC="hf:hf-internal-testing/tiny-random-LlamaForCausalLM"; MODEL_NOTE="a real public model from huggingface.co"
 else
-  lineage keygen --dir "$WORK" --name demo >/dev/null
+  MODEL_SRC="hf:apollo-health/triage-base"; MODEL_NOTE="the demo hub's triage-base"
 fi
-
-if [[ -z "${LINEAGE_API:-}" ]]; then
-  echo '{}' >"$WORK/feed.json"
-  py trust "$WORK/lineage.db" "$WORK/demo.pub"
-  LINEAGE_DB="$WORK/lineage.db" LINEAGE_ADVISORY_FEED="$WORK/feed.json" \
-    uv run uvicorn lineage_server.app:app --port "${API##*:}" >"$WORK/server.log" 2>&1 &
-  SERVER_PID=$!
-  for _ in $(seq 1 40); do curl -sf "$API/healthz" >/dev/null && break; sleep 0.5; done
-  curl -sf "$API/healthz" >/dev/null || { echo "Server failed to start; see $WORK/server.log" >&2; exit 1; }
+step "2. Inbound, fetched" "Lineage fetches $MODEL_NOTE itself into prod. Facts are fetched, trust is origin_verified; a human must approve."
+intake model "$MODEL_SRC" prod; MODEL_ID="$LAST_ID"
+if [[ -n "$MODEL_ID" ]]; then
+  note "alice (who requested it) tries to approve:"
+  c=$(approve "$MODEL_ID" "$ALICE" "my own request"); printf '    HTTP %s: %s\n' "$c" "$(py get detail <"$WORK/appr.json" 2>/dev/null | cut -c1-110)"
+  note "bob approves:"
+  c=$(approve "$MODEL_ID" "$BOB" "tiny test model, licence checked"); printf '    HTTP %s: %s\n' "$c" "$(py get outcome <"$WORK/appr.json" 2>/dev/null) (approver: $(py get approver <"$WORK/appr.json" 2>/dev/null))"
+  note "lineage pull, then lineage.load():"
+  lineage pull "$MODEL_ID" "$WORK/pulled-model" --env prod --pin 2>&1 | sed 's/^/    /' | cut -c1-170
+  printf '    %s\n' "$(py loadmodel "$WORK/pulled-model" prod 2>&1 | tail -1)"
 fi
+pause
 
-printf '%sLineage demo: Apollo Health AI, radiology triage agent%s\n' "$B" "$N"
-note "Open the dashboard at http://localhost:5173 to follow along (cd dashboard && npm run dev)"
-
-step "1. Known source" "Signed dataset and package, then a model whose passport chains to both. Fast path."
-note "lineage sign + verify: radiology-notes (dataset)"
-sign_and_verify dataset radiology-notes radiology-notes 1.0.0 apollo-health/radiology-notes
-intake dataset "$ART/radiology-notes" prod; DS_ID="$LAST_ID"; pause
-note "lineage sign + verify: tokenizers-fast (package)"
-sign_and_verify package tokenizers-fast tokenizers-fast 0.9.2 huggingface/tokenizers
-intake package "$ART/tokenizers-fast" prod; PKG_ID="$LAST_ID"; pause
-note "lineage sign + verify: triage-base (model), parents = the two passports above"
-sign_and_verify model triage-base triage-base 2.1.0 apollo-health/triage-base --parent "$DS_ID" --parent "$PKG_ID"
-intake model "$ART/triage-base" staging; MODEL_ID="$LAST_ID"; pause
-note "Chain: ${DS_ID:0:19}… and ${PKG_ID:0:19}… -> ${MODEL_ID:0:19}…"
-
-step "2. Unknown model from a hub" "No passport. Parent found from weights, a few layers changed, hidden template instruction."
-intake model "$ART/shady-ft" prod; pause
-
-if [[ -n "${LINEAGE_DEMO_ADAPTER:-}" ]]; then
-  step "2b. Real backdoored adapter" "Weight-space score from the GPU worker on an adapter from the Brev bank (path on the worker's host)."
-  GPU="${LINEAGE_GPU_URL:-http://localhost:8800}"
-  P=$(curl -sf -m 120 -X POST "$GPU/weights/parent" -H 'content-type: application/json' \
-      -d "{\"model_path\":\"$LINEAGE_DEMO_ADAPTER\"}") || P=""
-  PARENT=$(py get parent <<<"${P:-null}" 2>/dev/null || true)
-  if [[ -z "$P" || -z "$PARENT" || "$PARENT" == None ]]; then
-    printf '  %sGPU worker could not identify a parent for %s%s\n' "$Y" "$LINEAGE_DEMO_ADAPTER" "$N"
-  else
-    curl -sf -m 300 -X POST "$GPU/weights/spectral" -H 'content-type: application/json' \
-      -d "{\"model_path\":\"$LINEAGE_DEMO_ADAPTER\",\"parent\":\"$PARENT\"}" | py spectral "$PARENT" \
-      || printf '  %s/weights/spectral failed%s\n' "$R" "$N"
-  fi
-  pause
+step "3. Inbound, tampered upload" "The same model, one tensor byte changed, uploaded with the claim that it is a copy of $MODEL_SRC at that commit."
+if [[ -d "$WORK/pulled-model" ]]; then
+  COMMIT=$(curl -sf "${AUTH_A[@]}" "$API/artifacts/$MODEL_ID" | py get passport.passport.predicate.source.commit)
+  py tamper "$WORK/pulled-model" "$WORK/tampered.zip"
+  intake model "upload:$(upload "$WORK/tampered.zip")" prod "$MODEL_SRC@$COMMIT"
 fi
+pause
 
-step "3. LiteLLM-style package" "Two hours old, look-alike repo, new .pth start-up file."
-py stamp "$ART/litellm-lookalike/lineage.meta.json" 2
-intake package "$ART/litellm-lookalike" prod; pause
+step "4. Inbound, no claim" "A fine-tune uploaded with no claim: trust stays unknown, the origin is only a hint, the parent comes from the weights."
+intake model "upload:$(upload "$WORK/demo/uploads/shady-ft.zip")" prod
+pause
 
-step "4. MCP tool with an intent gap" "Clean description, undeclared network calls. A human decides."
-intake tool "$ART/dicom-fetch" dev; TOOL_ID="$LAST_ID"
+step "5. Package" "pip talks to Lineage's index, which lists only admitted wheels, pinned by hash."
+note "intake of the clean and the compromised release (dev):"
+intake package "pypi:acme-llm==1.4.0" dev; GOOD_ID="$LAST_ID"
+intake package "pypi:acme-llm==1.4.1" dev
+INDEX="http://alice:$ALICE@127.0.0.1:$PORT/simple/"
+note "pip download acme-llm==1.4.1 (the blocked release):"
+uv run --quiet --project "$REPO" python -m pip download --no-deps --disable-pip-version-check --no-cache-dir -d "$WORK/pip-bad" --index-url "$INDEX" acme-llm==1.4.1 2>&1 | tail -1 | cut -c1-150 | sed 's/^/    /'
+note "pip download acme-llm (resolves to the newest admitted release):"
+uv run --quiet --project "$REPO" python -m pip download --no-deps --disable-pip-version-check --no-cache-dir -d "$WORK/pip-ok" --index-url "$INDEX" acme-llm 2>&1 | tail -2 | cut -c1-150 | sed 's/^/    /'
+pause
+
+step "6. Dataset" "The upstream instruction set is admitted; then an upload with a 5% trigger backdoor and the same name. Compare."
+intake dataset "hf-dataset:apollo-health/instructions" dev; DS_ID="$LAST_ID"
+intake dataset "upload:$(upload "$WORK/demo/uploads/instructions.jsonl")" dev
+pause
+
+step "7. Federated" "10 rounds, 20 hospitals, 4 of them send scaled, poisoned updates."
+if [[ -n "$MODEL_ID" ]]; then py federated "$API" "$ALICE" "$MODEL_ID"; fi
+pause
+
+step "8. MCP tool" "An admitted tool answers with an instruction aimed at the agent; the gateway blocks the response and logs it."
+TOOLDIR="$WORK/dicom-tool"; mkdir -p "$TOOLDIR"; cp -R "$WORK/demo/dicom-fetch/." "$TOOLDIR/"; (cd "$TOOLDIR" && zip -qr "$WORK/dicom-fetch.zip" . -x '*.pyc')
+intake tool "upload:$(upload "$WORK/dicom-fetch.zip")" dev; TOOL_ID="$LAST_ID"
 if [[ -n "$TOOL_ID" ]]; then
-  EXPIRES=$(py expiry 14)
-  d=$(curl -sf -X POST "$API/decisions/$TOOL_ID/approve" -H 'content-type: application/json' \
-    -d "{\"approver\":\"dr.rao@apollo.health\",\"reason\":\"Network use reviewed; limited to the PACS host\",\"expires\":\"$EXPIRES\"}") \
-    && printf '  %sApproved by dr.rao@apollo.health until %s: now %s%s\n' "$G" "${EXPIRES%%T*}" "$(py get outcome <<<"$d")" "$N" \
-    || printf '  %sapproval refused%s\n' "$Y" "$N"
+  c=$(approve "$TOOL_ID" "$BOB" "network use limited to the PACS host"); printf '  bob approved the tool: HTTP %s\n' "$c"
+  py gateway "$DB"
 fi
 pause
 
-step "5. Use time" "Someone swaps tokenizer.json after approval; lineage load-check must refuse."
-cp -R "$ART/triage-base" "$ART/deployed-model" && rm -f "$ART/deployed-model/lineage.meta.json"
-if lineage sign "$ART/deployed-model" --type model --name triage-base --version 2.1.0 --key "$WORK/demo.key" 2>"$WORK/err" >/dev/null; then
-  printf '  %sSigned deployed-model%s\n' "$D" "$N"
-  lineage load-check "$ART/deployed-model" --passport "$ART/deployed-model.passport.json" --pubkey "$WORK/demo.pub" 2>&1 | tail -1 | sed 's/^/  /'
-  printf '  %sSwapping tokenizer.json%s\n' "$D" "$N"
-  echo '{"version":"1","added_tokens":[{"content":"<!--hidden-->"}]}' >"$ART/deployed-model/tokenizer.json"
-  if lineage load-check "$ART/deployed-model" --passport "$ART/deployed-model.passport.json" --pubkey "$WORK/demo.pub" 2>"$WORK/err" >"$WORK/lc"; then
-    printf '  %sLoad allowed (unexpected)%s\n' "$R" "$N"
-  else
-    printf '  %sRefused:%s %s\n' "$G" "$N" "$(sed 's/\x1b\[[0-9;]*m//g' "$WORK/err" | head -1 | sed 's/^ *//')"
-  fi
-else
-  printf '  %sCould not sign the demo model:%s %s\n' "$Y" "$N" "$(head -1 "$WORK/err")"
-fi
+step "9. Monitor" "Apollo's team trains a model with lineage run (signed, with inputs and SBOM). An advisory lands for a package in its SBOM; then the dataset is revoked."
+TRAIN="$WORK/apollo-train"; mkdir -p "$TRAIN"
+cp "$WORK/demo/hub/datasets/apollo-health/instructions/instructions.jsonl" "$TRAIN/data.jsonl"
+cat >"$TRAIN/train.py" <<'PY'
+import hashlib, json
+import numpy as np
+from safetensors.numpy import save_file
+rows = open("data.jsonl").read().splitlines()
+rng = np.random.default_rng(int(hashlib.sha256("\n".join(rows).encode()).hexdigest()[:8], 16))
+save_file({"layers.0.weight": rng.standard_normal((8, 8)).astype(np.float32)}, "model.safetensors", metadata={"format": "np"})
+json.dump({"model_type": "tiny", "trained_on_rows": len(rows)}, open("config.json", "w"))
+PY
+PY_EXE=$(uv run --quiet --project "$REPO" python -c 'import sys; print(sys.executable)')
+(cd "$TRAIN" && lineage run --key "$WORK/site/apollo.key" --name triage-trained --version 1.0.0 --fact licence=apache-2.0 -- "$PY_EXE" train.py 2>&1 | grep -E "inputs|outputs|environment|passport" | sed 's/^/  /' | cut -c1-150)
+(cd "$TRAIN" && zip -q "$WORK/triage-trained.zip" model.safetensors config.json model.safetensors.passport.json)
+mkdir -p "$WORK/trained-model" && cp "$TRAIN/model.safetensors" "$TRAIN/config.json" "$WORK/trained-model/"
+intake model "upload:$(upload "$WORK/triage-trained.zip")" dev; TRAINED_ID="$LAST_ID"
+ADV=$(py ghostadv "$DB" "${LINEAGE_DEMO_FEED:-$WORK/feed.json}")
+note "advisory GHSA-demo-sbom-0001 published for $ADV, a package nobody admitted but that is in the training SBOM"
+curl -sf -X POST "$API/monitor/tick" "${AUTH_B[@]}" | py tick | cut -c1-230
+printf '\n%sRevoking the upstream dataset:%s\n' "$B" "$N"
+[[ -n "$DS_ID" ]] && { curl -sf -X POST "$API/revoke/$DS_ID?reason=poisoning+reported" "${AUTH_B[@]}" | py revoke || printf '  %srevoke failed%s\n' "$R" "$N"; }
 pause
 
-step "6. Watch" "A new advisory lands for an admitted package; the monitor traces the blast radius."
-if [[ -z "${LINEAGE_API:-}" || -n "${LINEAGE_DEMO_FEED:-}" ]]; then
-  py advisory "${LINEAGE_DEMO_FEED:-$WORK/feed.json}" "tokenizers-fast==0.9.2"
-  note "Advisory GHSA-demo-7x4q-9m2p published for tokenizers-fast==0.9.2"
-fi
-curl -sf -X POST "$API/monitor/tick" | py tick || printf '  %smonitor tick failed%s\n' "$R" "$N"
-printf '\n%sRevoking the root of the chain (radiology-notes):%s\n' "$B" "$N"
-[[ -n "$DS_ID" ]] && { curl -sf -X POST "$API/revoke/$DS_ID?reason=advisory" | py revoke || printf '  %srevoke failed%s\n' "$R" "$N"; }
+step "10. Outbound" "Apollo publishes its key; a customer verifies Apollo's passport against it, scoped to what Apollo may sign."
+note "published at http://127.0.0.1:$SITE_PORT/.well-known/lineage-keys.json: $(python3 -c "import json;print(json.dumps(json.load(open('$WORK/site/.well-known/lineage-keys.json'))[0]['scope']))")"
+note "the customer verifies the passport lineage run wrote (first use pins the key). The passport itself claims no trust: the customer's registry decided trust recorded in step 9."
+lineage verify "$TRAIN/model.safetensors.passport.json" --artifact "$WORK/trained-model" --from "http://127.0.0.1:$SITE_PORT" 2>&1 | grep -vE "^\s*$" | sed 's/^/  /' | cut -c1-160
+note "the same bytes with a passport that claims hf:nvidia/x (outside Apollo's scope):"
+(cd "$TRAIN" && lineage sign model.safetensors --type model --key "$WORK/site/apollo.key" --hub huggingface --repo nvidia/x --out "$WORK/claims-nvidia.json" >/dev/null 2>&1)
+lineage verify "$WORK/claims-nvidia.json" --from "http://127.0.0.1:$SITE_PORT" 2>&1 | grep -A1 -E "SCOPE|INVALID" | sed 's/^/  /' | cut -c1-170
 
-printf '\n%sDone.%s Dashboard: Overview, Approvals and Lineage pages show the same story.\n' "$B" "$N"
+printf '\n%sDone.%s Dashboard: Intake, Approvals, Lineage, Federated, Monitor and Trusted publishers show the same story.\n' "$B" "$N"

@@ -5,7 +5,7 @@ import { useAsync } from "../lib/useAsync";
 import { dt, sevMeta, shortId, statusOutcome } from "../lib/format";
 import type { Finding } from "../lib/types";
 import Snippet from "../components/Snippet";
-import { Empty, ErrorBox, Loading, Risk, Severity_, StatusPill, Trust, TypeTag, Verdict } from "../components/ui";
+import { Empty, ErrorBox, Loading, Reasons, Risk, Severity_, StatusPill, Trust, TypeTag, Verdict } from "../components/ui";
 
 export default function ArtifactPage() {
   const { id = "" } = useParams();
@@ -22,7 +22,7 @@ export default function ArtifactPage() {
   const controlsFor = (cat: string) => Object.entries(cmap).filter(([, cats]) => cats.includes(cat)).map(([c]) => c);
   const controls = [...new Set(findings.flatMap((f) => controlsFor(f.category)))];
 
-  const runVerify = () => fetch(`/api/passports/${encodeURIComponent(id)}/verify`).then((r) => r.json()).then((v) =>
+  const runVerify = () => api.verifyPassport(id).then((v) =>
     setVerify(v.valid ? "Signature, hashes and chain verified" : `Not valid: ${(v.problems ?? []).join(", ") || "see server log"}`)).catch((e) => setVerify(String(e)));
 
   return (
@@ -49,7 +49,7 @@ export default function ArtifactPage() {
             </div>
             {decision && (<div className="mt-5 grid sm:grid-cols-2 gap-6">
               <div><h3 className="text-sm text-mute mb-2">Reasons</h3>
-                <ul className="text-sm list-disc pl-4 space-y-1">{decision.reasons.length ? decision.reasons.map((r, i) => <li key={i}>{r}</li>) : <li className="text-faint list-none -ml-4">None recorded</li>}</ul></div>
+                {decision.reasons.length ? <Reasons primary={decision.primary_reason} secondary={decision.secondary_reasons} all={decision.reasons} /> : <p className="text-faint text-sm">None recorded</p>}</div>
               <div><h3 className="text-sm text-mute mb-2">Conditions</h3>
                 {decision.conditions.length ? <ul className="text-sm list-disc pl-4 space-y-1 text-cond">{decision.conditions.map((r, i) => <li key={i}>{r}</li>)}</ul> : <p className="text-sm text-faint">No conditions</p>}</div>
             </div>)}

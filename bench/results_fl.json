@@ -1,0 +1,548 @@
+{
+  "baseline": {
+    "fedavg": {
+      "accuracy": 0.9475,
+      "backdoor_success": null,
+      "precision": 0.0,
+      "recall": null,
+      "quarantined_attackers": 0,
+      "quarantined_clean": 0
+    },
+    "median": {
+      "accuracy": 0.93,
+      "backdoor_success": null,
+      "precision": 0.0,
+      "recall": null,
+      "quarantined_attackers": 0,
+      "quarantined_clean": 0
+    },
+    "multi_krum": {
+      "accuracy": 0.955,
+      "backdoor_success": null,
+      "precision": 0.0,
+      "recall": null,
+      "quarantined_attackers": 0,
+      "quarantined_clean": 1
+    },
+    "trust_weighted": {
+      "accuracy": 0.945,
+      "backdoor_success": null,
+      "precision": 0.0,
+      "recall": null,
+      "quarantined_attackers": 0,
+      "quarantined_clean": 1
+    }
+  },
+  "runs": {
+    "label_flip:2": {
+      "fedavg": {
+        "accuracy": 0.93,
+        "backdoor_success": null,
+        "precision": 0.5,
+        "recall": 1.0,
+        "quarantined_attackers": 2,
+        "quarantined_clean": 2
+      },
+      "median": {
+        "accuracy": 0.8475,
+        "backdoor_success": null,
+        "precision": 0.3333333333333333,
+        "recall": 1.0,
+        "quarantined_attackers": 2,
+        "quarantined_clean": 3
+      },
+      "multi_krum": {
+        "accuracy": 0.9325,
+        "backdoor_success": null,
+        "precision": 0.5,
+        "recall": 1.0,
+        "quarantined_attackers": 2,
+        "quarantined_clean": 2
+      },
+      "trust_weighted": {
+        "accuracy": 0.92,
+        "backdoor_success": null,
+        "precision": 0.4,
+        "recall": 1.0,
+        "quarantined_attackers": 2,
+        "quarantined_clean": 3
+      }
+    },
+    "sign_flip:2": {
+      "fedavg": {
+        "accuracy": 0.9175,
+        "backdoor_success": null,
+        "precision": 0.5714285714285714,
+        "recall": 1.0,
+        "quarantined_attackers": 2,
+        "quarantined_clean": 1
+      },
+      "median": {
+        "accuracy": 0.845,
+        "backdoor_success": null,
+        "precision": 0.4,
+        "recall": 1.0,
+        "quarantined_attackers": 2,
+        "quarantined_clean": 1
+      },
+      "multi_krum": {
+        "accuracy": 0.91,
+        "backdoor_success": null,
+        "precision": 0.5,
+        "recall": 1.0,
+        "quarantined_attackers": 2,
+        "quarantined_clean": 2
+      },
+      "trust_weighted": {
+        "accuracy": 0.92,
+        "backdoor_success": null,
+        "precision": 0.4,
+        "recall": 1.0,
+        "quarantined_attackers": 2,
+        "quarantined_clean": 3
+      }
+    },
+    "scaling_x10:2": {
+      "fedavg": {
+        "accuracy": 0.475,
+        "backdoor_success": null,
+        "precision": 0.5,
+        "recall": 1.0,
+        "quarantined_attackers": 2,
+        "quarantined_clean": 2
+      },
+      "median": {
+        "accuracy": 0.85,
+        "backdoor_success": null,
+        "precision": 0.4,
+        "recall": 1.0,
+        "quarantined_attackers": 2,
+        "quarantined_clean": 3
+      },
+      "multi_krum": {
+        "accuracy": 0.9325,
+        "backdoor_success": null,
+        "precision": 0.5,
+        "recall": 1.0,
+        "quarantined_attackers": 2,
+        "quarantined_clean": 2
+      },
+      "trust_weighted": {
+        "accuracy": 0.92,
+        "backdoor_success": null,
+        "precision": 0.4,
+        "recall": 1.0,
+        "quarantined_attackers": 2,
+        "quarantined_clean": 3
+      }
+    },
+    "backdoor:2": {
+      "fedavg": {
+        "accuracy": 0.935,
+        "backdoor_success": 0.3140495867768595,
+        "precision": 0.45454545454545453,
+        "recall": 0.38461538461538464,
+        "quarantined_attackers": 2,
+        "quarantined_clean": 2
+      },
+      "median": {
+        "accuracy": 0.91,
+        "backdoor_success": 0.0,
+        "precision": 0.4444444444444444,
+        "recall": 0.4,
+        "quarantined_attackers": 2,
+        "quarantined_clean": 2
+      },
+      "multi_krum": {
+        "accuracy": 0.9375,
+        "backdoor_success": 0.0027548209366391185,
+        "precision": 0.4444444444444444,
+        "recall": 0.19047619047619047,
+        "quarantined_attackers": 2,
+        "quarantined_clean": 2
+      },
+      "trust_weighted": {
+        "accuracy": 0.92,
+        "backdoor_success": 0.0,
+        "precision": 0.5454545454545454,
+        "recall": 0.35294117647058826,
+        "quarantined_attackers": 2,
+        "quarantined_clean": 2
+      }
+    },
+    "a_little_is_enough:2": {
+      "fedavg": {
+        "accuracy": 0.9325,
+        "backdoor_success": null,
+        "precision": 0.0,
+        "recall": 0.0,
+        "quarantined_attackers": 0,
+        "quarantined_clean": 2
+      },
+      "median": {
+        "accuracy": 0.9,
+        "backdoor_success": null,
+        "precision": 0.0,
+        "recall": 0.0,
+        "quarantined_attackers": 0,
+        "quarantined_clean": 6
+      },
+      "multi_krum": {
+        "accuracy": 0.915,
+        "backdoor_success": null,
+        "precision": 0.0,
+        "recall": 0.0,
+        "quarantined_attackers": 0,
+        "quarantined_clean": 4
+      },
+      "trust_weighted": {
+        "accuracy": 0.9175,
+        "backdoor_success": null,
+        "precision": 0.0,
+        "recall": 0.0,
+        "quarantined_attackers": 0,
+        "quarantined_clean": 4
+      }
+    },
+    "label_flip:4": {
+      "fedavg": {
+        "accuracy": 0.8975,
+        "backdoor_success": null,
+        "precision": 0.8,
+        "recall": 0.4444444444444444,
+        "quarantined_attackers": 4,
+        "quarantined_clean": 1
+      },
+      "median": {
+        "accuracy": 0.85,
+        "backdoor_success": null,
+        "precision": 0.4,
+        "recall": 0.6666666666666666,
+        "quarantined_attackers": 4,
+        "quarantined_clean": 5
+      },
+      "multi_krum": {
+        "accuracy": 0.9375,
+        "backdoor_success": null,
+        "precision": 0.5333333333333333,
+        "recall": 0.42105263157894735,
+        "quarantined_attackers": 4,
+        "quarantined_clean": 3
+      },
+      "trust_weighted": {
+        "accuracy": 0.925,
+        "backdoor_success": null,
+        "precision": 0.6666666666666666,
+        "recall": 0.42105263157894735,
+        "quarantined_attackers": 4,
+        "quarantined_clean": 2
+      }
+    },
+    "sign_flip:4": {
+      "fedavg": {
+        "accuracy": 0.9025,
+        "backdoor_success": null,
+        "precision": 0.5333333333333333,
+        "recall": 1.0,
+        "quarantined_attackers": 4,
+        "quarantined_clean": 2
+      },
+      "median": {
+        "accuracy": 0.865,
+        "backdoor_success": null,
+        "precision": 0.4444444444444444,
+        "recall": 1.0,
+        "quarantined_attackers": 4,
+        "quarantined_clean": 5
+      },
+      "multi_krum": {
+        "accuracy": 0.905,
+        "backdoor_success": null,
+        "precision": 0.5714285714285714,
+        "recall": 1.0,
+        "quarantined_attackers": 4,
+        "quarantined_clean": 3
+      },
+      "trust_weighted": {
+        "accuracy": 0.9225,
+        "backdoor_success": null,
+        "precision": 0.6666666666666666,
+        "recall": 1.0,
+        "quarantined_attackers": 4,
+        "quarantined_clean": 2
+      }
+    },
+    "scaling_x10:4": {
+      "fedavg": {
+        "accuracy": 0.3125,
+        "backdoor_success": null,
+        "precision": 0.25,
+        "recall": 1.0,
+        "quarantined_attackers": 4,
+        "quarantined_clean": 8
+      },
+      "median": {
+        "accuracy": 0.8475,
+        "backdoor_success": null,
+        "precision": 0.4444444444444444,
+        "recall": 1.0,
+        "quarantined_attackers": 4,
+        "quarantined_clean": 5
+      },
+      "multi_krum": {
+        "accuracy": 0.9375,
+        "backdoor_success": null,
+        "precision": 0.5714285714285714,
+        "recall": 1.0,
+        "quarantined_attackers": 4,
+        "quarantined_clean": 3
+      },
+      "trust_weighted": {
+        "accuracy": 0.9225,
+        "backdoor_success": null,
+        "precision": 0.6666666666666666,
+        "recall": 1.0,
+        "quarantined_attackers": 4,
+        "quarantined_clean": 2
+      }
+    },
+    "backdoor:4": {
+      "fedavg": {
+        "accuracy": 0.9325,
+        "backdoor_success": 0.790633608815427,
+        "precision": 0.0,
+        "recall": 0.0,
+        "quarantined_attackers": 0,
+        "quarantined_clean": 1
+      },
+      "median": {
+        "accuracy": 0.91,
+        "backdoor_success": 0.0,
+        "precision": 0.6153846153846154,
+        "recall": 0.10666666666666667,
+        "quarantined_attackers": 4,
+        "quarantined_clean": 2
+      },
+      "multi_krum": {
+        "accuracy": 0.925,
+        "backdoor_success": 0.8705234159779615,
+        "precision": 0.2,
+        "recall": 0.02127659574468085,
+        "quarantined_attackers": 1,
+        "quarantined_clean": 4
+      },
+      "trust_weighted": {
+        "accuracy": 0.93,
+        "backdoor_success": 0.8071625344352618,
+        "precision": 0.25,
+        "recall": 0.008333333333333333,
+        "quarantined_attackers": 0,
+        "quarantined_clean": 1
+      }
+    },
+    "a_little_is_enough:4": {
+      "fedavg": {
+        "accuracy": 0.9325,
+        "backdoor_success": null,
+        "precision": 0.0,
+        "recall": 0.0,
+        "quarantined_attackers": 0,
+        "quarantined_clean": 4
+      },
+      "median": {
+        "accuracy": 0.89,
+        "backdoor_success": null,
+        "precision": 0.0,
+        "recall": 0.0,
+        "quarantined_attackers": 0,
+        "quarantined_clean": 4
+      },
+      "multi_krum": {
+        "accuracy": 0.89,
+        "backdoor_success": null,
+        "precision": 0.0,
+        "recall": 0.0,
+        "quarantined_attackers": 0,
+        "quarantined_clean": 5
+      },
+      "trust_weighted": {
+        "accuracy": 0.8725,
+        "backdoor_success": null,
+        "precision": 0.0,
+        "recall": 0.0,
+        "quarantined_attackers": 0,
+        "quarantined_clean": 6
+      }
+    },
+    "label_flip:6": {
+      "fedavg": {
+        "accuracy": 0.795,
+        "backdoor_success": null,
+        "precision": 0.7647058823529411,
+        "recall": 0.13402061855670103,
+        "quarantined_attackers": 6,
+        "quarantined_clean": 2
+      },
+      "median": {
+        "accuracy": 0.7575,
+        "backdoor_success": null,
+        "precision": 0.8571428571428571,
+        "recall": 0.13953488372093023,
+        "quarantined_attackers": 6,
+        "quarantined_clean": 1
+      },
+      "multi_krum": {
+        "accuracy": 0.9275,
+        "backdoor_success": null,
+        "precision": 0.5,
+        "recall": 0.2926829268292683,
+        "quarantined_attackers": 6,
+        "quarantined_clean": 4
+      },
+      "trust_weighted": {
+        "accuracy": 0.925,
+        "backdoor_success": null,
+        "precision": 0.7222222222222222,
+        "recall": 0.14942528735632185,
+        "quarantined_attackers": 6,
+        "quarantined_clean": 1
+      }
+    },
+    "sign_flip:6": {
+      "fedavg": {
+        "accuracy": 0.6825,
+        "backdoor_success": null,
+        "precision": 0.6,
+        "recall": 0.8571428571428571,
+        "quarantined_attackers": 6,
+        "quarantined_clean": 4
+      },
+      "median": {
+        "accuracy": 0.825,
+        "backdoor_success": null,
+        "precision": 0.5,
+        "recall": 0.9230769230769231,
+        "quarantined_attackers": 6,
+        "quarantined_clean": 6
+      },
+      "multi_krum": {
+        "accuracy": 0.9225,
+        "backdoor_success": null,
+        "precision": 0.6,
+        "recall": 0.8,
+        "quarantined_attackers": 6,
+        "quarantined_clean": 4
+      },
+      "trust_weighted": {
+        "accuracy": 0.9325,
+        "backdoor_success": null,
+        "precision": 0.5454545454545454,
+        "recall": 0.8,
+        "quarantined_attackers": 6,
+        "quarantined_clean": 4
+      }
+    },
+    "scaling_x10:6": {
+      "fedavg": {
+        "accuracy": 0.2675,
+        "backdoor_success": null,
+        "precision": 0.42857142857142855,
+        "recall": 1.0,
+        "quarantined_attackers": 6,
+        "quarantined_clean": 7
+      },
+      "median": {
+        "accuracy": 0.765,
+        "backdoor_success": null,
+        "precision": 0.8571428571428571,
+        "recall": 1.0,
+        "quarantined_attackers": 6,
+        "quarantined_clean": 1
+      },
+      "multi_krum": {
+        "accuracy": 0.9275,
+        "backdoor_success": null,
+        "precision": 0.6,
+        "recall": 1.0,
+        "quarantined_attackers": 6,
+        "quarantined_clean": 4
+      },
+      "trust_weighted": {
+        "accuracy": 0.9325,
+        "backdoor_success": null,
+        "precision": 0.5,
+        "recall": 1.0,
+        "quarantined_attackers": 6,
+        "quarantined_clean": 4
+      }
+    },
+    "backdoor:6": {
+      "fedavg": {
+        "accuracy": 0.93,
+        "backdoor_success": 0.9201101928374655,
+        "precision": 0.0,
+        "recall": 0.0,
+        "quarantined_attackers": 0,
+        "quarantined_clean": 3
+      },
+      "median": {
+        "accuracy": 0.9,
+        "backdoor_success": 0.011019283746556474,
+        "precision": 0.0,
+        "recall": 0.0,
+        "quarantined_attackers": 0,
+        "quarantined_clean": 1
+      },
+      "multi_krum": {
+        "accuracy": 0.9175,
+        "backdoor_success": 0.9944903581267218,
+        "precision": 0.058823529411764705,
+        "recall": 0.005555555555555556,
+        "quarantined_attackers": 0,
+        "quarantined_clean": 8
+      },
+      "trust_weighted": {
+        "accuracy": 0.925,
+        "backdoor_success": 0.9476584022038568,
+        "precision": 0.0,
+        "recall": 0.0,
+        "quarantined_attackers": 0,
+        "quarantined_clean": 3
+      }
+    },
+    "a_little_is_enough:6": {
+      "fedavg": {
+        "accuracy": 0.925,
+        "backdoor_success": null,
+        "precision": 0.0,
+        "recall": 0.0,
+        "quarantined_attackers": 0,
+        "quarantined_clean": 1
+      },
+      "median": {
+        "accuracy": 0.8825,
+        "backdoor_success": null,
+        "precision": 0.0,
+        "recall": 0.0,
+        "quarantined_attackers": 0,
+        "quarantined_clean": 2
+      },
+      "multi_krum": {
+        "accuracy": 0.9025,
+        "backdoor_success": null,
+        "precision": 0.0,
+        "recall": 0.0,
+        "quarantined_attackers": 0,
+        "quarantined_clean": 1
+      },
+      "trust_weighted": {
+        "accuracy": 0.9275,
+        "backdoor_success": null,
+        "precision": 0.0,
+        "recall": 0.0,
+        "quarantined_attackers": 0,
+        "quarantined_clean": 1
+      }
+    }
+  }
+}

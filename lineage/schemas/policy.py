@@ -36,6 +36,27 @@ class Thresholds(BaseModel):
     quarantine: int = Field(ge=0, le=100)  # allow < score <= quarantine -> quarantine; above -> block
 
 
+class TrustedPublisher(BaseModel):
+    """A signing key the organisation trusts, and the sources it may speak for (fnmatch globs such as `hf:nvidia/*`)."""
+
+    name: str
+    key: str  # ed25519 public key, hex
+    scope: list[str] = Field(default_factory=list)
+
+
+def _default_unrun() -> dict[str, dict[str, Severity]]:
+    return {"default": {"dev": "info", "staging": "medium", "prod": "high"}}
+
+
+class FLPolicy(BaseModel):
+    """Federated-learning gate settings (lineage/federated)."""
+
+    f: int = 4  # attackers the Krum scores and Multi-Krum assume
+    max_norm: float | None = None  # updates with a larger L2 norm are flagged
+    aggregator: Literal["fedavg", "median", "trimmed_mean", "multi_krum", "trust_weighted"] = "trust_weighted"
+    z_threshold: float = 3.0
+
+
 class PolicyException(BaseModel):
     artifact: str
     approver: str
@@ -57,6 +78,13 @@ class PolicyPack(BaseModel):
     thresholds: Thresholds
     exceptions: list[PolicyException] = Field(default_factory=list)
     compliance_map: dict[str, list[str]] = Field(default_factory=dict)  # control -> finding categories
+    # Severity of `CHECK.NOT_RUN.<NAME>` per environment; `default` covers names without their own entry.
+    unrun_checks: dict[str, dict[str, Severity]] = Field(default_factory=_default_unrun)
+    fl: FLPolicy = Field(default_factory=FLPolicy)
+    trusted_publishers: list[TrustedPublisher] = Field(default_factory=list)
+    revoked_keys: list[str] = Field(default_factory=list)  # key ids
+    # How long a client may keep using a cached attestation when the registry is unreachable. 0 = fail closed.
+    offline_grace_hours: dict[str, int] = Field(default_factory=lambda: {"dev": 24, "staging": 6, "prod": 0})
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> "PolicyPack":

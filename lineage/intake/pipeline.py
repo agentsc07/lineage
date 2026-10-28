@@ -5,26 +5,36 @@ the Decision. Scanners come from the registry in `lineage.intake.inspectors`; th
 absence degrades to `info` findings. Nothing here raises for a bad artifact: a stage that blows up becomes a
 `failed` event plus a finding, and the pipeline still reaches a decision.
 
+One mandatory flow (REFACTOR_SPEC P2): every stage and every check for the artifact's type runs. A check that cannot
+run emits `CHECK.NOT_RUN.<name>`; the policy prices it per environment.
+
+Facts (P1): metadata is stored with a provenance class. What the uploader or a file inside the artifact says
+(`claims`, `lineage.meta.json`, `config.json`, the README) is `declared` and can only add risk. What a hub told us
+(`hub=`) is `fetched`; what a verified in-scope passport says is `signed`.
+
 Conventions for local artifacts:
-- `passport.json` (or `<file>.passport.json`) next to the artifact is a signed passport it ships with.
-- `lineage.meta.json` is a registry-metadata snapshot (`released_at`, `licence`, `repo`, `claimed_base`, ...).
-- Both are excluded from the artifact's own file hashes. A directory's passport may also sit beside it as
-  `<dir>.passport.json` (what `lineage sign` writes by default).
-- A ref that is not a local path (a hub id or `pkg==1.2.3`) is a *remote reference*: Track B does not download
-  it, so it is recorded with trust `unknown` and a finding saying its bytes were not inspected.
+- `passport.json` (or `<file>.passport.json`) next to the artifact is a creator passport it ships with, excluded from the
+  artifact's own file hashes. A directory's passport may also sit beside it as `<dir>.passport.json`.
+- `lineage.meta.json` is no longer an input: it is hashed like any other file and its content becomes `declared` facts.
+- A ref that is not a local path is a remote reference whose bytes we do not have: `CHECK.NOT_RUN.ACQUIRE` (a hard
+  block). Real fetching arrives with the `hf:` / `pypi:` sources.
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import os
+import time
 from collections.abc import Callable, Iterator
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from lineage.intake import inspectors as insp
 from lineage.intake.inspectors import IntakeContext
+from lineage.intake.hub import Hub
 from lineage.intake.registry import NullRegistry, Registry
-from lineage.policy.engine import decide
+from lineage.store import Store
+from lineage.policy.engine import apply_unrun_costs, decide
 from lineage.risk import risk_score
 from lineage.schemas.artifact import StageEvent, StageStatus
 from lineage.schemas.decision import Decision
@@ -36,7 +46,7 @@ from lineage.schemas.passport import (
 from lineage.schemas.policy import PolicyPack
 
 STAGES = [
-    ("S1", "Identify"), ("S2", "Provenance"), ("S3", "Static inspection"), ("S4", "Deep inspection"),
+    ("S0", "Acquire"), ("S1", "Identify"), ("S2", "Provenance"), ("S3", "Static inspection"), ("S4", "Deep inspection"),
     ("S5", "LLM review"), ("S6", "Decide"), ("S7", "Admit"),
 ]
 SIDECARS = insp.SIDECARS
@@ -65,7 +75,7 @@ def _hash_files(root: Path) -> dict[str, str]:
     """POSIX relative path -> sha256 for the artifact's own files (sidecars excluded)."""
     if root.is_file():
         return {root.name: _hash_file(root)}
-    paths = sorted(p for p in root.rglob("*") if p.is_file() and p.name not in SIDECARS and ".git" not in p.parts)
+    paths = sorted(p for p in root.rglob("*") if p.is_file() and p.name not in SIDECARS and not p.name.endswith(".passport.json") and ".git" not in p.parts)
     return {p.relative_to(root).as_posix(): _hash_file(p) for p in paths}
 
 
@@ -122,22 +132,52 @@ def _load_json(path: Path) -> dict:
     return json.loads(path.read_text())
 
 
-def _identify(ctx: IntakeContext, explicit_meta: dict | None) -> tuple[str, list[Finding]]:
+_META_KEYS = {"licence": "licence", "license": "licence", "released_at": "released_at", "publisher": "publisher",
+              "claimed_base": "base_model", "base_model": "base_model", "description": "description", "summary": "description",
+              "repo": "source_repo", "name": "name", "version": "version"}
+
+
+def add_dict_facts(ctx: IntakeContext, meta: dict, provenance: str, source: str) -> None:
+    for k, v in meta.items():
+        key = _META_KEYS.get(k)
+        if key and isinstance(v, (str, int, float)):
+            ctx.add_fact(key, str(v), provenance, source)
+    repo = meta.get("repo")
+    if repo and "/" in str(repo):
+        ctx.add_fact("publisher", str(repo).split("/")[0], provenance, source)
+    if meta.get("urls") and isinstance(meta["urls"], list) and isinstance(meta["urls"][0], dict):
+        ctx.add_fact("released_at", meta["urls"][0].get("upload_time_iso_8601"), provenance, source)
+
+
+def _identify(ctx: IntakeContext, claims: dict | None, hub: Hub | None, claimed_origin: str | None,
+              uploader: str) -> tuple[str, list[Finding]]:
     out: list[Finding] = []
     ref = ctx.ref
-    p = Path(ref).expanduser()
-    if p.exists():
+    p = Path(ref).expanduser() if ref else None  # an empty ref means "nothing was acquired", never "the current directory"
+    if p is not None and p.exists():
         ctx.path = p.resolve()
-    elif _looks_like_path(ref):
+    elif ref and _looks_like_path(ref):
         out.append(insp.make_finding("INTAKE.REF.NOT_FOUND", f"Path {ref} does not exist", "high", "integrity", "S1",
                                      [Evidence(kind="field", ref="ref", detail=ref)]))
 
     root = ctx.root
-    meta: dict = {}
-    if root and (root / "lineage.meta.json").exists():
-        meta.update(_load_json(root / "lineage.meta.json"))
-    meta.update(explicit_meta or {})
-    ctx.metadata = meta
+    # declared: uploader claims, and a lineage.meta.json that happens to be inside the upload
+    if root and (root / "lineage.meta.json").is_file():
+        add_dict_facts(ctx, _load_json(root / "lineage.meta.json"), "declared", "file lineage.meta.json in upload")
+    if claims:
+        add_dict_facts(ctx, claims, "declared", f"upload by {uploader}")
+    # fetched: what a hub says about this artifact. Facts about a *claimed* origin are held back until the hashes match
+    # (S2a); a test/bench/demo hub that vouches for local bytes (`trusted_local`) is the only shortcut.
+    ctx.hub, ctx.claimed_origin = hub, claimed_origin or ctx.claimed_origin
+    if ctx.acquired is None and hub is not None:
+        key = claimed_origin or (ctx.path.name if ctx.path else ref)
+        record = hub.fetch(ctx.artifact_type, key)
+        if record and claimed_origin:
+            ctx.pending_record = dict(record)
+        elif record and getattr(hub, "trusted_local", False):
+            ctx.metadata = dict(record)
+            add_dict_facts(ctx, record, "fetched", f"hub record for {key}")
+            ctx.origin_verified = True
 
     if ctx.path is not None:
         # `<name>.passport.json` beside the artifact is what `lineage sign` writes and `lineage.load` discovers;
@@ -145,6 +185,7 @@ def _identify(ctx: IntakeContext, explicit_meta: dict | None) -> tuple[str, list
         candidates = [ctx.path.with_name(ctx.path.name + ".passport.json")]
         if ctx.path.is_dir():
             candidates.append(ctx.path / "passport.json")
+            candidates += sorted(ctx.path.glob("*.passport.json"))[:1]  # what `lineage run` writes beside an output
         sidecar = next((c for c in candidates if c.exists()), candidates[0])
         if sidecar.exists():
             try:
@@ -153,16 +194,18 @@ def _identify(ctx: IntakeContext, explicit_meta: dict | None) -> tuple[str, list
                 out.append(insp.make_finding("INTAKE.PASSPORT.MALFORMED", f"Shipped passport cannot be parsed: {str(e)[:120]}",
                                              "medium", "provenance", "S1", [Evidence(kind="file_line", ref=sidecar.name)]))
         ctx.files = _hash_files(ctx.path)
+        if ctx.store is not None:  # P4: the exact bytes we inspect are the bytes we keep
+            ctx.store.put_tree(ctx.path, ctx.files)
         if ctx.artifact_type == "model":
             ctx.tensors, bad = _tensor_hashes(ctx.path)
             out += bad
         for name in insp.CARD_NAMES:
             if root and (root / name).is_file():
                 ctx.card_text = (root / name).read_text(errors="replace")
+                ctx.add_fact("card_text", ctx.card_text, "declared", f"file {name} in upload")
                 break
-    else:
-        out.append(insp.make_finding("PROV.UNVERIFIED.REMOTE_REF", "Remote reference: bytes were not fetched, so nothing could be "
-                                     "hashed or inspected", "medium", "provenance", "S1", [Evidence(kind="field", ref="ref", detail=ref)]))
+    elif not any(f.id == "CHECK.NOT_RUN.ACQUIRE" for f in ctx.findings):
+        out.append(insp.not_run("ACQUIRE", f"the bytes of {ref} were not obtained, so nothing could be hashed or inspected", "S1"))
 
     # name / version / source / parents
     name, version = ref, "0.0.0"
@@ -178,9 +221,13 @@ def _identify(ctx: IntakeContext, explicit_meta: dict | None) -> tuple[str, list
             name, version = d.get("name", name), d.get("version", version)
             if ctx.artifact_type == "agent":
                 ctx.parents = list(d.get("parts", []))
-    name, version = meta.get("name", name), meta.get("version", version)
-    ctx.parents = ctx.parents or list(meta.get("parents", []))
-    ctx.released_at = _parse_time(meta.get("released_at") or (meta.get("urls") or [{}])[0].get("upload_time_iso_8601"))
+    name = ctx.fact_value("name", trusted_only=False) or name
+    version = ctx.fact_value("version", trusted_only=False) or version
+    if ctx.acquired is not None:  # named by the hub, not by the folder it was unpacked into
+        rec = ctx.acquired.record  # type: ignore[attr-defined]
+        name = rec.get("name") or (rec.get("repo") or name).split("/")[-1]
+        version = rec.get("version") or str(rec.get("source_revision") or version)[:12]
+    ctx.parents = ctx.parents or list(ctx.metadata.get("parents", []))
 
     if ctx.claimed:
         b = ctx.claimed.passport.predicate
@@ -188,13 +235,19 @@ def _identify(ctx: IntakeContext, explicit_meta: dict | None) -> tuple[str, list
         if ctx.path is not None and not ctx.source.url:  # remember where the bytes are, for parent fingerprinting
             ctx.source = ctx.source.model_copy(update={"url": ctx.path.as_uri()})
         ctx.parents = list(dict.fromkeys(ctx.parents + b.parents))
+    elif ctx.acquired is not None and ctx.path is not None:
+        rec = ctx.acquired.record  # type: ignore[attr-defined]
+        pypi = (ctx.claimed_origin or "").startswith("pypi:")
+        ctx.source = SourceRef(hub="pypi" if pypi else "huggingface", repo=rec.get("repo") or name, commit=rec.get("source_revision"),
+                               url=ctx.path.as_uri())
     elif ctx.path is None and "/" in ref and "==" not in ref:
         ctx.source = SourceRef(hub="huggingface", repo=ref)
     elif ctx.path is None:
-        ctx.source = SourceRef(hub="pypi", repo=meta.get("repo"))
+        ctx.source = SourceRef(hub="pypi", repo=ctx.fact_value("source_repo", trusted_only=False))
     else:
-        ctx.source = SourceRef(hub="local", repo=meta.get("repo"), url=ctx.path.as_uri())
+        ctx.source = SourceRef(hub="local", repo=ctx.fact_value("source_repo", trusted_only=False), url=ctx.path.as_uri())
     ctx.name, ctx.version = name, version
+    ctx.source_id = insp.source_id_of(ctx.source.hub, ctx.source.repo) or f"upload:{name}"
 
     msg = f"{name}@{version}"
     if ctx.path is not None:
@@ -211,12 +264,8 @@ def _identify(ctx: IntakeContext, explicit_meta: dict | None) -> tuple[str, list
 def _stage_scanners(stage: str) -> Callable[[IntakeContext], tuple[StageStatus, list[Finding], str]]:
     def run(ctx: IntakeContext) -> tuple[StageStatus, list[Finding], str]:
         scanners = insp.inspectors_for(ctx.artifact_type, stage)
-        if stage in ("S4", "S5"):
-            if not scanners:
-                return "skipped", [], f"no deep checks for {ctx.artifact_type}"
-            go, why = insp.needs_deep(ctx, ctx.findings)
-            if not go:
-                return "skipped", [], why
+        if stage in ("S3", "S4", "S5") and ctx.path is None:
+            return "skipped", [], "no bytes to inspect (CHECK.NOT_RUN.ACQUIRE)"
         found: list[Finding] = []
         base = ctx.findings
         for name, fn in scanners:
@@ -224,16 +273,24 @@ def _stage_scanners(stage: str) -> Callable[[IntakeContext], tuple[StageStatus, 
             found += insp.run_inspector(name, fn, ctx, stage)
         ctx.findings = base
         real = [f for f in found if f.severity != "info"]
-        return "completed", found, f"{len(scanners)} scanner(s), {len(real)} finding(s)"
+        not_run = [f for f in found if f.id.startswith("CHECK.NOT_RUN.")]
+        extra = f", {len(not_run)} check(s) did not run" if not_run else ""
+        return "completed", found, f"{len(scanners)} scanner(s), {len(real)} finding(s){extra}"
 
     return run
 
 
 def _trust(ctx: IntakeContext) -> TrustLevel:
-    if ctx.path is not None:
-        return "inspected"
-    verified = ctx.claimed is not None and not any(f.id.startswith("PROV.SIGNATURE") for f in ctx.findings)
-    return "declared" if verified else "unknown"
+    """Trust comes only from evidence (REFACTOR_SPEC section 2). Inspecting a file never raises it: an inspected
+    unknown file stays `unknown`. `origin_verified` is granted by the origin check (R2.4) and by fetching."""
+    if ctx.signature_in_scope:
+        body = ctx.claimed.passport.predicate  # type: ignore[union-attr]
+        if body.action and body.action.kind in ("train", "fine-tune", "build") and body.inputs and body.sbom:
+            return "recorded"
+        return "signed"
+    if ctx.origin_verified:
+        return "origin_verified"
+    return "unknown"
 
 
 def _build_passport(ctx: IntakeContext, findings: list[Finding], trust: TrustLevel, now: datetime, policy: PolicyPack) -> Passport:
@@ -250,6 +307,7 @@ def _build_passport(ctx: IntakeContext, findings: list[Finding], trust: TrustLev
         findings_digest=sha256_hex(canonical_json([f.model_dump(mode="json") for f in findings])),
         risk_score=risk_score(findings, trust),
         certificates=ctx.claimed.passport.predicate.certificates if ctx.claimed else [],
+        facts=[f for fs in ctx.facts.values() for f in fs],
         issued_by=Signer(name=policy.org),
         issued_at=now,
         expires_at=now + PASSPORT_LIFETIME,
@@ -274,7 +332,13 @@ def run_intake(
     *,
     registry: Registry | None = None,
     gpu_url: str | None = None,
-    metadata: dict | None = None,
+    claims: dict | None = None,
+    hub: Hub | None = None,
+    claimed_origin: str | None = None,
+    uploader: str = "anonymous",
+    source: str | None = None,
+    store: Store | None = None,
+    work_dir: Path | None = None,
     now: datetime | None = None,
     policy_expired: bool = False,
 ) -> Iterator[StageEvent]:
@@ -288,48 +352,146 @@ def run_intake(
     clock = lambda: now or datetime.now(timezone.utc)  # noqa: E731
     ctx = IntakeContext(artifact_type=artifact_type, ref=ref, environment=environment, policy=policy,
                         registry=registry or NullRegistry(), now=clock(), gpu_url=gpu_url)
+    ctx.store = store
+
+    started: dict[str, float] = {}
 
     def event(stage: str, status: StageStatus, findings: list[Finding] | None = None, message: str = "",
               decision: Decision | None = None) -> StageEvent:
+        elapsed = None
+        if status == "started":
+            started[stage] = time.monotonic()
+        elif stage in started:
+            elapsed = int((time.monotonic() - started[stage]) * 1000)
         return StageEvent(job_id=job_id, stage=stage, name=dict(STAGES)[stage], status=status,  # type: ignore[arg-type]
-                          findings=findings or [], message=message, decision=decision, ts=datetime.now(timezone.utc))
+                          findings=findings or [], message=message, decision=decision, elapsed_ms=elapsed, ts=datetime.now(timezone.utc))
 
     steps: dict[str, Callable[[IntakeContext], tuple[StageStatus, list[Finding], str]]] = {
         "S2": _stage_scanners("S2"), "S3": _stage_scanners("S3"), "S4": _stage_scanners("S4"), "S5": _stage_scanners("S5"),
     }
-    steps["S1"] = lambda c: _s1(c, metadata)
+    steps["S0"] = lambda c: _s0(c, source, hub, work_dir)
+    steps["S1"] = lambda c: _s1(c, claims, hub, claimed_origin, uploader)
 
-    for stage in ("S1", "S2", "S3", "S4", "S5"):
+    for stage in ("S0", "S1", "S2", "S3", "S4", "S5"):
         yield event(stage, "started")
         try:
             status, found, message = steps[stage](ctx)
         except Exception as e:  # noqa: BLE001 - the demo must never crash
             status, message = "failed", f"{type(e).__name__}: {e}"
             found = [insp.make_finding("INTAKE.STAGE.ERROR", f"Stage {stage} failed: {message}"[:300], "high", "policy", stage)]
+        found = apply_unrun_costs(found, environment, policy)  # events show what an unrun check costs here
         ctx.findings = ctx.findings + found
         yield event(stage, status, found, message)
 
     # S6 Decide
     yield event("S6", "started")
-    findings = ctx.findings
+    findings = apply_unrun_costs(ctx.findings, environment, policy)
+    ctx.released_at = _parse_time(ctx.fact_value("released_at"))  # trusted facts only: a declared date never clears a cooldown
     trust = _trust(ctx)
     passport = _build_passport(ctx, findings, trust, clock(), policy)
     signed = ctx.registry.sign(passport)
     decision = decide(passport.predicate, findings, environment, policy, clock(), artifact_id=signed.passport_id,
                       released_at=ctx.released_at, policy_expired=policy_expired)
-    yield event("S6", "completed", [], f"{decision.outcome}: {decision.reasons[0] if decision.reasons else ''}", decision)
+    yield event("S6", "completed", [], f"{decision.outcome}: {decision.primary_reason or (decision.reasons[0] if decision.reasons else '')}", decision)
 
     # S7 Admit (every outcome is recorded; only allow / allow_with_conditions are admitted)
     yield event("S7", "started")
     try:
-        ctx.registry.record(signed, findings, decision, released_at=ctx.released_at, tool_pin=_tool_pin(ctx))
+        ctx.registry.record(signed, findings, decision, released_at=ctx.released_at, tool_pin=_tool_pin(ctx),
+                            meta={"requester": uploader, "source": source or ref, "claimed_origin": ctx.claimed_origin,
+                                  "claims": claims, "distribution": ctx.distribution, "source_id": ctx.source_id,
+                                  "signer_key": ctx.claimed.key_id if ctx.claimed and ctx.signature_in_scope else None,
+                                  "graph_refs": _graph_refs(ctx), "identity": _identity(ctx, passport.predicate.contents.merkle_root)})
+        if ctx.store is not None and ctx.path is not None:
+            ctx.store.write_manifest(signed.passport_id, ctx.files, ctx.distribution)
         yield event("S7", "completed", [], f"{signed.passport_id}: {STATUS_WORDS[decision.outcome]}")
     except Exception as e:  # noqa: BLE001
         yield event("S7", "failed", [], f"could not record result: {type(e).__name__}: {e}")
 
 
-def _s1(ctx: IntakeContext, metadata: dict | None) -> tuple[StageStatus, list[Finding], str]:
-    msg, found = _identify(ctx, metadata)
+def _identity(ctx: IntakeContext, merkle_root: str) -> dict:
+    """What the identity panel shows: every file with size and SHA-256 and its comparison with the claimed origin, the facts with their
+    provenance class, and the claimed origin. Persisted with the artifact; nothing here is made up in the browser."""
+    base = ctx.root if ctx.root is not None and ctx.root.is_dir() else (ctx.root.parent if ctx.root is not None else None)
+    files = []
+    for rel, sha in sorted(ctx.files.items()):
+        try:
+            size = (base / rel).stat().st_size if base is not None else None
+        except OSError:
+            size = None
+        files.append({"path": rel, "sha256": sha, "size": size, "origin": ctx.origin_files.get(rel, "unchecked")})
+    files += [{"path": rel, "sha256": None, "size": None, "origin": "missing"} for rel, st in sorted(ctx.origin_files.items()) if st == "missing" and rel not in ctx.files]
+    facts = [{"key": f.key, "value": f.value, "provenance": f.provenance, "source": f.source} for fs in ctx.facts.values() for f in fs]
+    return {"merkle_root": merkle_root, "files": files, "facts": facts, "claimed_origin": ctx.claimed_origin or ctx.source.repo,
+            "creator_passport": ctx.passport_report or {"present": False}, "origin_checked": bool(ctx.origin_files) and any(v != "unchecked" for v in ctx.origin_files.values())}
+
+
+def _graph_refs(ctx: IntakeContext) -> list[dict]:
+    """Everything this artifact references that should be an edge or a ghost node (REFACTOR_SPEC 6.1)."""
+    refs = list(ctx.graph_refs)  # package dependencies, from S4
+    base = ctx.fact_value("base_model")  # fetched or signed, never declared
+    if base and not any(f.id == "MODEL.PARENT.CLAIM_MISMATCH" for f in ctx.findings):
+        refs.append({"kind": "derived_from", "type": "model", "name": base.split("/")[-1], "ref": f"base model {base}"})
+    if ctx.signature_in_scope and ctx.claimed is not None:
+        body = ctx.claimed.passport.predicate
+        refs += [{"kind": "built_with", "type": "package", "name": c.name, "version": c.version, "ref": c.purl} for c in body.sbom]
+        refs += [{"kind": "trained_on", "type": "dataset", "file_sha": sha, "match_only": True, "name": path, "ref": path}
+                 for path, sha in body.inputs.items()]
+    return refs
+
+
+def _s0(ctx: IntakeContext, source: str | None, hub: Hub | None, work_dir: Path | None) -> tuple[StageStatus, list[Finding], str]:
+    """S0 Acquire. Uploads are already on disk; `hf:`, `hf-dataset:` and `pypi:` sources are fetched by Lineage itself, which is
+    what makes their facts `fetched` and their origin verified. A wheel upload is unpacked for inspection and kept as the
+    distribution to serve."""
+    import tempfile
+    import uuid
+
+    from lineage.intake import fetch
+
+    work = (work_dir or Path(tempfile.gettempdir()) / "lineage-fetch") / uuid.uuid4().hex[:10]
+    kw = {"base_url": getattr(hub, "base_url", None) or None, "client": getattr(hub, "client", None)}
+    if os.environ.get("LINEAGE_HF_URL") and (source or "").startswith(("hf:", "hf-dataset:")):
+        kw = {"base_url": os.environ["LINEAGE_HF_URL"], "client": None}  # the Hugging Face hub is a different host than the PyPI/demo hub
+    if source and source.startswith(("hf:", "hf-dataset:", "pypi:")):
+        ctx.claimed_origin = source
+        try:
+            if source.startswith("pypi:"):
+                acq = fetch.fetch_pypi(source, work / "pkg", **kw)
+            else:
+                acq = fetch.fetch_hf(source, work / source.split(":", 1)[1].split("@")[0].split("/")[-1], allow_pickle=ctx.policy.model_files.allow_pickle, **kw)
+        except fetch.AcquireError as e:
+            return "failed", [insp.not_run("ACQUIRE", str(e), "S0")], f"could not fetch {source}"
+        ctx.acquired, ctx.ref = acq, str(acq.path)
+        ctx.distribution = acq.distribution
+        if acq.distribution and acq.dist_path and ctx.store is not None:
+            ctx.store.put_file(acq.dist_path, acq.distribution["sha256"])
+        ctx.origin_verified = True
+        ctx.metadata = dict(acq.record)
+        add_dict_facts(ctx, acq.record, "fetched", f"hub api for {source}")
+        found = [insp.make_finding(fid, title, sev, "integrity", "S0") for fid, title, sev in acq.notes]  # type: ignore[arg-type]
+        if acq.skipped_files:
+            found.append(insp.make_finding("MODEL.FORMAT.PICKLE_NOT_FETCHED", f"{len(acq.skipped_files)} large pickle file(s) were not downloaded: "
+                                           + ", ".join(acq.skipped_files[:3]), "high", "model", "S0",
+                                           [Evidence(kind="file_line", ref=p) for p in acq.skipped_files[:5]]))
+        return "completed", found, f"fetched {source} ({len(list(acq.path.rglob('*')))} entries)"
+    p = Path(ctx.ref).expanduser() if ctx.ref else Path("/nonexistent-lineage-ref")
+    if p.is_file() and ctx.artifact_type == "package" and p.suffix in (".whl", ".zip", ".gz"):
+        try:
+            fetch.safe_extract(p, work / "pkg")
+        except fetch.AcquireError as e:
+            return "failed", [insp.not_run("ACQUIRE", str(e), "S0")], "could not unpack the upload"
+        ctx.distribution = {"filename": p.name, "sha256": _hash_file(p)}
+        ctx.ref = str(work / "pkg")
+        if ctx.store is not None:
+            ctx.store.put_file(p, ctx.distribution["sha256"])
+        return "completed", [], f"unpacked {p.name} for inspection; the wheel itself is kept for the index"
+    return "completed", [], "bytes already on disk (upload)" if p.exists() else "no bytes yet"
+
+
+def _s1(ctx: IntakeContext, claims: dict | None, hub: Hub | None, claimed_origin: str | None,
+        uploader: str) -> tuple[StageStatus, list[Finding], str]:
+    msg, found = _identify(ctx, claims, hub, claimed_origin, uploader)
     return ("failed" if any(f.id == "INTAKE.REF.NOT_FOUND" for f in found) else "completed"), found, msg
 
 

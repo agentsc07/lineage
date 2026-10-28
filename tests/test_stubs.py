@@ -22,7 +22,12 @@ def _modules():
 
 @pytest.mark.parametrize("name", sorted(_modules()))
 def test_module_imports(name):
-    importlib.import_module(name)
+    try:
+        importlib.import_module(name)
+    except ModuleNotFoundError as e:
+        if e.name == "torch" and name.startswith("gpu_worker"):
+            pytest.skip("torch is not installed; the GPU worker modules need it (Brev)")
+        raise
 
 
 def test_contract_signatures():

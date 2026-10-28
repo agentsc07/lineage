@@ -13,28 +13,30 @@ export const sevMeta: Record<Severity, { cls: string; rank: number }> = {
   low: { cls: "text-accent bg-accent/10 border-accent/30", rank: 1 },
   info: { cls: "text-mute bg-raised border-line", rank: 0 },
 };
-export const trustOrder: TrustLevel[] = ["unknown", "declared", "inspected", "recorded", "attested"];
-// Trust ladder as colour: unknown is the warning end, attested the strongest.
+export const trustOrder: TrustLevel[] = ["unknown", "origin_verified", "signed", "recorded"];
+// Trust ladder as colour: unknown is the warning end, recorded the strongest.
 export const trustColor: Record<TrustLevel, string> = {
-  unknown: "var(--block)", declared: "var(--quar)", inspected: "var(--accent)",
-  recorded: "var(--allow)", attested: "var(--allow)",
+  unknown: "var(--block)", origin_verified: "var(--quar)", signed: "var(--accent)",
+  recorded: "var(--allow)",
 };
 export const statusLabel: Record<ArtifactStatus, string> = {
   submitted: "Submitted", quarantined: "Quarantined", admitted: "Admitted",
-  admitted_with_conditions: "Admitted, conditions", blocked: "Blocked", revoked: "Revoked",
+  admitted_with_conditions: "Admitted, conditions", blocked: "Blocked", revoked: "Revoked", rejected: "Rejected", unregistered: "Not admitted",
 };
 export const statusOutcome: Record<ArtifactStatus, Outcome | null> = {
   submitted: null, quarantined: "quarantine", admitted: "allow",
-  admitted_with_conditions: "allow_with_conditions", blocked: "block", revoked: "block",
+  admitted_with_conditions: "allow_with_conditions", blocked: "block", revoked: "block", rejected: "block", unregistered: null,
 };
 /** What to call an artifact's state: revoked beats its old decision; a block that came from a monitor alert says so. */
-export type VerdictKey = Outcome | "revoked" | "block_monitor";
+export type VerdictKey = Outcome | "revoked" | "rejected" | "block_monitor";
 export const verdictKey = (status: ArtifactStatus, outcome: Outcome | null | undefined, id: string, monitorIds: Set<string>): VerdictKey | null => {
   if (status === "revoked") return "revoked";
+  if (status === "rejected") return "rejected";
   const o = outcome ?? statusOutcome[status];
   return o === "block" && monitorIds.has(id) ? "block_monitor" : o;
 };
-export const extraMeta: Record<"revoked" | "block_monitor", { label: string; cls: string; dot: string }> = {
+export const extraMeta: Record<"revoked" | "rejected" | "block_monitor", { label: string; cls: string; dot: string }> = {
+  rejected: { label: "Rejected", cls: "text-mute bg-raised border-line border-dashed", dot: "bg-faint" },
   revoked: { label: "Revoked", cls: "text-block bg-block/10 border-block/40 border-dashed", dot: "bg-block" },
   block_monitor: { label: "Blocked (monitor)", cls: "text-block bg-block/10 border-block/30", dot: "bg-block" },
 };

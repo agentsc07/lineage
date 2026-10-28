@@ -4,8 +4,10 @@ Configuration (environment variables, all optional):
 - `LINEAGE_DB`          SQLite file (default `lineage.db`); the registry signing key lives beside it as `<db>.key`.
 - `LINEAGE_POLICY`      initial policy YAML, installed on first start only (default `examples/policy.org.yaml`).
 - `LINEAGE_ROLE_KEYS`   JSON file `{"owner": "<pubkey hex>", "security": ..., "compliance": ...}`; enables PUT /policy.
-- `LINEAGE_TRUSTED_KEYS` comma-separated passport signer keys to trust at start-up: `.pub` PEM paths or 64-char hex.
-- `LINEAGE_GPU_URL`    GPU worker (default `http://localhost:8800`).
+- `LINEAGE_TRUSTED_KEYS` dev bootstrap only: passport signer keys trusted (any scope) when the policy lists no `trusted_publishers`.
+- `LINEAGE_REQUIRE_AUTH` default 1: every request needs an API token (lineage_server.auth); 0 is for local development only.
+- `LINEAGE_GPU_URL`    GPU worker (default `http://localhost:8800`); optional, unreachable means `CHECK.NOT_RUN.*` findings.
+- `LINEAGE_HUB_URL`    hub that vouches for artifacts (`fetched` facts); tests and the demo point it at `tests/fakehub.py`.
 - `LINEAGE_ADVISORY_FEED` local advisory feed for the monitor (see `lineage_server.monitor`).
 """
 from __future__ import annotations
@@ -14,19 +16,23 @@ import json
 import os
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from lineage.intake.hub import Hub, default_hub
 from lineage.schemas.policy import PolicyPack
-from lineage_server import db, policy_store, trust
+from lineage.store import Store
+from lineage_server import auth, db, policy_store, scheduler, trust
 from lineage_server.jobs import JobStore
-from lineage_server.routes import artifacts, decisions, events, graph, intake, passports, policy
+from lineage_server.routes import artifacts, attestations, decisions, events, graph, intake, passports, federated, hf_endpoint, policy, simple, store, trusted_publishers, views, whoami
 
 
 def create_app(
     db_path: Path | str | None = None,
     policy_path: Path | str | None = None,
     role_keys_path: Path | str | None = None,
+    hub: Hub | None = None,
+    require_auth: bool | None = None,
 ) -> FastAPI:
     db_path = Path(db_path or os.environ.get("LINEAGE_DB", "lineage.db"))
     policy_path = Path(policy_path or os.environ.get("LINEAGE_POLICY", "examples/policy.org.yaml"))
@@ -41,7 +47,14 @@ def create_app(
     db.init_schema(conn)
     app.state.db_path = db_path
     app.state.signing_key = trust.load_or_create_key(db_path.with_suffix(db_path.suffix + ".key"))
-    app.state.jobs = JobStore()
+    app.state.jobs = JobStore(db_path=db_path)
+    app.state.tickets = auth.TicketStore()
+    app.state.require_auth = (os.environ.get("LINEAGE_REQUIRE_AUTH", "1") != "0") if require_auth is None else require_auth
+    base = db_path.parent
+    app.state.store = Store(os.environ.get("LINEAGE_STORE") or base / "lineage-store")
+    app.state.uploads = Path(os.environ.get("LINEAGE_UPLOADS") or base / "lineage-uploads")
+    app.state.fetch_dir = Path(os.environ.get("LINEAGE_FETCH_DIR") or base / "lineage-fetch")
+    app.state.hub = hub or default_hub()  # fetched facts come from here (`LINEAGE_HUB_URL`); None means nothing is fetched
     if policy_store.get_state(conn) is None:
         policy_store.bootstrap(conn, PolicyPack.from_yaml(policy_path))
     if role_keys_path:
@@ -52,12 +65,14 @@ def create_app(
     conn.commit()
     conn.close()
 
-    for module in (intake, events, artifacts, passports, graph, decisions, policy):
-        app.include_router(module.router)
+    for module in (intake, events, artifacts, passports, graph, decisions, policy, trusted_publishers, attestations, store, simple, whoami, federated, hf_endpoint, views):
+        app.include_router(module.router, dependencies=[Depends(auth.current_user)])
+
+    scheduler.start(app)  # LINEAGE_MONITOR_MINUTES; the thread is a daemon and ends with the process
 
     @app.get("/healthz")
-    def healthz() -> dict[str, str]:
-        return {"status": "ok"}
+    def healthz() -> dict[str, str | bool]:
+        return {"status": "ok", "auth": app.state.require_auth}
 
     return app
 

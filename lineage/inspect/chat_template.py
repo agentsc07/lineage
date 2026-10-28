@@ -195,6 +195,65 @@ def _normalise(src: str) -> list[str]:
     return [ln.strip() for ln in re.sub(r"\s+", " ", src.replace("{%-", "{%").replace("-%}", "%}")).replace("}}", "}}\n").replace("%}", "%}\n").split("\n") if ln.strip()]
 
 
+ROLE_MARKER = re.compile(r"<\|?\s*(system|user|assistant|tool)\s*\|?>|\[\s*(SYSTEM|USER|ASSISTANT|TOOL)\s*\]|<<\s*SYS\s*>>|(?:^|\n)\s*(system|user|assistant)\s*:", re.I)
+TOOL_CALL_LITERAL = re.compile(r"(<tool_call>|<function_call>|<function=|\[TOOL_CALLS\])[^{<]{0,20}\{?[^{}]{0,40}\"name\"\s*:\s*\"([A-Za-z_][\w.\-]*)\"", re.S)
+
+
+def _role_literals(test: nodes.Node) -> set[str]:
+    """Roles a condition compares `.role` / `['role']` against."""
+    roles: set[str] = set()
+    for c in _all(test, nodes.Compare):
+        operands = [c.expr] + [o.expr for o in c.ops]
+        is_role = any((isinstance(o, nodes.Getattr) and o.attr == "role") or (isinstance(o, nodes.Getitem) and isinstance(o.arg, nodes.Const) and o.arg.value == "role")
+                      or (isinstance(o, nodes.Name) and o.name == "role") for o in operands)
+        if is_role:
+            for o in operands:
+                if isinstance(o, nodes.Const) and isinstance(o.value, str):
+                    roles.add(o.value.lower())
+                elif isinstance(o, (nodes.List, nodes.Tuple)):
+                    roles |= {x.value.lower() for x in o.items if isinstance(x, nodes.Const) and isinstance(x.value, str)}
+    return roles
+
+
+def _role_remap(tree: nodes.Template, ref: str, an: "_Analysis") -> list[Finding]:
+    """A branch taken for a user / assistant / tool message that prints that message's content under the *system* marker: user text
+    gains system authority. (Tool results under a user marker are ordinary, so only the system marker counts.)"""
+    out: list[Finding] = []
+    for node in tree.find_all(nodes.If):
+        roles = _role_literals(node.test) - {"system", "developer"}
+        if not roles:
+            continue
+        for b in node.body:
+            lits = [t for _, t in _literal_text(b)]
+            marker = None
+            for t in lits:
+                for m in ROLE_MARKER.finditer(t):
+                    name = next((g for g in m.groups() if g), "sys" if "SYS" in m.group(0) else "")
+                    if name.lower() in ("system", "sys"):
+                        marker = m
+            prints_content = any(an.is_text(o) for o in b.find_all((nodes.Getattr, nodes.Getitem)))
+            if marker and prints_content:
+                out.append(finding("MODEL.TEMPLATE.ROLE_REMAP", f"{ref}: a {'/'.join(sorted(roles))} message is rendered under a system marker ({marker.group(0).strip()[:20]!r})",
+                                   "high", "model", "S3", [ev("field", f"{ref}:{node.lineno}", f"role {sorted(roles)} -> {marker.group(0).strip()[:30]}")]))
+                break
+    return out
+
+
+# Names that appear in the *description* of a tool-call format (Falcon3, Hermes, Qwen explain `{"name": "function_name", ...}`); a real hidden call names a real tool.
+PLACEHOLDER_NAMES = {"function_name", "function-name", "tool_name", "tool-name", "func_name", "function", "name", "tool", "func", "fn", "your_function", "name_of_function"}
+
+
+def _hidden_tool_calls(tree: nodes.Template, ref: str) -> list[Finding]:
+    """Function-call markup with a literal function name, printed by the template itself rather than built from a message's tool_calls."""
+    out: list[Finding] = []
+    for line, text in _literal_text(tree):
+        m = TOOL_CALL_LITERAL.search(text)
+        if m and m.group(2).strip().lower() not in PLACEHOLDER_NAMES and not re.search(r"[<>{}.\s]", m.group(2)):  # documentation of the format, not a call
+            out.append(finding("MODEL.TEMPLATE.HIDDEN_TOOL_CALL", f"{ref}: the template itself emits a tool call to {m.group(2)!r}", "high", "model", "S3",
+                               [ev("field", f"{ref}:{line}", text.strip()[:140])]))
+    return out
+
+
 def scan(model_dir: Path, known_good_template: str | None = None) -> list[Finding]:
     out: list[Finding] = []
     for ref, tpl in find_templates(model_dir):
@@ -204,7 +263,8 @@ def scan(model_dir: Path, known_good_template: str | None = None) -> list[Findin
 
 def scan_template(template: str, ref: str = "chat_template", known_good: str | None = None) -> list[Finding]:
     out: list[Finding] = []
-    env = Environment()
+    # loopcontrols ({% continue %}, {% break %}) and `do` are standard in Hugging Face templates; without them such a template did not parse
+    env = Environment(extensions=["jinja2.ext.loopcontrols", "jinja2.ext.do"])
     try:
         tree = env.parse(template)
     except TemplateSyntaxError as e:
@@ -280,6 +340,9 @@ def scan_template(template: str, ref: str = "chat_template", known_good: str | N
         dynamic = _urls_with_data(tree)
         out.append(finding("MODEL.TEMPLATE.URL", f"{ref}: template embeds {len(urls)} URL(s)" + (" and appends message data to one" if dynamic else ""),
                            "critical" if dynamic else "low", "model", "S3", [ev("url", u[:150]) for u in urls[:5]]))
+
+    out += _role_remap(tree, ref, an)
+    out += _hidden_tool_calls(tree, ref)
 
     # diff vs known-good
     if known_good is not None:

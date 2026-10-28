@@ -1,11 +1,11 @@
 // Hand-written mirror of lineage/schemas (frozen contracts). Keep in sync with docs/API.md.
 export type ArtifactType = "dataset" | "model" | "package" | "tool" | "agent";
-export type TrustLevel = "unknown" | "declared" | "inspected" | "recorded" | "attested";
+export type TrustLevel = "unknown" | "origin_verified" | "signed" | "recorded";
 export type Severity = "info" | "low" | "medium" | "high" | "critical";
 export type Outcome = "allow" | "allow_with_conditions" | "quarantine" | "block";
 export type ArtifactStatus =
-  | "submitted" | "quarantined" | "admitted" | "admitted_with_conditions" | "blocked" | "revoked";
-export type StageId = "S1" | "S2" | "S3" | "S4" | "S5" | "S6" | "S7";
+  | "submitted" | "quarantined" | "admitted" | "admitted_with_conditions" | "blocked" | "revoked" | "rejected" | "unregistered";
+export type StageId = "S0" | "S1" | "S2" | "S3" | "S4" | "S5" | "S6" | "S7";
 
 export interface Evidence { kind: string; ref: string; detail: string }
 export interface Finding {
@@ -14,7 +14,7 @@ export interface Finding {
   grounded: boolean;
 }
 export interface Decision {
-  artifact_id: string; environment: string; outcome: Outcome; reasons: string[];
+  artifact_id: string; environment: string; outcome: Outcome; reasons: string[]; primary_reason?: string; secondary_reasons?: string[];
   conditions: string[]; risk_score: number; trust_level: TrustLevel; findings: Finding[];
   policy_version: string; decided_at: string; approver?: string | null;
 }
@@ -30,7 +30,9 @@ export interface PassportBody {
   parents: string[]; action?: { kind: string } | null; trust_level: TrustLevel;
   findings_digest: string; risk_score: number; certificates: string[];
   issued_by: { name: string; key_id?: string | null }; issued_at: string; expires_at?: string | null;
+  facts?: Fact[];
 }
+export interface Fact { key: string; value: string | null; provenance: "computed" | "fetched" | "signed" | "declared"; source: string; at: string }
 export interface SignedPassport {
   passport: { _type: string; subject: { name: string; digest: Record<string, string> }[]; predicateType: string; predicate: PassportBody };
   signature: string; key_id: string;
@@ -40,13 +42,31 @@ export interface ArtifactDetail {
 }
 export interface StageEvent {
   job_id: string; stage: StageId; name: string; status: "started" | "completed" | "skipped" | "failed";
-  findings: Finding[]; message: string; decision?: Decision | null; ts: string;
+  findings: Finding[]; message: string; decision?: Decision | null; elapsed_ms?: number | null; ts: string;
+}
+export type OriginStatus = "matching" | "changed" | "missing" | "extra" | "unchecked";
+export interface ArtifactView {
+  artifact_id: string; merkle_root: string; claimed_origin: string | null; origin_checked: boolean;
+  files: { path: string; size: number | null; sha256: string | null; origin: OriginStatus }[];
+  facts: { key: string; value: string | null; provenance: Fact["provenance"]; source: string }[];
+  creator_passport: { present: boolean; claimed_publisher?: string; claimed_source?: string; key_id?: string; signature?: string; key_status?: string; signer?: string | null; bytes_match?: boolean | null };
+  finding_classes: Record<string, "hard_block" | "policy_dependent" | "scored">;
+  decision: Decision | null; status: string; requester: string | null; hard_block: boolean; next_action: string;
+  pull_command: string | null; pull_command_first_use: string | null;
+}
+export interface JobView { job_id: string; requester: string | null; artifact_type: string | null; environment: string | null; label: string | null; created_at: string | null; done: boolean; artifact_id: string | null }
+export interface Limits { max_upload_mb: number; max_fetch_mb: number; max_archive_files: number; accepted: string[] }
+export interface AttestationView {
+  attestation: { attestation: { artifact_id: string; digest: string; outcome: Outcome; environment: string; trust: TrustLevel; policy_version: string; issued_at: string; expires_at: string; revoked: boolean }; signature: string; key_id: string };
+  signature_ok: boolean; registry_key_id: string; verified_by: string;
 }
 export interface GraphNode {
   id: string; label: string; artifact_type: ArtifactType; trust_level: TrustLevel;
   status: ArtifactStatus; risk_score: number;
+  version?: string | null; advisories?: string[]; group_members?: GraphNode[];
 }
-export interface Graph { root: string; direction: "up" | "down"; nodes: GraphNode[]; edges: { source: string; target: string; kind: string }[] }
+export interface GraphEdge { source: string; target: string; kind: string; evidence?: string }
+export interface Graph { root: string; direction: "up" | "down"; nodes: GraphNode[]; edges: GraphEdge[] }
 export interface RevokeResult { revoked: string; reason: string; blast_radius: GraphNode[] }
 export interface PolicySignature { role: string; key_id: string; signature: string }
 export interface PolicyState {

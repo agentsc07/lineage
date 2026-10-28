@@ -1,8 +1,8 @@
 org: "Apollo Health AI"
 environments:
-  dev: { min_trust: declared, max_risk: 70 }
-  staging: { min_trust: inspected, max_risk: 40 }
-  prod: { min_trust: inspected, max_risk: 25 }
+  dev: { min_trust: unknown, max_risk: 70 }
+  staging: { min_trust: origin_verified, max_risk: 40 }
+  prod: { min_trust: origin_verified, max_risk: 25 }
 publishers:
   allow: ["nvidia", "meta-llama", "BerriAI", "apollo-health", "huggingface"]
   block: ["*-official-mirror"]
@@ -18,3 +18,12 @@ exceptions: []                              # {artifact, approver, reason, expir
 compliance_map:
   "NIST-AI-RMF:MAP-4.1": ["provenance"]
   "ISO42001:A.7.5": ["data"]
+unrun_checks:                               # what a check that could not run costs, per environment
+  default: { dev: info, staging: medium, prod: high }
+  ACQUIRE: { dev: critical, staging: critical, prod: critical }
+  WEIGHT_BACKDOOR: { dev: info, staging: low, prod: medium }
+  PARENT_ID: { dev: info, staging: low, prod: medium }     # same family as the GPU checks: no admitted model to compare with
+  BEHAVIOUR_DIFF: { dev: info, staging: low, prod: medium }
+  POLICY_CHECK: { dev: info, staging: info, prod: low }   # the card-vs-policy check needs the hosted API key
+trusted_publishers: []                      # {name, key (ed25519 hex), scope: ["hf:org/*", "pypi:name-*", "upload:*"]}
+revoked_keys: []                            # key ids

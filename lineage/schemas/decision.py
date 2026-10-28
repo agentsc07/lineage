@@ -16,7 +16,9 @@ class Decision(BaseModel):
     artifact_id: str
     environment: str
     outcome: Outcome
-    reasons: list[str] = Field(default_factory=list)
+    reasons: list[str] = Field(default_factory=list)  # everything that applied; the binding rule comes first
+    primary_reason: str = ""  # the rule that set the outcome (hard-block floor, else the winning soft rule; see engine.RANK_*)
+    secondary_reasons: list[str] = Field(default_factory=list)  # the other rules that also applied
     conditions: list[str] = Field(default_factory=list)  # e.g. "dev only", "sandbox only"
     risk_score: int = Field(ge=0, le=100)
     trust_level: TrustLevel

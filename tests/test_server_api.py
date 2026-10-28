@@ -16,6 +16,7 @@ from lineage.schemas.passport import SignedPassport
 from lineage.schemas.policy import PolicyPack
 from lineage_server import log, trust, tuf
 from lineage_server.app import create_app
+from tests.fakehub import old_release_hub
 from tests.server_helpers import KEY, make_signed, ship_passport
 
 
@@ -28,7 +29,7 @@ def role_keys():
 def client(tmp_path, policy_path, role_keys):
     keys_file = tmp_path / "roles.json"
     keys_file.write_text(json.dumps({r: trust.public_hex(k.public_key()) for r, k in role_keys.items()}))
-    app = create_app(tmp_path / "api.db", policy_path, keys_file)
+    app = create_app(tmp_path / "api.db", policy_path, keys_file, hub=old_release_hub())
     with TestClient(app) as c:
         yield c
 
@@ -50,7 +51,7 @@ def test_intake_streams_events_and_persists_artifact(client, tiny_dataset):
     job, r, events = run_intake(client, "dataset", tiny_dataset)
     assert r.headers["content-type"].startswith("text/event-stream")
     done = [e for e in events if e.status != "started"]
-    assert [e.stage for e in done] == ["S1", "S2", "S3", "S4", "S5", "S6", "S7"]
+    assert [e.stage for e in done] == ["S0", "S1", "S2", "S3", "S4", "S5", "S6", "S7"]
     decision = next(e.decision for e in events if e.decision)
     detail = ArtifactDetail.model_validate(client.get(f"/artifacts/{decision.artifact_id}").json())
     assert detail.artifact.status == "admitted" and detail.decision == decision and detail.passport is not None
@@ -265,3 +266,13 @@ def test_expired_policy_fails_closed_for_new_intake(tmp_path, policy_path, tiny_
 def test_monitor_tick_endpoint_with_no_news(client):
     tick = MonitorTick.model_validate(client.post("/monitor/tick").json())
     assert tick.checked == 0 and tick.alerts == []
+
+
+def test_trusted_publishers_endpoint_lists_policy_keys_and_bootstrap(tmp_path, policy_path, monkeypatch):
+    from lineage_server import trust
+
+    key = Ed25519PrivateKey.generate().public_key()
+    monkeypatch.setenv("LINEAGE_TRUSTED_KEYS", trust.public_hex(key))
+    client = TestClient(create_app(tmp_path / "tp.db", policy_path))
+    body = client.get("/trusted-publishers").json()
+    assert body["publishers"] == [] and body["bootstrap_keys"] == [trust.key_id(key)]

@@ -9,6 +9,7 @@ import httpx
 from pydantic import BaseModel
 
 from lineage.schemas.finding import Finding
+from lineage.serviceauth import bearer
 
 T = TypeVar("T", bound=BaseModel)
 DEFAULT_URL = os.environ.get("LINEAGE_GPU_URL", "http://localhost:8800")
@@ -29,7 +30,7 @@ class GpuRejected(GpuUnavailable):
 
 def post(path: str, request: BaseModel, response_model: type[T], base_url: str | None = None, timeout: float = 120.0) -> T:
     try:
-        r = httpx.post((base_url or DEFAULT_URL).rstrip("/") + path, json=request.model_dump(mode="json"), timeout=timeout)
+        r = httpx.post((base_url or DEFAULT_URL).rstrip("/") + path, json=request.model_dump(mode="json"), timeout=timeout, headers=bearer("LINEAGE_GPU_TOKEN"))
         r.raise_for_status()
         return response_model.model_validate(r.json())
     except httpx.HTTPStatusError as e:

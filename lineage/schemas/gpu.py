@@ -32,6 +32,7 @@ class Claim(BaseModel):
     line: int
     api: str  # the API/call the claim says appears on that line (checked deterministically)
     severity: Severity
+    purpose_mismatch: bool = False  # the capability is not expected for the artifact's stated purpose (precise mode)
 
 
 class ReviewResponse(BaseModel):

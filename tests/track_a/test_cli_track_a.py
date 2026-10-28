@@ -59,10 +59,10 @@ def test_sign_with_parent_and_trust(tmp_path, tiny_dataset):
     invoke("keygen", "--dir", tmp_path)
     out = tmp_path / "d.json"
     r = invoke("sign", tiny_dataset, "--type", "dataset", "--key", tmp_path / "lineage.key", "--out", out,
-               "--parent", "lp:abc", "--trust", "inspected")
+               "--parent", "lp:abc")
     assert r.exit_code == 0
     body = json.loads(out.read_text())["passport"]["predicate"]
-    assert body["parents"] == ["lp:abc"] and body["trust_level"] == "inspected"
+    assert body["parents"] == ["lp:abc"] and body["trust_level"] == "unknown"  # the signer never claims trust
 
 
 def test_diff_command_shows_changed_layer(tiny_model, tiny_model_child):
@@ -102,22 +102,30 @@ def test_run_signs_when_key_given(tmp_path, monkeypatch):
     assert json.loads(p.read_text())["key_id"]
 
 
-def test_load_check_ok_and_refused(tmp_path, tiny_model, policy_path):
-    invoke("keygen", "--dir", tmp_path)
-    out = tmp_path / "p.json"
-    invoke("sign", tiny_model, "--key", tmp_path / "lineage.key", "--out", out)
-    ok = invoke("load-check", tiny_model, "--passport", out, "--policy", policy_path)
+def test_load_check_ok_and_refused(tmp_path, tiny_model, monkeypatch):
+    from tests.attest_helpers import REGISTRY_PUB, attest
+
+    monkeypatch.setenv("LINEAGE_REGISTRY_PUBKEY", REGISTRY_PUB)
+    monkeypatch.setenv("LINEAGE_SERVER", "")
+    monkeypatch.setenv("LINEAGE_CONFIG", str(tmp_path / "none.toml"))
+    attest(tiny_model, env="dev")
+    ok = invoke("load-check", tiny_model, "--env", "dev")
     assert ok.exit_code == 0 and "load allowed" in ok.output
     (tiny_model / "evil.py").write_text("1")
-    bad = invoke("load-check", tiny_model, "--passport", out, "--policy", policy_path)
+    bad = invoke("load-check", tiny_model, "--env", "dev")
     assert bad.exit_code == 1 and "evil.py" in bad.output and "REFUSED" in bad.output
+    # prod fails closed when the registry cannot be reached
+    attest(tiny_model, env="prod")
+    (tiny_model / "evil.py").unlink()
+    prod = invoke("load-check", tiny_model, "--env", "prod")
+    assert prod.exit_code == 1 and "fail closed" in prod.output
 
 
 def test_revoke_renders_blast_radius(monkeypatch):
     import httpx
 
     payload = {"revoked": "lp:a", "reason": "bad", "blast_radius": [
-        {"id": "lp:b", "label": "model-b", "artifact_type": "model", "trust_level": "inspected", "status": "admitted", "risk_score": 10}]}
+        {"id": "lp:b", "label": "model-b", "artifact_type": "model", "trust_level": "origin_verified", "status": "admitted", "risk_score": 10}]}
 
     class R:
         def raise_for_status(self): pass

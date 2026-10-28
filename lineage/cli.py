@@ -51,7 +51,10 @@ def intake(
     from lineage.intake.pipeline import run_intake
     from lineage.schemas.policy import PolicyPack
 
-    for event in run_intake(artifact_type, ref, env, PolicyPack.from_yaml(policy), job_id="cli"):
+    from lineage.intake.hub import default_hub
+
+    for event in run_intake(artifact_type, "" if ref.startswith(("hf:", "hf-dataset:", "pypi:")) else ref, env, PolicyPack.from_yaml(policy), job_id="cli",
+                            hub=default_hub(), source=ref if ref.startswith(("hf:", "hf-dataset:", "pypi:")) else None):
         console.print(event.model_dump_json())
 
 
@@ -68,6 +71,8 @@ def _verdict(ok: bool, good: str, bad: str) -> None:
 def keygen(
     directory: Annotated[Path, typer.Option("--dir", help="Where to write the key pair")] = Path("."),
     name: Annotated[str, typer.Option(help="Key file stem")] = "lineage",
+    publish: Annotated[bool, typer.Option("--publish", help="Also write .well-known/lineage-keys.json for you to host")] = False,
+    scope: Annotated[list[str] | None, typer.Option(help="Sources this key may sign for, e.g. hf:my-org/* (repeatable); default *")] = None,
 ) -> None:
     """Generate an Ed25519 signing key pair (`<name>.key` private, `<name>.pub` public)."""
     from lineage.signing.keys import generate_keypair
@@ -79,6 +84,11 @@ def keygen(
         raise typer.Exit(code=1)
     console.print(f"[green]✓[/] wrote [bold]{directory / (name + '.key')}[/] (keep secret) and {directory / (name + '.pub')}")
     console.print(f"  key id: [cyan]{kid}[/]")
+    if publish:
+        from lineage.signing import wellknown
+
+        f = wellknown.publish(directory, name, wellknown.public_hex_of(directory / (name + ".pub")), scope or ["*"])
+        console.print(f"[green]✓[/] wrote [bold]{f}[/]: host it at https://<your-domain>/{wellknown.WELL_KNOWN}")
 
 
 @app.command()
@@ -90,10 +100,9 @@ def sign(
     key: Annotated[Path, typer.Option(help="Ed25519 private key")] = Path("lineage.key"),
     out: Annotated[Path | None, typer.Option(help="Where to write the signed passport")] = None,
     parent: Annotated[list[str] | None, typer.Option(help="Parent passport id (repeatable)")] = None,
-    trust: Annotated[TrustLevel, typer.Option(help="Trust level to claim")] = "declared",
     hub: Annotated[str | None, typer.Option(help="Source hub, e.g. huggingface")] = None,
     repo: Annotated[str | None, typer.Option(help="Source repo, e.g. org/name")] = None,
-    sigstore: Annotated[bool, typer.Option(help="Also write a Sigstore bundle (needs the sigstore package)")] = False,
+    sigstore: Annotated[bool, typer.Option(hidden=True, help="EXPERIMENTAL. Also write a Sigstore bundle (needs the sigstore package). Nothing in Lineage verifies the bundle.")] = False,
 ) -> None:
     """Hash an artifact, build its passport and sign it."""
     from lineage.passport.build import build_passport
@@ -111,7 +120,7 @@ def sign(
     with console.status("hashing…"):
         passport = build_passport(
             path, artifact_type, name or path.name, version, SourceRef(hub=hub, repo=repo),
-            parents=parent or [], trust_level=trust,
+            parents=parent or [],
         )
     signed = sign_passport(passport, priv, key_id(priv.public_key()))
     dest = out or path.with_name(path.name + ".passport.json")
@@ -144,6 +153,8 @@ def verify(
     artifact: Annotated[Path | None, typer.Option(help="Artifact path to re-hash against the passport")] = None,
     pubkey: Annotated[Path, typer.Option(help="Ed25519 public key")] = Path("lineage.pub"),
     server: Annotated[str | None, typer.Option(help="Server URL for revocation status")] = None,
+    from_: Annotated[str | None, typer.Option("--from", help="Fetch the signer's keys from https://<site>/.well-known/lineage-keys.json and pin them")] = None,
+    accept_change: Annotated[bool, typer.Option(help="With --from: accept a changed key list (the old pin is replaced)")] = False,
 ) -> None:
     """Verify a signed passport (signature, hashes, chain, revocation)."""
     from lineage.passport.verify import verify_passport
@@ -151,9 +162,39 @@ def verify(
     from lineage.signing.keys import load_public_key
 
     signed = SignedPassport.model_validate_json(passport.read_text())
-    r = verify_passport(signed, load_public_key(pubkey), artifact, server)
+    key = load_public_key(pubkey) if from_ is None else None
+    if from_ is not None:
+        from lineage.signing import wellknown
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+
+        try:
+            fetched = wellknown.fetch(from_)
+        except Exception as e:  # noqa: BLE001 - network, JSON, shape: all end the same way
+            err.print(f"[red]✗[/] cannot fetch the key list from {from_}: {e}")
+            raise typer.Exit(code=1)
+        trusted, status = wellknown.pin(from_, fetched, accept_change)
+        if status == "new":
+            err.print(f"[yellow]![/] first use: pinned {len(trusted)} key(s) from {from_} in {wellknown.pin_file()}; confirm them out of band")
+        elif status == "changed" and not accept_change:
+            err.print(f"[red]![/] the key list at {from_} CHANGED since it was pinned; verifying with the pinned keys (use --accept-change to take the new list)")
+        elif status == "changed":
+            err.print(f"[yellow]![/] the key list at {from_} changed; the new list is pinned")
+        entry = next((e for e in trusted if wellknown.key_id_of(e["key"]) == signed.key_id), None)
+        if entry is None:
+            err.print(f"[red]✗[/] the passport's key {signed.key_id} is not among the keys {from_} publishes")
+            raise typer.Exit(code=1)
+        from lineage.intake.inspectors import in_scope, source_id_of
+
+        src = signed.passport.predicate.source
+        sid = source_id_of(src.hub, src.repo)
+        if sid and not in_scope(entry.get("scope", ["*"]), [sid]):
+            err.print(f"[red]✗[/] SCOPE MISMATCH: {entry['name']} may sign for {entry.get('scope')}, but this passport claims {sid}")
+            raise typer.Exit(code=1)
+        key = Ed25519PublicKey.from_public_bytes(bytes.fromhex(entry["key"]))
+    r = verify_passport(signed, key, artifact, server)
     body = signed.passport.predicate
-    console.print(f"[bold]{body.name} {body.version}[/]  [dim]{_short(r.passport_id)}[/]  trust: {body.trust_level}")
+    console.print(f"[bold]{body.name} {body.version}[/]  [dim]{_short(r.passport_id)}[/]  trust claimed by the passport: "
+                  f"{'none' if body.trust_level == 'unknown' else body.trust_level} (the verifier decides)")
     mark = lambda ok: "[green]✓[/]" if ok else "[red]✗[/]"  # noqa: E731
     t = Table.grid(padding=(0, 2))
     t.add_row(mark(r.signature_ok), "signature", f"key {signed.key_id}")
@@ -219,8 +260,12 @@ def run(
     parent: Annotated[list[str] | None, typer.Option(help="Extra parent passport id (repeatable)")] = None,
     name: Annotated[str | None, typer.Option()] = None,
     version: Annotated[str, typer.Option()] = "0.0.0",
+    fact: Annotated[list[str] | None, typer.Option(help="A fact you assert, KEY=VALUE (licence, base_model, ...); repeatable. Becomes `signed` only if a verifier trusts your key.")] = None,
 ) -> None:
-    """Run a command and record its inputs/outputs into a child passport: `lineage run -- python train.py`."""
+    """Run a command and record its inputs/outputs into a child passport: `lineage run -- python train.py`.
+
+    The passport lists every file the run read (inputs, with hashes) and the environment (SBOM), and is written beside each output as
+    `<output>.passport.json` (signed with --key) and in .lineage/runs/<id>/. `lineage run` never claims a trust level."""
     from lineage.run import run_recorded_full
     from lineage.signing.ed25519 import sign_passport
     from lineage.signing.keys import key_id, load_private_key
@@ -230,7 +275,13 @@ def run(
         err.print("[red]✗[/] nothing to run. Usage: lineage run -- python train.py")
         raise typer.Exit(code=2)
     console.print(f"[bold]▶[/] {' '.join(command)}")
-    rec = run_recorded_full(command, Path.cwd(), parent or None, name=name, version=version)
+    from datetime import datetime, timezone
+
+    from lineage.schemas.fact import Fact
+
+    facts = [Fact(key=k, value=v, provenance="declared", source="creator passport", at=datetime.now(timezone.utc))
+             for k, _, v in (f.partition("=") for f in fact or [])]
+    rec = run_recorded_full(command, Path.cwd(), parent or None, name=name, version=version, facts=facts)
     if rec.exit_code != 0:
         err.print(f"[red]✗[/] command exited with status {rec.exit_code}; passport written for the record anyway")
     body = rec.passport.predicate
@@ -241,6 +292,10 @@ def run(
         doc = rec.passport.model_dump_json(by_alias=True, indent=2)
     dest = rec.record_dir / "passport.json"
     dest.write_text(doc)
+    for out in rec.outputs:  # beside each output, where intake and `lineage.load` look for it
+        o = Path.cwd() / out
+        if o.is_file() and not o.name.endswith(".passport.json") and o.name != "passport.json":
+            o.with_name(o.name + ".passport.json").write_text(doc)
 
     t = Table(title="recorded run", title_justify="left", show_header=False)
     t.add_row("inputs", f"{len(rec.inputs)} file(s)")
@@ -264,27 +319,67 @@ def run(
 @app.command("load-check")
 def load_check(
     path: Annotated[Path, typer.Argument(help="Artifact to re-check at use")],
-    passport: Annotated[Path, typer.Option(help="Signed passport JSON")],
-    policy: Annotated[Path, typer.Option(help="Policy pack YAML")] = Path("examples/policy.org.yaml"),
-    pubkey: Annotated[Path | None, typer.Option(help="Also verify the signature with this public key")] = None,
+    env: Annotated[str, typer.Option("--env", "-e", help="Environment the artifact is about to be used in")] = "prod",
+    server: Annotated[str | None, typer.Option(help="Registry URL (else LINEAGE_SERVER / ~/.lineage/config.toml)")] = None,
+    allow_pickle: Annotated[bool, typer.Option(help="Do not refuse pickle files")] = False,
 ) -> None:
-    """Re-hash an artifact against its passport and policy, as `lineage.load()` would."""
-    from lineage.bind import check
-    from lineage.schemas.passport import SignedPassport
-    from lineage.schemas.policy import PolicyPack
-    from lineage.signing.keys import load_public_key
+    """The same checks as `lineage.load()`, without loading: registry attestation, revocation, expiry, re-hash. Exit 1 on refuse."""
+    from lineage.client import check_for_use
 
-    problems = check(
-        path,
-        SignedPassport.model_validate_json(passport.read_text()),
-        PolicyPack.from_yaml(policy),
-        public_key=load_public_key(pubkey) if pubkey else None,
-    )
+    problems = check_for_use(path, env=env, server=server, allow_pickle=allow_pickle)
     for p in problems:
         err.print(f"  [red]✗[/] {p}", soft_wrap=True)
     _verdict(not problems, "load allowed", "REFUSED: lineage.load() would raise LoadRefused")
     if problems:
         raise typer.Exit(code=1)
+
+
+@app.command()
+def pull(
+    ref: Annotated[str, typer.Argument(help="Artifact id (lp:...), or a source such as hf:org/name or pypi:name==1.0")],
+    dest: Annotated[Path, typer.Argument(help="Directory to write the admitted bytes into")],
+    env: Annotated[str, typer.Option("--env", "-e")] = "prod",
+    server: Annotated[str | None, typer.Option(help="Registry URL (else LINEAGE_SERVER / ~/.lineage/config.toml)")] = None,
+    pin: Annotated[bool, typer.Option(help="First use: fetch the registry key and pin it in ~/.lineage/config.toml")] = False,
+) -> None:
+    """Download an admitted artifact from the store; verify the attestation and every hash; write the attestation beside it."""
+    import httpx
+
+    from lineage import client
+
+    cfg = client.settings()
+    srv = (server or cfg["server"]).rstrip("/")
+    key = cfg["registry_pubkey"]
+    if pin and srv:
+        key = httpx.get(f"{srv}/registry-key", headers={"Authorization": f"Bearer {cfg['token']}"} if cfg["token"] else {}).json()["public_key"]
+        where = client.pin_registry_key(key)
+        err.print(f"[yellow]![/] pinned registry key {key[:16]}… in {where} (trust on first use; check it out of band)")
+    try:
+        signed = client.pull(ref, dest, env=env, server=srv, registry_pubkey=key)
+    except client.LoadRefused as e:
+        err.print(f"[red]✗[/] {e}")
+        raise typer.Exit(code=1)
+    a = signed.attestation
+    console.print(f"[green]✓[/] pulled {a.artifact_id[:19]}… ({len(a.files)} file(s)) into {dest}: {a.outcome} for {a.environment}, expires {a.expires_at:%Y-%m-%d %H:%M} UTC")
+
+
+@app.command()
+def upload(
+    path: Annotated[Path, typer.Argument(help="File or archive to send to the registry")],
+    server: Annotated[str | None, typer.Option(help="Registry URL (else LINEAGE_SERVER / ~/.lineage/config.toml)")] = None,
+) -> None:
+    """Send a file or archive to the registry (POST /uploads) and print the `upload:<id>` source to intake."""
+    import httpx
+
+    from lineage import client
+
+    cfg = client.settings()
+    srv = (server or cfg["server"]).rstrip("/")
+    r = httpx.post(f"{srv}/uploads", files={"file": (path.name, path.open("rb"))}, headers={"Authorization": f"Bearer {cfg['token']}"} if cfg["token"] else {}, timeout=600)
+    if r.status_code != 200:
+        err.print(f"[red]✗[/] upload refused ({r.status_code}): {r.text[:200]}")
+        raise typer.Exit(code=1)
+    console.print(f"upload:{r.json()['upload_id']}")
 
 
 @app.command()

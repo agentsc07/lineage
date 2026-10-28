@@ -90,7 +90,7 @@ def save_decision(conn: sqlite3.Connection, decision: Decision) -> None:
         )
         conn.execute(
             "UPDATE artifacts SET outcome = ?, risk_score = ?, trust_level = ?, environment = ?,"
-            " status = CASE WHEN status = 'revoked' THEN 'revoked' ELSE ? END WHERE id = ?",
+            " status = CASE WHEN status IN ('revoked', 'rejected') THEN status ELSE ? END WHERE id = ?",
             (decision.outcome, decision.risk_score, decision.trust_level, decision.environment,
              OUTCOME_STATUS[decision.outcome], decision.artifact_id),
         )
@@ -159,6 +159,15 @@ def get_artifact(conn: sqlite3.Connection, artifact_id: str) -> ArtifactDetail |
 
 def set_status(conn: sqlite3.Connection, artifact_id: str, status: ArtifactStatus) -> None:
     conn.execute("UPDATE artifacts SET status = ? WHERE id = ?", (status, artifact_id))
+
+
+def is_rejected(conn: sqlite3.Connection, artifact_id: str) -> bool:
+    return conn.execute("SELECT 1 FROM rejections WHERE artifact_id = ?", (artifact_id,)).fetchone() is not None
+
+
+def was_admitted(conn: sqlite3.Connection, artifact_id: str) -> bool:
+    """Has this artifact ever been allowed (by policy or by an approval)? Revoke is for these; reject is for requests that never were."""
+    return conn.execute("SELECT 1 FROM decisions WHERE artifact_id = ? AND outcome IN ('allow', 'allow_with_conditions') LIMIT 1", (artifact_id,)).fetchone() is not None
 
 
 def is_revoked(conn: sqlite3.Connection, artifact_id: str) -> bool:

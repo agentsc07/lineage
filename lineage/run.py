@@ -109,6 +109,18 @@ def _snapshot(root: Path) -> dict[str, tuple[int, int]]:
     return snap
 
 
+def sbom_components(freeze: str):
+    """`pip freeze` lines -> CycloneDX-style components (`purl` = pkg:pypi/name@version)."""
+    from lineage.schemas.passport import SbomComponent
+
+    out = []
+    for line in freeze.splitlines():
+        if "==" in line and not line.startswith(("-e", "#")):
+            n, _, v = line.partition("==")
+            out.append(SbomComponent(name=n.strip(), version=v.strip(), purl=f"pkg:pypi/{n.strip().lower().replace('_', '-')}@{v.strip()}"))
+    return out
+
+
 def _freeze(command: list[str]) -> str:
     """`pip freeze` of the interpreter the command uses (falling back to uv, then importlib.metadata)."""
     exe = shutil.which(command[0]) if Path(command[0]).name.startswith("python") else None
@@ -153,9 +165,10 @@ def run_recorded_full(
     version: str = "0.0.0",
     artifact_type: ArtifactType = "model",
     kind: str = "train",
+    facts: list | None = None,
 ) -> RunRecord:
     """Run `command` with an audit-hook sitecustomize injected via PYTHONPATH, capture files opened,
-    `pip freeze` as SBOM and outputs; return a RunRecord whose passport is at trust level 'recorded'."""
+    `pip freeze` as SBOM and outputs; return a RunRecord whose passport is (trust is decided by the verifier, not the signer)."""
     if not command:
         raise ValueError("no command given")
     workdir = Path(workdir).resolve()
@@ -212,8 +225,10 @@ def run_recorded_full(
         SourceRef(hub="local-run"),
         parents=all_parents,
         action=Action(kind=kind, command=list(command), env_sbom_digest=sha256_hex(sbom.encode())),  # type: ignore[arg-type]
-        trust_level="recorded",
         contents=contents_for_files(workdir, out_rels),
+        inputs=in_hashes,
+        sbom=sbom_components(sbom),
+        facts=facts,
     )
     (record_dir / "run.json").write_text(
         json.dumps(

@@ -69,6 +69,14 @@ CREATE TABLE IF NOT EXISTS edges (
 );
 CREATE INDEX IF NOT EXISTS edges_child ON edges(child);
 
+CREATE TABLE IF NOT EXISTS rejections (
+    seq INTEGER PRIMARY KEY AUTOINCREMENT,
+    artifact_id TEXT NOT NULL,
+    actor TEXT NOT NULL,             -- the authenticated approver, never a typed name
+    reason TEXT NOT NULL,
+    rejected_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS revocations (
     artifact_id TEXT PRIMARY KEY,
     reason TEXT NOT NULL,
@@ -107,6 +115,74 @@ CREATE TABLE IF NOT EXISTS trusted_keys (
     key_id TEXT PRIMARY KEY,
     public_key TEXT NOT NULL,        -- raw Ed25519 public key, hex
     owner TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS artifact_meta (
+    artifact_id TEXT PRIMARY KEY,
+    requester TEXT,                  -- who asked for the intake (separation of duties)
+    source TEXT,
+    claimed_origin TEXT,
+    claims TEXT,                     -- JSON, all `declared`
+    distribution TEXT,               -- JSON {filename, sha256}: the wheel served by /simple
+    source_id TEXT,
+    signer_key TEXT                  -- key id of the in-scope creator passport, if any (monitor re-decides when it is revoked)
+);
+
+CREATE TABLE IF NOT EXISTS artifact_identity (
+    artifact_id TEXT PRIMARY KEY,
+    body TEXT NOT NULL               -- JSON: files (path, size, sha256, origin comparison), facts with provenance, claimed origin
+);
+
+CREATE TABLE IF NOT EXISTS jobs (
+    job_id TEXT PRIMARY KEY,
+    requester TEXT,
+    artifact_type TEXT,
+    environment TEXT,
+    label TEXT,                      -- what was asked for (upload filename or hub source)
+    created_at TEXT NOT NULL,
+    done INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS job_events (
+    seq INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_id TEXT NOT NULL,
+    body TEXT NOT NULL               -- StageEvent JSON
+);
+CREATE INDEX IF NOT EXISTS job_events_job ON job_events(job_id, seq);
+
+CREATE TABLE IF NOT EXISTS ghosts (
+    id TEXT PRIMARY KEY,             -- the referenced id: `ghost:<type>:<name>@<version>` or an unregistered `lp:...`
+    artifact_type TEXT NOT NULL,
+    name TEXT NOT NULL,
+    version TEXT NOT NULL,
+    ref TEXT NOT NULL,               -- the reference that created it
+    advisories TEXT NOT NULL DEFAULT '[]',
+    revoked_reason TEXT,
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS users (
+    token_hash TEXT PRIMARY KEY,     -- sha256 of the bearer token; the token itself is never stored
+    name TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL DEFAULT '',
+    roles TEXT NOT NULL,             -- comma-separated: requester, approver, admin, auditor
+    env TEXT NOT NULL DEFAULT 'prod' -- the environment this token's package index serves
+);
+
+CREATE TABLE IF NOT EXISTS fl_clients (
+    client_id TEXT PRIMARY KEY,
+    trust REAL NOT NULL,
+    flagged_rounds INTEGER NOT NULL DEFAULT 0,
+    clean_rounds INTEGER NOT NULL DEFAULT 0,
+    quarantined INTEGER NOT NULL DEFAULT 0,
+    reasons TEXT NOT NULL DEFAULT '[]'
+);
+
+CREATE TABLE IF NOT EXISTS fl_rounds (
+    round_id TEXT PRIMARY KEY,
+    global_model_id TEXT NOT NULL,
+    body TEXT NOT NULL,              -- RoundOut JSON
+    created_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS monitor_ticks (

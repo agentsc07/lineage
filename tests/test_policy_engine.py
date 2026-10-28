@@ -21,20 +21,20 @@ def body(**kw):
 # --- risk ---
 def test_risk_sums_caps_and_penalises_trust():
     fs = [finding(score=25, severity="high"), finding(score=12, severity="medium")]
-    assert risk_score(fs, "inspected") == 37
-    assert risk_score(fs, "declared") == 42
+    assert risk_score(fs, "signed") == 37 and risk_score(fs, "recorded") == 37
+    assert risk_score(fs, "origin_verified") == 42
     assert risk_score(fs, "unknown") == 52
     assert risk_score([finding(score=40)] * 4, "unknown") == 100
-    assert risk_score([], "inspected") == 0
+    assert risk_score([], "signed") == 0
 
 
 def test_ungrounded_llm_finding_adds_nothing_and_nothing_subtracts():
     llm = finding("LLM.X", "high", 25, category="llm", source="llm", grounded=False)
     grounded = finding("LLM.Y", "high", 25, category="llm", source="llm", grounded=True)
-    assert risk_score([llm], "inspected") == 0
-    assert risk_score([grounded], "inspected") == 25
+    assert risk_score([llm], "signed") == 0
+    assert risk_score([grounded], "signed") == 25
     base = [finding(score=10)]
-    assert risk_score(base + [llm, grounded], "inspected") >= risk_score(base, "inspected")
+    assert risk_score(base + [llm, grounded], "signed") >= risk_score(base, "signed")
 
 
 # --- outcomes ---
@@ -52,7 +52,7 @@ def test_thresholds_per_environment(policy):
 
 
 def test_trust_below_environment_minimum_quarantines(policy):
-    d = decide(body(name="p", trust_level="declared"), [], "prod", policy, NOW)
+    d = decide(body(name="p", trust_level="unknown"), [], "prod", policy, NOW)
     assert d.outcome == "quarantine" and any("below prod minimum" in r for r in d.reasons)
 
 
@@ -204,5 +204,5 @@ def test_advisories_group_into_one_finding_scored_at_the_worst_severity():
     grouped = group_advisories(fs)
     assert len(grouped) == 1 and grouped[0].id == "PKG.OSV.GROUP" and grouped[0].severity == "critical"
     assert "5 advisories" in grouped[0].title and "GHSA-2, GHSA-3, GHSA-5" in grouped[0].title and "+2 more" in grouped[0].title
-    assert risk_score(fs, "inspected") == 40  # not 5 summed advisories
+    assert risk_score(fs, "signed") == 40  # not 5 summed advisories
     assert group_advisories(fs[:1]) == fs[:1]  # a single advisory stays as it is

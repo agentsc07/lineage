@@ -45,3 +45,65 @@ def test_untainted_network_call_is_ignored(tmp_path):
     d.mkdir()
     (d / "m.py").write_text("import requests\nrequests.post('http://127.0.0.1:9/', data={'a': 1})\n")
     assert pt.scan(d) == []
+
+
+# --- R4.1: budgets ---
+def _deep_loops(depth: int) -> str:
+    body = "x = os.environ['TOKEN']\nrequests.post('http://127.0.0.1:9/', data=x)\n"
+    for _ in range(depth):
+        body = "for i in range(3):\n" + "".join("    " + l + "\n" for l in body.splitlines())
+    return "import os\nimport requests\n\n" + body
+
+
+def test_deeply_nested_loops_finish_quickly_and_still_find_the_flow(tmp_path):
+    import time
+
+    from lineage.inspect import package_taint
+
+    pkg = tmp_path / "p"
+    pkg.mkdir()
+    (pkg / "m.py").write_text(_deep_loops(22))  # 2**22 body walks before the fix
+    t0 = time.monotonic()
+    fs = package_taint.scan(pkg)
+    assert time.monotonic() - t0 < 10
+    assert any(f.id.startswith("PKG.TAINT") for f in fs)
+
+
+def test_wall_clock_budget_returns_partial_results_and_says_so(tmp_path, monkeypatch):
+    from lineage.inspect import package_taint
+
+    pkg = tmp_path / "p"
+    pkg.mkdir()
+    (pkg / "a.py").write_text("import os\nimport requests\nrequests.post('http://127.0.0.1:9/', data=os.environ['TOKEN'])\n")
+    (pkg / "b.py").write_text("\n".join(f"v{i} = {i}" for i in range(3000)))
+    monkeypatch.setenv("LINEAGE_TAINT_BUDGET_S", "0")
+    monkeypatch.setattr(package_taint.Budget, "tick", lambda self: (_ for _ in ()).throw(package_taint.BudgetExceeded()) if self.deadline < __import__("time").monotonic() else None)
+    fs = package_taint.scan(pkg)
+    assert "CHECK.NOT_RUN.TAINT_PARTIAL" in {f.id for f in fs}
+
+
+def test_file_cap_analyses_the_smallest_files_and_records_the_cap(tmp_path, monkeypatch):
+    from lineage.inspect import package_taint
+
+    pkg = tmp_path / "p"
+    pkg.mkdir()
+    for i in range(5):
+        (pkg / f"f{i}.py").write_text("x = 1\n" * (i + 1))
+    monkeypatch.setenv("LINEAGE_TAINT_MAX_FILES", "2")
+    fs = package_taint.scan(pkg)
+    assert any("2 smallest of 5" in f.title for f in fs if f.id == "CHECK.NOT_RUN.TAINT_PARTIAL")
+
+
+def test_a_variable_reassigned_thousands_of_times_does_not_build_quadratic_taint(tmp_path):
+    """The real hang (black, datasets): `x = f(x)` repeated made one new taint with a longer path per assignment."""
+    import time
+
+    from lineage.inspect import package_taint
+
+    pkg = tmp_path / "p"
+    pkg.mkdir()
+    body = "import os\nx = os.environ['TOKEN']\n" + "".join(f"x = str(x) + 'a{i}'\n" for i in range(4000)) + "import requests\nrequests.post('http://127.0.0.1:9/', data=x)\n"
+    (pkg / "m.py").write_text(body)
+    t0 = time.monotonic()
+    fs = package_taint.scan(pkg)
+    assert time.monotonic() - t0 < 10 and any(f.id.startswith("PKG.TAINT") for f in fs)

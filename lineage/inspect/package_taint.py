@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import ast
+import os
 import re
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -55,11 +57,31 @@ _FLOWS = {
 }
 
 
+class BudgetExceeded(Exception):
+    """The wall-clock or step budget ran out; what was found so far is kept and the scan says it was partial."""
+
+
+class Budget:
+    """Wall-clock seconds per package (LINEAGE_TAINT_BUDGET_S, default 20) and a statement-step cap shared by all scopes. Before this, a
+    loop nested in a loop nested in a loop re-walked its body 2**depth times and `black` / `datasets` never finished."""
+
+    def __init__(self, seconds: float | None = None, steps: int = 400_000):
+        self.deadline = time.monotonic() + (float(os.environ.get("LINEAGE_TAINT_BUDGET_S", "20")) if seconds is None else seconds)
+        self.steps = steps
+
+    def tick(self) -> None:
+        self.steps -= 1
+        if self.steps <= 0 or (self.steps % 256 == 0 and time.monotonic() > self.deadline):
+            raise BudgetExceeded
+
+
 class _Scope:
     """Walks one function body (or module top level) in source order."""
 
-    def __init__(self, pf: PyFile, names: Names, consts: dict[str, str] | None = None, blobs: set[str] | None = None):
+    def __init__(self, pf: PyFile, names: Names, consts: dict[str, str] | None = None, blobs: set[str] | None = None, budget: Budget | None = None):
         self.pf, self.names = pf, names
+        self.budget = budget or Budget()
+        self.loop_depth = 0
         self.consts = consts or {}  # NAME = "literal"
         self.blobs = blobs or set()  # names bound to a long literal string/bytes (an embedded blob)
         self.conn_hosts: dict[str, tuple[str, ...]] = {}  # s = socket.create_connection(("host", 9)): later s.sendall(...) goes there
@@ -188,10 +210,17 @@ class _Scope:
                 return
         else:
             return
-        moved = {Taint(t.kind, t.src_line, t.path + (line,), t.desc) for t in taint}
+        self.budget.tick()
         if isinstance(target, (ast.Name, ast.Attribute)) and not isinstance(target.ctx, ast.Store):
             return
-        self.env[key] = (self.env.get(key, set()) | moved) if moved else self.env.get(key, set())
+        if not taint:
+            return
+        # One taint per (kind, source line) per variable, with a short path: `x = f(x)` repeated a thousand times used to build a thousand
+        # taints with ever-longer paths (quadratic work; the cause of the hang on black and datasets).
+        merged = {(t.kind, t.src_line): t for t in self.env.get(key, set())}
+        for t in taint:
+            merged[(t.kind, t.src_line)] = Taint(t.kind, t.src_line, (t.path + (line,))[-6:], t.desc)
+        self.env[key] = set(list(merged.values())[:16])
 
     def run(self, body: list[ast.stmt]) -> None:
         for stmt in body:
@@ -199,7 +228,18 @@ class _Scope:
                 continue  # separate scope
             self._stmt(stmt)
 
+    def _loop(self, body: list[ast.stmt]) -> None:
+        """A loop body is walked twice at the outermost level (taint set in iteration one reaches a sink in iteration two) and once
+        when nested, which keeps the work linear in the nesting depth."""
+        self.loop_depth += 1
+        try:
+            for _ in range(2 if self.loop_depth == 1 else 1):
+                self.run(body)
+        finally:
+            self.loop_depth -= 1
+
     def _stmt(self, s: ast.stmt) -> None:
+        self.budget.tick()
         header: list[ast.AST] = []
         if isinstance(s, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
             value = s.value
@@ -218,8 +258,7 @@ class _Scope:
         if isinstance(s, (ast.For, ast.AsyncFor)):
             self._check_sinks(s.iter)
             self._bind(s.target, self.taint_of(s.iter), s.lineno)
-            for _ in range(2):
-                self.run(s.body)
+            self._loop(s.body)
             self.run(s.orelse)
             return
         if isinstance(s, (ast.With, ast.AsyncWith)):
@@ -243,8 +282,7 @@ class _Scope:
             self.run(s.body)
             self.run(s.orelse)
         elif isinstance(s, ast.While):
-            for _ in range(2):
-                self.run(s.body)
+            self._loop(s.body)
             self.run(s.orelse)
 
 
@@ -256,10 +294,20 @@ def _scopes(tree: ast.Module):
 
 
 def flows(package_dir: Path) -> list[tuple[Flow, PyFile]]:
+    return flows_budgeted(package_dir)[0]
+
+
+def flows_budgeted(package_dir: Path, budget: Budget | None = None) -> tuple[list[tuple[Flow, PyFile]], str | None]:
+    """(flows, why it is partial or None). Files are analysed smallest first, at most LINEAGE_TAINT_MAX_FILES of them."""
+    budget = budget or Budget()
     out, seen = [], set()
-    for pf in iter_python(Path(package_dir)):
-        if pf.tree is None:
-            continue
+    partial: str | None = None
+    files = sorted((pf for pf in iter_python(Path(package_dir)) if pf.tree is not None), key=lambda pf: len(pf.text))
+    cap = int(os.environ.get("LINEAGE_TAINT_MAX_FILES", "400"))
+    if len(files) > cap:
+        partial = f"only the {cap} smallest of {len(files)} Python files were analysed (LINEAGE_TAINT_MAX_FILES)"
+        files = files[:cap]
+    for pf in files:
         names = Names(pf.tree)
         consts, blobs = {}, set()
         for n in ast.walk(pf.tree):
@@ -270,15 +318,21 @@ def flows(package_dir: Path) -> list[tuple[Flow, PyFile]]:
                             consts[t.id] = n.value.value
                         if len(n.value.value) >= 16:
                             blobs.add(t.id)
-        for body in _scopes(pf.tree):
-            sc = _Scope(pf, names, consts, blobs)
-            sc.run(body)
-            for f in sc.flows:
-                key = (f.file, f.sink_line, f.source.kind)
-                if key not in seen:
-                    seen.add(key)
-                    out.append((f, pf))
-    return sorted(out, key=lambda x: (x[0].file, x[0].sink_line))
+        try:
+            for body in _scopes(pf.tree):
+                sc = _Scope(pf, names, consts, blobs, budget)
+                try:
+                    sc.run(body)
+                finally:
+                    for f in sc.flows:  # keep what was found before the budget ran out
+                        key = (f.file, f.sink_line, f.source.kind)
+                        if key not in seen:
+                            seen.add(key)
+                            out.append((f, pf))
+        except BudgetExceeded:
+            partial = (partial + "; " if partial else "") + f"the analysis budget ran out in {pf.rel} (LINEAGE_TAINT_BUDGET_S)"
+            break
+    return sorted(out, key=lambda x: (x[0].file, x[0].sink_line)), partial
 
 
 def slices(package_dir: Path) -> list[CodeSlice]:
@@ -297,7 +351,10 @@ def scan(package_dir: Path, name: str = "", metadata: dict | None = None) -> lis
     working, and a destination the caller supplies is the library's interface; neither is exfiltration."""
     declared = _hosts.declared_hosts(Path(package_dir), metadata)
     out: list[Finding] = []
-    for f, pf in flows(package_dir):
+    found, partial = flows_budgeted(package_dir)
+    if partial:
+        out.append(finding("CHECK.NOT_RUN.TAINT_PARTIAL", f"Taint analysis was partial: {partial}", "low", "policy", "S4", [ev("field", "taint_budget", partial[:160])]))
+    for f, pf in found:
         fid, title, sev = _FLOWS[(f.source.kind, f.sink_kind)]
         if f.source.kind == "env" and f.sink_kind == "net_send":
             stray = [h for h in f.hosts if not _hosts.is_declared(h, name, declared)]

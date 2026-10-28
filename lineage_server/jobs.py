@@ -9,24 +9,39 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
 from lineage.schemas.artifact import StageEvent
+from lineage_server import db
 
 MAX_JOBS = 200
 KEEPALIVE_SECONDS = 15.0
 
 
 class Job:
-    def __init__(self, job_id: str):
+    def __init__(self, job_id: str, db_path=None):
         self.job_id = job_id
         self.events: list[StageEvent] = []
         self.done = False
         self._cond = threading.Condition()
+        self._db_path = db_path  # events are written through to SQLite so a reload (or a restart) can rebuild the page
+
+    def _persist(self, sql: str, args: tuple) -> None:
+        if self._db_path is None:
+            return
+        conn = db.connect(self._db_path)
+        try:
+            conn.execute(sql, args)
+        except Exception:  # noqa: BLE001 - a failed write must not stop the intake; the live stream still works
+            pass
+        finally:
+            conn.close()
 
     def push(self, event: StageEvent) -> None:
+        self._persist("INSERT INTO job_events (job_id, body) VALUES (?, ?)", (self.job_id, event.model_dump_json()))
         with self._cond:
             self.events.append(event)
             self._cond.notify_all()
 
     def finish(self) -> None:
+        self._persist("UPDATE jobs SET done = 1 WHERE job_id = ?", (self.job_id,))
         with self._cond:
             self.done = True
             self._cond.notify_all()
@@ -51,17 +66,56 @@ class Job:
 
 
 class JobStore:
-    def __init__(self, workers: int = 4):
+    def __init__(self, workers: int = 4, db_path=None):
         self._jobs: OrderedDict[str, Job] = OrderedDict()
         self._pool = ThreadPoolExecutor(max_workers=workers, thread_name_prefix="intake")
         self._lock = threading.Lock()
+        self._db_path = db_path
 
     def get(self, job_id: str) -> Job | None:
-        return self._jobs.get(job_id)
+        """The live job if this process runs it, else one rebuilt from SQLite (a page reload or a server restart). A job that was still
+        running when the server stopped gets one real, labelled `failed` event: it was interrupted, it did not finish."""
+        if job_id in self._jobs:
+            return self._jobs[job_id]
+        if self._db_path is None:
+            return None
+        conn = db.connect(self._db_path)
+        try:
+            row = conn.execute("SELECT done FROM jobs WHERE job_id = ?", (job_id,)).fetchone()
+            if row is None:
+                return None
+            job = Job(job_id)  # not written through: it is already in the database
+            job.events = [StageEvent.model_validate_json(r["body"]) for r in conn.execute("SELECT body FROM job_events WHERE job_id = ? ORDER BY seq", (job_id,))]
+            job.done = True
+            if not row["done"]:
+                job.events.append(StageEvent(job_id=job_id, stage="S7", name="Admit", status="failed", ts=datetime.now(timezone.utc),
+                                             message="intake interrupted: the server stopped before this job finished"))
+            return job
+        finally:
+            conn.close()
 
-    def start(self, run: Callable[[Job], None]) -> Job:
-        """`run(job)` is executed on a worker thread; the job is finished however it ends."""
-        job = Job(uuid.uuid4().hex[:12])
+    def describe(self, job_id: str) -> dict | None:
+        if self._db_path is None:
+            return None
+        conn = db.connect(self._db_path)
+        try:
+            r = conn.execute("SELECT job_id, requester, artifact_type, environment, label, created_at, done FROM jobs WHERE job_id = ?", (job_id,)).fetchone()
+            return dict(r) if r else None
+        finally:
+            conn.close()
+
+    def start(self, run: Callable[[Job], None], meta: dict | None = None) -> Job:
+        """`run(job)` is executed on a worker thread; the job is finished however it ends. `meta` (requester, artifact_type, environment,
+        label) is stored so a reload can say what the job was."""
+        job = Job(uuid.uuid4().hex[:12], self._db_path)
+        if self._db_path is not None:
+            conn = db.connect(self._db_path)
+            try:
+                conn.execute("INSERT INTO jobs (job_id, requester, artifact_type, environment, label, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+                             (job.job_id, (meta or {}).get("requester"), (meta or {}).get("artifact_type"), (meta or {}).get("environment"),
+                              (meta or {}).get("label"), datetime.now(timezone.utc).isoformat()))
+            finally:
+                conn.close()
         with self._lock:
             self._jobs[job.job_id] = job
             while len(self._jobs) > MAX_JOBS:

@@ -1,0 +1,417 @@
+{
+  "base": "20newsgroups subset",
+  "attacks": {
+    "random label flip|0.01": {
+      "recall": 0.0,
+      "precision": null,
+      "flagged": 0,
+      "poisoned": 10,
+      "dataset_detected": false,
+      "top": "low",
+      "ids": [
+        "DATA.KNN.LABEL_DISAGREE",
+        "DATA.SPECTRAL.OUTLIERS",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.LABEL_ERRORS",
+        "DATA.STATS.NEAR_DUPLICATES"
+      ]
+    },
+    "random label flip|0.05": {
+      "recall": 0.92,
+      "precision": 0.6052631578947368,
+      "flagged": 76,
+      "poisoned": 50,
+      "dataset_detected": true,
+      "top": "high",
+      "ids": [
+        "DATA.KNN.LABEL_DISAGREE",
+        "DATA.SPECTRAL.OUTLIERS",
+        "DATA.STATS.CONFLICTING_LABELS",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.LABEL_ERRORS",
+        "DATA.STATS.NEAR_DUPLICATES"
+      ]
+    },
+    "random label flip|0.1": {
+      "recall": 0.91,
+      "precision": 0.7398373983739838,
+      "flagged": 123,
+      "poisoned": 100,
+      "dataset_detected": true,
+      "top": "medium",
+      "ids": [
+        "DATA.KNN.LABEL_DISAGREE",
+        "DATA.SPECTRAL.OUTLIERS",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.LABEL_ERRORS",
+        "DATA.STATS.NEAR_DUPLICATES"
+      ]
+    },
+    "targeted flip|0.01": {
+      "recall": 0.0,
+      "precision": null,
+      "flagged": 0,
+      "poisoned": 10,
+      "dataset_detected": false,
+      "top": "low",
+      "ids": [
+        "DATA.KNN.LABEL_DISAGREE",
+        "DATA.SPECTRAL.OUTLIERS",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.LABEL_ERRORS",
+        "DATA.STATS.NEAR_DUPLICATES"
+      ]
+    },
+    "targeted flip|0.05": {
+      "recall": 0.68,
+      "precision": 0.29310344827586204,
+      "flagged": 116,
+      "poisoned": 50,
+      "dataset_detected": true,
+      "top": "high",
+      "ids": [
+        "DATA.KNN.LABEL_DISAGREE",
+        "DATA.SPECTRAL.OUTLIERS",
+        "DATA.STATS.CONFLICTING_LABELS",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.LABEL_ERRORS",
+        "DATA.STATS.NEAR_DUPLICATES",
+        "DATA.TRIGGER.LABEL"
+      ]
+    },
+    "targeted flip|0.1": {
+      "recall": 0.27,
+      "precision": 0.25961538461538464,
+      "flagged": 104,
+      "poisoned": 100,
+      "dataset_detected": true,
+      "top": "high",
+      "ids": [
+        "DATA.KNN.LABEL_DISAGREE",
+        "DATA.SPECTRAL.OUTLIERS",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.LABEL_ERRORS",
+        "DATA.STATS.NEAR_DUPLICATES",
+        "DATA.TRIGGER.LABEL"
+      ]
+    },
+    "rare-word trigger, forced label|0.01": {
+      "recall": 0.0,
+      "precision": null,
+      "flagged": 0,
+      "poisoned": 10,
+      "dataset_detected": false,
+      "top": "low",
+      "ids": [
+        "DATA.KNN.LABEL_DISAGREE",
+        "DATA.SPECTRAL.OUTLIERS",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.LABEL_ERRORS",
+        "DATA.STATS.NEAR_DUPLICATES"
+      ]
+    },
+    "rare-word trigger, forced label|0.05": {
+      "recall": 0.82,
+      "precision": 0.36607142857142855,
+      "flagged": 112,
+      "poisoned": 50,
+      "dataset_detected": true,
+      "top": "high",
+      "ids": [
+        "DATA.KNN.LABEL_DISAGREE",
+        "DATA.SPECTRAL.OUTLIERS",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.LABEL_ERRORS",
+        "DATA.STATS.NEAR_DUPLICATES",
+        "DATA.TRIGGER.LABEL"
+      ]
+    },
+    "rare-word trigger, forced label|0.1": {
+      "recall": 0.78,
+      "precision": 0.75,
+      "flagged": 104,
+      "poisoned": 100,
+      "dataset_detected": true,
+      "top": "high",
+      "ids": [
+        "DATA.KNN.LABEL_DISAGREE",
+        "DATA.SPECTRAL.OUTLIERS",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.LABEL_ERRORS",
+        "DATA.STATS.NEAR_DUPLICATES",
+        "DATA.TRIGGER.LABEL"
+      ]
+    },
+    "sentence trigger|0.01": {
+      "recall": 0.0,
+      "precision": null,
+      "flagged": 0,
+      "poisoned": 10,
+      "dataset_detected": false,
+      "top": "low",
+      "ids": [
+        "DATA.KNN.LABEL_DISAGREE",
+        "DATA.SPECTRAL.OUTLIERS",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.LABEL_ERRORS",
+        "DATA.STATS.NEAR_DUPLICATES"
+      ]
+    },
+    "sentence trigger|0.05": {
+      "recall": 0.76,
+      "precision": 0.3838383838383838,
+      "flagged": 99,
+      "poisoned": 50,
+      "dataset_detected": true,
+      "top": "high",
+      "ids": [
+        "DATA.KNN.LABEL_DISAGREE",
+        "DATA.SPECTRAL.OUTLIERS",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.LABEL_ERRORS",
+        "DATA.STATS.NEAR_DUPLICATES",
+        "DATA.TRIGGER.LABEL"
+      ]
+    },
+    "sentence trigger|0.1": {
+      "recall": 0.81,
+      "precision": 0.7714285714285715,
+      "flagged": 105,
+      "poisoned": 100,
+      "dataset_detected": true,
+      "top": "high",
+      "ids": [
+        "DATA.KNN.LABEL_DISAGREE",
+        "DATA.SPECTRAL.OUTLIERS",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.LABEL_ERRORS",
+        "DATA.STATS.NEAR_DUPLICATES",
+        "DATA.TRIGGER.LABEL"
+      ]
+    },
+    "invisible-character trigger|0.01": {
+      "recall": 1.0,
+      "precision": 1.0,
+      "flagged": 10,
+      "poisoned": 10,
+      "dataset_detected": true,
+      "top": "high",
+      "ids": [
+        "DATA.CHARS.ZERO_WIDTH",
+        "DATA.KNN.LABEL_DISAGREE",
+        "DATA.SPECTRAL.OUTLIERS",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.LABEL_ERRORS",
+        "DATA.STATS.NEAR_DUPLICATES"
+      ]
+    },
+    "invisible-character trigger|0.05": {
+      "recall": 1.0,
+      "precision": 0.625,
+      "flagged": 80,
+      "poisoned": 50,
+      "dataset_detected": true,
+      "top": "high",
+      "ids": [
+        "DATA.CHARS.ZERO_WIDTH",
+        "DATA.KNN.LABEL_DISAGREE",
+        "DATA.SPECTRAL.OUTLIERS",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.LABEL_ERRORS",
+        "DATA.STATS.NEAR_DUPLICATES"
+      ]
+    },
+    "invisible-character trigger|0.1": {
+      "recall": 1.0,
+      "precision": 0.7936507936507936,
+      "flagged": 126,
+      "poisoned": 100,
+      "dataset_detected": true,
+      "top": "high",
+      "ids": [
+        "DATA.CHARS.ZERO_WIDTH",
+        "DATA.KNN.LABEL_DISAGREE",
+        "DATA.SPECTRAL.OUTLIERS",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.LABEL_ERRORS",
+        "DATA.STATS.NEAR_DUPLICATES"
+      ]
+    },
+    "instruction backdoor|0.01": {
+      "recall": 1.0,
+      "precision": 1.0,
+      "flagged": 20,
+      "poisoned": 20,
+      "dataset_detected": true,
+      "top": "high",
+      "ids": [
+        "DATA.INJECT.URL",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.NEAR_DUPLICATES",
+        "DATA.TRIGGER.BEHAVIOUR"
+      ]
+    },
+    "instruction backdoor|0.05": {
+      "recall": 1.0,
+      "precision": 1.0,
+      "flagged": 100,
+      "poisoned": 100,
+      "dataset_detected": true,
+      "top": "high",
+      "ids": [
+        "DATA.INJECT.URL",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.NEAR_DUPLICATES",
+        "DATA.TRIGGER.BEHAVIOUR"
+      ]
+    },
+    "instruction backdoor|0.1": {
+      "recall": 1.0,
+      "precision": 1.0,
+      "flagged": 200,
+      "poisoned": 200,
+      "dataset_detected": true,
+      "top": "high",
+      "ids": [
+        "DATA.INJECT.URL",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.NEAR_DUPLICATES",
+        "DATA.TRIGGER.BEHAVIOUR"
+      ]
+    },
+    "injected instructions/links in responses|0.01": {
+      "recall": 0.75,
+      "precision": 1.0,
+      "flagged": 15,
+      "poisoned": 20,
+      "dataset_detected": true,
+      "top": "high",
+      "ids": [
+        "DATA.INJECT.EXEC",
+        "DATA.INJECT.MARKDOWN_IMAGE",
+        "DATA.INJECT.OVERRIDE",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.NEAR_DUPLICATES"
+      ]
+    },
+    "injected instructions/links in responses|0.05": {
+      "recall": 0.79,
+      "precision": 1.0,
+      "flagged": 79,
+      "poisoned": 100,
+      "dataset_detected": true,
+      "top": "high",
+      "ids": [
+        "DATA.INJECT.EXEC",
+        "DATA.INJECT.MARKDOWN_IMAGE",
+        "DATA.INJECT.OVERRIDE",
+        "DATA.INJECT.URL",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.NEAR_DUPLICATES"
+      ]
+    },
+    "injected instructions/links in responses|0.1": {
+      "recall": 0.76,
+      "precision": 0.987012987012987,
+      "flagged": 154,
+      "poisoned": 200,
+      "dataset_detected": true,
+      "top": "high",
+      "ids": [
+        "DATA.INJECT.EXEC",
+        "DATA.INJECT.MARKDOWN_IMAGE",
+        "DATA.INJECT.OVERRIDE",
+        "DATA.INJECT.URL",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.NEAR_DUPLICATES",
+        "DATA.TRIGGER.BEHAVIOUR"
+      ]
+    },
+    "duplicated poison|0.01": {
+      "recall": 0.0,
+      "precision": null,
+      "flagged": 0,
+      "poisoned": 9,
+      "dataset_detected": false,
+      "top": "low",
+      "ids": [
+        "DATA.KNN.LABEL_DISAGREE",
+        "DATA.SPECTRAL.OUTLIERS",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.LABEL_ERRORS",
+        "DATA.STATS.NEAR_DUPLICATES"
+      ]
+    },
+    "duplicated poison|0.05": {
+      "recall": 0.6470588235294118,
+      "precision": 0.532258064516129,
+      "flagged": 62,
+      "poisoned": 51,
+      "dataset_detected": true,
+      "top": "high",
+      "ids": [
+        "DATA.KNN.LABEL_DISAGREE",
+        "DATA.SPECTRAL.OUTLIERS",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.LABEL_ERRORS",
+        "DATA.STATS.NEAR_DUPLICATES",
+        "DATA.TRIGGER.LABEL"
+      ]
+    },
+    "duplicated poison|0.1": {
+      "recall": 0.7575757575757576,
+      "precision": 0.6198347107438017,
+      "flagged": 121,
+      "poisoned": 99,
+      "dataset_detected": true,
+      "top": "high",
+      "ids": [
+        "DATA.KNN.LABEL_DISAGREE",
+        "DATA.SPECTRAL.OUTLIERS",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.LABEL_ERRORS",
+        "DATA.STATS.NEAR_DUPLICATES",
+        "DATA.TRIGGER.LABEL"
+      ]
+    }
+  },
+  "clean": {
+    "topics (generated)": {
+      "top": "low",
+      "ids": [
+        "DATA.KNN.LABEL_DISAGREE"
+      ]
+    },
+    "sentiment-like (generated)": {
+      "top": "low",
+      "ids": [
+        "DATA.SPECTRAL.OUTLIERS"
+      ]
+    },
+    "20newsgroups or topics": {
+      "top": "low",
+      "ids": [
+        "DATA.KNN.LABEL_DISAGREE",
+        "DATA.SPECTRAL.OUTLIERS",
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.LABEL_ERRORS",
+        "DATA.STATS.NEAR_DUPLICATES"
+      ]
+    },
+    "instructions A": {
+      "top": "low",
+      "ids": [
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.NEAR_DUPLICATES"
+      ]
+    },
+    "instructions B": {
+      "top": "high",
+      "ids": [
+        "DATA.STATS.EXACT_DUPLICATES",
+        "DATA.STATS.NEAR_DUPLICATES",
+        "DATA.TRIGGER.BEHAVIOUR"
+      ]
+    }
+  }
+}

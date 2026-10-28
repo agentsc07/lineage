@@ -63,7 +63,9 @@ def test_graph_unknown_and_unregistered_parent(conn, policy):
     orphan = make_signed("orphan", "model", parents=["lp:" + "0" * 64])
     oid = admit(conn, policy, orphan)
     g = graph.lineage_graph(conn, oid, "up")
-    assert [n.id for n in g.nodes] == [oid] and g.edges == []
+    # P6: a parent that was never admitted is a ghost node, not a dropped edge
+    ghost = next(n for n in g.nodes if n.status == "unregistered")
+    assert ghost.id == "lp:" + "0" * 64 and [(e.source, e.target) for e in g.edges] == [(ghost.id, oid)]
 
 
 def test_graph_survives_cycle(conn, lineage):

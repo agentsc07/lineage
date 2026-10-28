@@ -14,6 +14,10 @@ import GraphPage from "./pages/LineageGraph";
 import Policy from "./pages/Policy";
 import Approvals from "./pages/Approvals";
 import Bench from "./pages/Bench";
+import TrustedPublishers from "./pages/TrustedPublishers";
+import Federated from "./pages/Federated";
+import NotFound from "./pages/NotFound";
+import Monitor from "./pages/Monitor";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -22,13 +26,17 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route element={<Layout />}>
           <Route index element={<Overview />} />
           <Route path="catalogue" element={<Catalogue />} />
-          <Route path="intake" element={<Intake />} />
+          <Route path="intake/:jobId?" element={<Intake />} />
           <Route path="artifacts/:id" element={<ArtifactPage />} />
           <Route path="graph" element={<GraphPage />} />
           <Route path="graph/:id" element={<GraphPage />} />
           <Route path="policy" element={<Policy />} />
           <Route path="approvals" element={<Approvals />} />
           <Route path="bench" element={<Bench />} />
+          <Route path="publishers" element={<TrustedPublishers />} />
+          <Route path="federated" element={<Federated />} />
+          <Route path="monitor" element={<Monitor />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </BrowserRouter>

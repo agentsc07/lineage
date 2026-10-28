@@ -27,7 +27,7 @@ def test_generic_capabilities_are_info_signals_with_no_score(tmp_path):
                                    "def f(u):\n    subprocess.run(['git', 'log'])\n    return urllib.request.urlopen(u), os.environ.get('HOME'), getattr(os, u)\n"})
     fs = pc.scan(d)
     assert {"PKG.SIGNAL.SUBPROCESS", "PKG.SIGNAL.NETWORK", "PKG.SIGNAL.ENV_SECRETS"} <= {f.id for f in fs}
-    assert real(fs) == set() and risk_score(fs, "inspected") == 0
+    assert real(fs) == set() and risk_score(fs, "signed") == 0
 
 
 def test_test_files_never_form_combinations(tmp_path):
@@ -150,7 +150,7 @@ def _body(policy, name, findings, files=None):
     from lineage.schemas.passport import Contents, PassportBody, Signer, SourceRef
     now = datetime(2026, 10, 25, tzinfo=timezone.utc)
     return PassportBody(artifact_type="package" if not files else "model", name=name, version="1", source=SourceRef(),
-                        contents=Contents(merkle_root="0" * 64, files=files or {}), action={"kind": "intake"}, trust_level="inspected",
+                        contents=Contents(merkle_root="0" * 64, files=files or {}), action={"kind": "intake"}, trust_level="origin_verified",
                         findings_digest="0" * 64, risk_score=0, issued_by=Signer(name="t"), issued_at=now, expires_at=now), now
 
 
@@ -189,7 +189,7 @@ def test_package_with_signals_triggers_a_reviewer_call(tmp_path, monkeypatch):
                               "lib/b.py": "import subprocess\n\ndef v():\n    return subprocess.check_output(['git', 'describe'])\n"})
     policy = PolicyPack.from_yaml(Path(__file__).parent.parent / "examples" / "policy.org.yaml")
     decision, events = run_to_decision("package", str(d), "dev", policy, "t", gpu_url="http://worker.test", now=datetime(2026, 10, 25, tzinfo=timezone.utc))
-    assert any(f.id.startswith("PKG.SIGNAL.") for f in decision.findings) and not real(decision.findings) - {"PROV.PUBLISHER.UNLISTED"}
+    assert any(f.id.startswith("PKG.SIGNAL.") for f in decision.findings) and not real(decision.findings) - {"PROV.PUBLISHER.UNLISTED", "PROV.COOLDOWN.UNVERIFIED", "PROV.ORIGIN.UNCLAIMED"}
     assert next(e for e in events if e.stage == "S5" and e.status != "started").status == "completed"
     assert len(calls) == 1
     assert {s.file for s in calls[0].slices} == {"lib/a.py", "lib/b.py"}

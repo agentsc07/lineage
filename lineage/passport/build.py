@@ -74,10 +74,13 @@ def build_passport(
     *,
     parents: list[str] | None = None,
     action: Action | None = None,
-    trust_level: TrustLevel = "declared",
+    trust_level: TrustLevel = "unknown",
     findings: list[Finding] | None = None,
     signer_name: str = "local",
     contents: Contents | None = None,
+    inputs: dict[str, str] | None = None,
+    sbom: list | None = None,
+    facts: list | None = None,
 ) -> Passport:
     """Hash `path` (files, and tensors for models), compute the Merkle root and assemble the statement."""
     findings = findings or []
@@ -93,6 +96,9 @@ def build_passport(
         trust_level=trust_level,
         findings_digest=findings_digest(findings),
         risk_score=min(100, sum(f.score for f in findings)),
+        inputs=dict(inputs or {}),
+        sbom=list(sbom or []),
+        facts=list(facts or []),
         issued_by=Signer(name=signer_name),
         issued_at=datetime.now(timezone.utc).replace(microsecond=0),
     )

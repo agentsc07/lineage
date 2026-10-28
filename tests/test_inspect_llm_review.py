@@ -109,7 +109,8 @@ def test_review_grounded_findings(evil):
     assert res.verdict == "malicious"
 
 
-def test_uncorroborated_claims_are_capped(evil):
+def test_uncorroborated_claims_are_capped_in_broad_mode(evil, monkeypatch):
+    monkeypatch.setenv("LINEAGE_REVIEW_MODE", "broad")  # the pre-refactor behaviour; precise mode is the default now
     worker = FakeWorker(prosecutor=[claim("evilpkg/core.py", 1, "os", "critical", "imports os, looks sinister")])
     [f] = [f for f in llm_review.review(evil, "x", client=worker.client()) if f.id == "LLM.REVIEW.CLAIM"]
     assert f.severity == "high" and "capped" in f.evidence[0].detail
@@ -118,7 +119,8 @@ def test_uncorroborated_claims_are_capped(evil):
     assert f.severity == "medium"
 
 
-def test_benign_verdict_cannot_escalate(evil):
+def test_benign_verdict_cannot_escalate(evil, monkeypatch):
+    monkeypatch.setenv("LINEAGE_REVIEW_MODE", "broad")
     worker = FakeWorker(prosecutor=[claim("evilpkg/core.py", 1, "os", "critical")], verdict="benign")
     [f] = [f for f in llm_review.review(evil, "x", client=worker.client()) if f.id == "LLM.REVIEW.CLAIM"]
     assert f.severity == "low"
@@ -205,3 +207,16 @@ def test_review_to_findings_grounds_against_slices_when_no_root(evil):
     assert fs[0].evidence[0].ref == "evilpkg/core.py:8"
     down = llm_review.review_to_findings(req, client=FakeWorker([], down=True).client())
     assert [f.id for f in down] == ["LLM.REVIEW.SKIPPED"]
+
+
+def test_precise_mode_shows_a_claim_with_no_rule_behind_it_at_info_and_adds_nothing(evil):
+    worker = FakeWorker(prosecutor=[claim("evilpkg/core.py", 1, "os", "critical", "imports os, looks sinister")], verdict="suspicious")
+    [f] = [f for f in llm_review.review(evil, "x", client=worker.client()) if f.id == "LLM.REVIEW.CLAIM"]
+    assert f.severity == "info" and f.score == 0 and "adds no risk" in f.evidence[0].detail
+
+
+def test_precise_mode_credits_a_purpose_mismatch(evil):
+    c = claim("evilpkg/core.py", 1, "os", "high", "an image resizer imports os to read credentials")
+    worker = FakeWorker(prosecutor=[c.model_copy(update={"purpose_mismatch": True})], verdict="suspicious")
+    [f] = [f for f in llm_review.review(evil, "x", client=worker.client()) if f.id == "LLM.REVIEW.CLAIM"]
+    assert f.severity == "medium" and f.score > 0 and "purpose mismatch" in f.evidence[0].detail

@@ -189,6 +189,8 @@ def scan(dataset_path: Path, card_text: str | None = None) -> list[Finding]:
 
     text_col = pick_column(rows, TEXT_COLUMNS, string_only=True)
     label_col = pick_column(rows, LABEL_COLUMNS)
+    if label_col and label_col.lower() == "output":  # instruction data: `output` is the response, not a class label
+        label_col = None
     out: list[Finding] = []
     n = len(rows)
     out.append(finding("DATA.STATS.SUMMARY", f"{n} rows, text column {text_col!r}, label column {label_col!r}", "info", "data", "S4",

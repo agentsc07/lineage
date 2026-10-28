@@ -7,7 +7,7 @@ from lineage.schemas.passport import TrustLevel
 SEVERITY_WEIGHT = {"info": 0, "low": 5, "medium": 12, "high": 25, "critical": 40}
 SEVERITY_ORDER = ["info", "low", "medium", "high", "critical"]
 ADVISORY_PREFIX = "PKG.OSV."
-TRUST_PENALTY = {"unknown": 15, "declared": 5}
+TRUST_PENALTY = {"unknown": 15, "origin_verified": 5, "signed": 0, "recorded": 0}
 
 
 # Findings no baseline, exception-free "signal" demotion or LLM verdict may lower: the artifact is known-bad, or carries

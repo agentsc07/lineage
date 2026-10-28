@@ -196,7 +196,7 @@ def _models(items: Items, out: Path) -> None:
         label = "malicious" if how else "benign"
         d = _add(items, out, f"w_{'tamper' if how else 'ok'}_{i}", "tampered_weights", label, "model", "bind", tamper=how)
         make_tiny_model(d / "model", seed=100 + i)
-        signed = sign_passport(build_passport(d / "model", "model", f"bench-model-{i}", "1", SourceRef(), trust_level="inspected"),
+        signed = sign_passport(build_passport(d / "model", "model", f"bench-model-{i}", "1", SourceRef(), trust_level="origin_verified"),
                                priv, "bench")
         (d / "passport.signed.json").write_text(signed.model_dump_json(by_alias=True))
         if how:

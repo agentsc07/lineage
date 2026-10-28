@@ -15,8 +15,8 @@ from lineage_server import models, service, trust
 
 
 class SqliteRegistry:
-    def __init__(self, conn: sqlite3.Connection, signing_key: Ed25519PrivateKey):
-        self.conn, self.key = conn, signing_key
+    def __init__(self, conn: sqlite3.Connection, signing_key: Ed25519PrivateKey, store=None):
+        self.conn, self.key, self.store = conn, signing_key, store
         trust.trust_key(conn, signing_key.public_key(), "registry")
 
     def find_by_digest(self, merkle_root: str) -> str | None:
@@ -28,6 +28,26 @@ class SqliteRegistry:
 
     def trusted_key(self, key_id: str) -> Ed25519PublicKey | None:
         return trust.trusted_key(self.conn, key_id)
+
+    def package_status(self, name: str, version: str | None = None) -> str | None:
+        import re
+
+        norm = lambda n: re.sub(r"[-_.]+", "-", n).lower()  # noqa: E731
+        for a in models.list_artifacts(self.conn):
+            if a.artifact_type == "package" and norm(a.name) == norm(name) and (version is None or a.version == version):
+                return a.status
+        return None
+
+    def previous_version_path(self, artifact_type: str, name: str, dest: Path) -> Path | None:
+        if self.store is None:
+            return None
+        for a in models.list_artifacts(self.conn):
+            if a.artifact_type == artifact_type and a.name == name and a.status in ("admitted", "admitted_with_conditions"):
+                man = self.store.manifest(a.id)
+                if man:
+                    self.store.materialise(man["files"], dest)
+                    return dest
+        return None
 
     def reference_models(self) -> dict[str, tuple[str, Path]]:
         out: dict[str, tuple[str, Path]] = {}
@@ -53,5 +73,6 @@ class SqliteRegistry:
         *,
         released_at: datetime | None = None,
         tool_pin: dict[str, str] | None = None,
+        meta: dict | None = None,
     ) -> None:
-        service.record(self.conn, signed, findings, decision, released_at=released_at, tool_pin=tool_pin)
+        service.record(self.conn, signed, findings, decision, released_at=released_at, tool_pin=tool_pin, meta=meta)

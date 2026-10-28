@@ -14,6 +14,14 @@ def offline(monkeypatch):
     monkeypatch.setenv("LINEAGE_OFFLINE", "1")
 
 
+@pytest.fixture(autouse=True)
+def dev_server_defaults(monkeypatch):
+    """Server tests run unauthenticated with local paths allowed unless a test turns auth on (tests/test_roles.py)."""
+    monkeypatch.setenv("LINEAGE_REQUIRE_AUTH", "0")
+    monkeypatch.setenv("LINEAGE_MONITOR_MINUTES", "0")  # tests tick by hand
+    monkeypatch.setenv("LINEAGE_DEV_LOCAL_PATHS", "1")
+
+
 @pytest.fixture
 def policy_path() -> Path:
     return REPO / "examples" / "policy.org.yaml"
@@ -49,14 +57,8 @@ def toy_tool() -> Path:
     return FIXTURES / "toy_tool"
 
 
-# GPU-worker modules need torch, which only the Brev machine has.
+# The GPU worker's modules import torch at the top, which only the Brev machine has. Without it those test files are not collected (a skip
+# marker cannot help: the import fails first). `uv run pytest -q` therefore stays green on a laptop without torch; the full run is on Brev.
 import importlib.util as _ilu
-import pytest as _pytest
 
-
-def pytest_collection_modifyitems(config, items):
-    if _ilu.find_spec("torch") is None:
-        skip = _pytest.mark.skip(reason="torch not installed; GPU worker tests run on Brev")
-        for item in items:
-            if "gpu_worker" in item.nodeid:
-                item.add_marker(skip)
+collect_ignore_glob = ["test_gpu_*.py"] if _ilu.find_spec("torch") is None else []

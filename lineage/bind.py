@@ -1,4 +1,7 @@
-"""`lineage.load()`: re-check an artifact against its passport at the moment of use (Track A)."""
+"""`lineage.load()`: re-check an artifact against the registry's decision attestation at the moment of use (REFACTOR_SPEC section 5).
+
+The creator passport is evidence inside the intake record; it is no longer used at load time. `check()` below (passport hashes) is kept
+for the benchmark's tamper items."""
 from __future__ import annotations
 
 import zipfile
@@ -15,11 +18,10 @@ from lineage.signing.ed25519 import verify_signed
 
 _PICKLE_EXT = {".pkl", ".pickle", ".ckpt", ".joblib", ".dill"}
 _MAYBE_PICKLE_EXT = {".pt", ".pth", ".bin"}
-_REMOTE_CODE_TRUST = {"inspected", "recorded", "attested"}
+_REMOTE_CODE_TRUST = {"origin_verified", "signed", "recorded"}  # attestation trust needed for trust_remote_code
 
 
-class LoadRefused(Exception):
-    """Raised when hashes mismatch, a file is unpinned, or policy forbids the format."""
+from lineage.client import LoadRefused  # noqa: E402  (re-exported: `from lineage.bind import LoadRefused`)
 
 
 def _is_pickle(path: Path) -> bool:
@@ -85,39 +87,43 @@ def _transformers_class():
     return transformers.AutoModelForCausalLM
 
 
-def _verified(path, passport, policy, public_key, loader_kwargs) -> SignedPassport:
+def _verified(path, env, loader_kwargs, check_kwargs):
+    from lineage import client
+
     path = Path(path)
-    passport = passport or _discover_passport(path)
-    if passport is None:
-        raise LoadRefused(f"no passport for {path}: refusing to load an unpinned artifact")
-    problems = check(path, passport, policy, public_key=public_key)
-    if loader_kwargs.get("trust_remote_code") and passport.passport.predicate.trust_level not in _REMOTE_CODE_TRUST:
-        problems.append(
-            f"trust_remote_code requires trust level inspected or higher (passport is {passport.passport.predicate.trust_level})"
-        )
+    problems = client.check_for_use(path, env=env, **check_kwargs)
+    if loader_kwargs.get("trust_remote_code"):
+        att = check_kwargs.get("attestation")
+        cached = client.cache_path(path)
+        if att is None and cached.is_file():
+            from lineage.schemas.attestation import SignedAttestation
+
+            att = SignedAttestation.model_validate_json(cached.read_text())
+        if att is None or att.attestation.trust not in _REMOTE_CODE_TRUST:
+            problems.append(f"trust_remote_code requires attested trust origin_verified or higher (attestation says {att.attestation.trust if att else 'none'})")
     if problems:
         raise LoadRefused(f"refusing to load {path}:\n  - " + "\n  - ".join(problems))
-    return passport
 
 
-def load(
-    path: Path,
-    passport: SignedPassport | None = None,
-    policy: PolicyPack | None = None,
-    *,
-    public_key: Ed25519PublicKey | None = None,
-    **loader_kwargs: Any,
-) -> Any:
-    """Re-hash `path` against the passport; refuse on mismatch, on pickle (per policy) and on unpinned files.
+def _split(kwargs: dict) -> tuple[dict, dict]:
+    keys = ("attestation", "registry_pubkey", "server", "token", "offline_grace_hours", "allow_pickle", "now", "client")
+    return {k: kwargs.pop(k) for k in keys if k in kwargs}, kwargs
 
-    The passport defaults to `<path>.passport.json` or `<path>/passport.json`. Returns, in order of preference:
-    a transformers model (if `transformers` is installed and the directory has a config.json), a dict of numpy
-    arrays (a single .safetensors), or the verified Path (datasets, packages, tools).
+
+def load(path: Path, *, env: str | None = None, **kwargs: Any) -> Any:
+    """Refuse unless the registry attests this exact content for `env`; then load it.
+
+    Needs a registry-signed attestation (`<path>.lineage-attestation.json` from `lineage pull`, else asked of the server), verified
+    with the pinned registry key; outcome allow/allow_with_conditions for `env`; not expired; not revoked (online check, fail closed
+    in prod if the registry is unreachable); every file re-hashed; pickle refused unless `allow_pickle=True`.
+    Returns a transformers model if installed and the directory has a config.json, a dict of numpy arrays for .safetensors,
+    else the verified Path. Extra keyword arguments go to the model loader.
 
     The check and the load are separate reads; for hostile filesystems, load from a read-only mount.
     """
     path = Path(path)
-    _verified(path, passport, policy, public_key, loader_kwargs)
+    check_kwargs, loader_kwargs = _split(dict(kwargs))
+    _verified(path, env, loader_kwargs, check_kwargs)
     if path.is_dir() and (path / "config.json").is_file():
         try:
             cls = _transformers_class()
@@ -137,23 +143,22 @@ def load(
 
 
 class LineageAutoModel:
-    """Drop-in for `transformers.AutoModelForCausalLM`: `from_pretrained` verifies, then delegates.
-
-    Always passes `use_safetensors=True`, so transformers will not fall back to a pickle checkpoint.
-    """
+    """Drop-in for `transformers.AutoModelForCausalLM`: `from_pretrained` pulls (for `hf:org/repo` or an artifact id) or checks a
+    local directory, verifies the attestation, then delegates. Always passes `use_safetensors=True`."""
 
     @classmethod
-    def from_pretrained(
-        cls,
-        path: str | Path,
-        *model_args: Any,
-        passport: SignedPassport | None = None,
-        policy: PolicyPack | None = None,
-        public_key: Ed25519PublicKey | None = None,
-        auto_class: Any = None,
-        **kwargs: Any,
-    ) -> Any:
-        _verified(path, passport, policy, public_key, kwargs)
+    def from_pretrained(cls, path: str | Path, *model_args: Any, env: str | None = None, auto_class: Any = None,
+                        cache_dir: str | Path | None = None, **kwargs: Any) -> Any:
+        from lineage import client
+
+        check_kwargs, kwargs = _split(dict(kwargs))
+        target = str(path)
+        if target.startswith(("hf:", "lp:")):
+            dest = Path(cache_dir or Path.home() / ".cache" / "lineage") / target.replace(":", "_").replace("/", "__")
+            client.pull(target, dest, env=env or client.settings()["env"], server=check_kwargs.get("server"),
+                        token=check_kwargs.get("token"), registry_pubkey=check_kwargs.get("registry_pubkey"), client=check_kwargs.get("client"))
+            path = dest
+        _verified(path, env, kwargs, check_kwargs)
         auto_class = auto_class or _transformers_class()
         kwargs["use_safetensors"] = True
         return auto_class.from_pretrained(path, *model_args, **kwargs)

@@ -136,6 +136,13 @@ def scan_manifest(manifest: object, ref: str = "manifest.json") -> list[Finding]
                 out += _agent_findings(path, where, b, "encoded ") or [finding(
                     "TOOL.DESC.AGENT_INSTRUCTION", f"{path}: encoded text reads as an instruction", "critical", "tool", "S3", [ev("field", where, f"decodes to {b[:120]!r}")])]
         out += _agent_findings(path, where, visible)
+        if inv:  # zero-width characters inside a directive split it so a pattern misses it; match on the cleaned text too
+            gone = {i for i, _, _ in invisible_chars(visible)}
+            cleaned = "".join(ch for i, ch in enumerate(visible) if i not in gone)
+            seen = {(f.id, f.title) for f in out}
+            for f in _agent_findings(path, where, cleaned, "zero-width-split "):
+                if (f.id, f.title) not in seen:
+                    out.append(f)
         img = MD_IMAGE.findall(visible)
         urls = URL.findall(visible)
         if img:

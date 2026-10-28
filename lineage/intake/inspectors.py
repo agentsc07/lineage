@@ -1,18 +1,23 @@
 """Inspector registry for intake: which scanners run at which stage for which artifact type.
 
 An inspector is `fn(ctx) -> list[Finding]`. Scanners that are not implemented yet, or that crash, never take
-intake down: a missing one yields an `info` finding, a crashing one a `medium` finding (a scanner that dies on
-an artifact is itself suspicious, and must not turn into a silent pass).
+intake down: a missing one yields a `CHECK.NOT_RUN.*` finding, a crashing one a `medium` finding (a scanner that dies
+on an artifact is itself suspicious, and must not turn into a silent pass).
+
+One mandatory flow (REFACTOR_SPEC P2): every registered inspector runs for every artifact of its type. A check that
+cannot run says so with `not_run(...)`; the policy (`unrun_checks`) decides what that costs per environment.
 """
 from __future__ import annotations
 
 import base64
 import json
+import logging
+import os
 import re
 from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from fnmatch import fnmatchcase
 from pathlib import Path
 
@@ -22,6 +27,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from lineage.intake import gpu
 from lineage.intake.registry import Registry
 from lineage.risk import SEVERITY_WEIGHT
+from lineage.schemas.fact import Fact, best
 from lineage.schemas.finding import Evidence, Finding, Severity
 from lineage.schemas.gpu import (
     BehaviourDiffRequest, BehaviourDiffResponse, Claim, NotaryCheckRequest, NotaryCheckResponse,
@@ -31,7 +37,8 @@ from lineage.schemas.gpu import (
 from lineage.schemas.passport import ArtifactType, SignedPassport, SourceRef
 from lineage.schemas.policy import PolicyPack
 
-SIDECARS = {"passport.json", "lineage.meta.json"}
+log = logging.getLogger(__name__)
+SIDECARS = {"passport.json"}  # a shipped passport is evidence, not part of the artifact's own bytes
 PICKLE_SUFFIXES = (".pkl", ".pickle", ".pt", ".pth", ".bin", ".ckpt")
 CARD_NAMES = ("README.md", "MODEL_CARD.md", "DATASET_CARD.md", "README")
 SPECTRAL_HIGH, SPECTRAL_MEDIUM = 0.8, 0.5
@@ -51,9 +58,10 @@ class IntakeContext:
     name: str = ""
     version: str = "0.0.0"
     source: SourceRef = field(default_factory=SourceRef)
-    metadata: dict = field(default_factory=dict)  # registry JSON / lineage.meta.json
-    released_at: datetime | None = None
-    claimed: SignedPassport | None = None  # passport shipped with the artifact
+    metadata: dict = field(default_factory=dict)  # what a hub returned for this artifact (`fetched` only; never uploader input)
+    facts: dict[str, list[Fact]] = field(default_factory=dict)
+    released_at: datetime | None = None  # the best *trusted* release date; None means the cooldown cannot be cleared
+    claimed: SignedPassport | None = None  # passport shipped with the artifact (evidence until S2b verifies it)
     parents: list[str] = field(default_factory=list)
     files: dict[str, str] = field(default_factory=dict)  # computed sha256 per file
     card_text: str | None = None
@@ -61,15 +69,41 @@ class IntakeContext:
     findings: list[Finding] = field(default_factory=list)  # everything found so far
     gpu_down: bool = False
     previous: tuple[Path, str] | None = None  # (folder, version) of the release before this one, for diff-aware review
+    signature_in_scope: bool = False  # S2b: a trusted key, in scope, hashes match
+    passport_report: dict | None = None  # what the creator-passport check found, for the five-way trust panel
+    origin_files: dict[str, str] = field(default_factory=dict)  # path -> matching | changed | missing | extra | unchecked (what the origin check saw)
+    origin_verified: bool = False  # every file matches what the hub published, or Lineage fetched the bytes itself
+    graph_refs: list[dict] = field(default_factory=list)  # things this artifact references: become edges or ghost nodes (P6)
+    store: object | None = None  # lineage.store.Store: where every inspected file is kept
+    hub: object | None = None  # the Hub used for origin checks (S2a)
+    claimed_origin: str | None = None  # what an upload says it is a copy of, e.g. `hf:org/name@rev`
+    pending_record: dict | None = None  # hub record for the claimed origin: becomes `fetched` facts only if the hashes match
+    acquired: object | None = None  # lineage.intake.fetch.Acquired when Lineage fetched the bytes itself
+    distribution: dict | None = None  # {filename, sha256}: the wheel as distributed (served by /simple)
+    source_id: str = ""  # `upload:<name>`, `hf:<repo>`, `pypi:<name>`: what trusted-publisher scopes are matched against
 
     @property
     def root(self) -> Path | None:
         return self.path if self.path and self.path.is_dir() else (self.path.parent if self.path else None)
 
+    def add_fact(self, key: str, value: str | None, provenance: str, source: str) -> None:
+        if value is None or value == "":
+            return
+        self.facts.setdefault(key, []).append(
+            Fact(key=key, value=str(value), provenance=provenance, source=source, at=self.now))  # type: ignore[arg-type]
+
+    def fact(self, key: str, trusted_only: bool = True) -> Fact | None:
+        """Best fact for `key` by class: signed > fetched > computed > declared. `trusted_only` never returns a declared one."""
+        return best(self.facts.get(key, []), trusted_only)
+
+    def fact_value(self, key: str, trusted_only: bool = True) -> str | None:
+        f = self.fact(key, trusted_only)
+        return f.value if f else None
+
     @property
     def publisher(self) -> str | None:
-        repo = self.source.repo or self.metadata.get("publisher")
-        return repo.split("/")[0] if repo else None
+        """The publisher according to the best trusted fact (never the uploader's word)."""
+        return self.fact_value("publisher")
 
 
 Inspector = Callable[[IntakeContext], list[Finding]]
@@ -107,23 +141,17 @@ def run_inspector(name: str, fn: Inspector, ctx: IntakeContext, stage: str) -> l
     try:
         return fn(ctx)
     except NotImplementedError:
-        return [make_finding(f"SCANNER.UNAVAILABLE.{name.upper()}", f"Scanner '{name}' is not available yet; skipped",
-                             "info", "policy", stage)]
+        return [not_run(name, "scanner is not available in this build", stage)]
     except Exception as e:  # noqa: BLE001 - a crashing scanner must never become a silent pass
         return [make_finding(f"SCANNER.ERROR.{name.upper()}", f"Scanner '{name}' failed: {type(e).__name__}: {e}"[:300],
                              "medium", "policy", stage, [Evidence(kind="field", ref=name, detail=repr(e)[:200])])]
 
 
-def needs_deep(ctx: IntakeContext, findings: list[Finding]) -> tuple[bool, str]:
-    """Tiering: deep stages (S4, S5) run when earlier ones raised suspicion or the environment demands it."""
-    if ctx.environment in ("staging", "prod"):
-        return True, f"required for {ctx.environment}"
-    if ctx.artifact_type in ("package", "tool") and any(f.id.startswith("PKG.SIGNAL.") for f in findings):
-        return True, "capability signals present; the reviewer decides whether they matter"
-    sus = [f for f in findings if f.severity in ("medium", "high", "critical") and not f.id.startswith("SCANNER.")]
-    if sus:
-        return True, f"{len(sus)} finding(s) of medium or higher severity"
-    return False, "no suspicion raised in dev; deep stages not required"
+def not_run(name: str, why: str, stage: str, severity: Severity = "medium") -> Finding:
+    """A check that could not run. The severity here is a placeholder: the policy's `unrun_checks` sets the real cost per
+    environment (`lineage.policy.engine.apply_unrun_costs`)."""
+    return make_finding(f"CHECK.NOT_RUN.{name.upper()}", f"Check {name.lower()} did not run: {why}", severity, "policy", stage,
+                        [Evidence(kind="field", ref=name.lower(), detail=why[:200])])
 
 
 def _levenshtein(a: str, b: str) -> int:
@@ -137,22 +165,138 @@ def _levenshtein(a: str, b: str) -> int:
 
 
 # ----------------------------------------------------------------------------------------------- S2 (all types)
+def source_id_of(hub: str | None, repo: str | None) -> str | None:
+    """`hf:org/name`, `pypi:name` for a source reference; None when it names nothing checkable."""
+    if not repo:
+        return None
+    return {"huggingface": f"hf:{repo}", "hf": f"hf:{repo}", "pypi": f"pypi:{repo}"}.get(hub or "")
+
+
+def _git_oid(path: Path) -> str:
+    import hashlib
+
+    data = path.read_bytes()
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()  # noqa: S324 - git's object id, not a security hash
+
+
+def _promote_pending(ctx: IntakeContext, source: str) -> None:
+    """The hashes match what the hub published, so what the hub says about that repo describes these bytes: `fetched`."""
+    from lineage.intake.pipeline import add_dict_facts
+
+    ctx.origin_verified = True
+    if ctx.pending_record:
+        add_dict_facts(ctx, ctx.pending_record, "fetched", source)
+        ctx.metadata = dict(ctx.pending_record)
+        ctx.pending_record = None
+
+
+@register("*", "S2")
+def origin_check(ctx: IntakeContext) -> list[Finding]:
+    """S2a. Where did these bytes come from? An upload with a claimed origin is compared, file by file, with what that hub
+    published at a pinned revision. Hints inside the artifact are shown as `declared` and never used for trust."""
+    from lineage.intake.fetch import _wanted
+
+    out: list[Finding] = []
+    kind = "dataset" if ctx.artifact_type == "dataset" else "model"
+    for hint, value in _hints(ctx):
+        ctx.add_fact("source_repo", value, "declared", f"hint: {hint}")
+        out.append(make_finding("PROV.ORIGIN.HINT", f"Suggested origin: {value} (from {hint}); not used for trust", "info", "provenance", "S2",
+                                [Evidence(kind="field", ref=hint, detail=value)]))
+    if ctx.acquired is not None:
+        ctx.origin_files = {rel: "matching" for rel in ctx.files}  # downloaded from the hub; a differing hash is INTEGRITY.FETCH_MISMATCH
+        out.append(make_finding("PROV.ORIGIN.VERIFIED", f"Fetched by Lineage from {ctx.claimed_origin}", "info", "provenance", "S2",
+                                [Evidence(kind="field", ref="origin", detail=str(ctx.claimed_origin))]))
+        return out
+    origin = ctx.claimed_origin
+    if origin is None:
+        if ctx.origin_verified:  # a hub stand-in vouched for the local bytes (tests, bench, demo)
+            return out + [make_finding("PROV.ORIGIN.VERIFIED", "Vouched for by the configured hub record", "info", "provenance", "S2")]
+        ctx.origin_files = {rel: "unchecked" for rel in ctx.files}
+        return out + [make_finding("PROV.ORIGIN.UNCLAIMED", "No origin was claimed, so nothing can be compared with a hub; trust stays unknown",
+                                   "medium", "provenance", "S2")]
+    hub = ctx.hub
+    pub = hub.published_files(origin) if hub is not None else None
+    if pub is None:
+        ctx.origin_files = {rel: "unchecked" for rel in ctx.files}
+        return out + [make_finding("PROV.ORIGIN.UNVERIFIABLE", f"The claimed origin {origin} could not be checked (hub unreachable or repo unknown)",
+                                   "high", "provenance", "S2", [Evidence(kind="field", ref="claimed_origin", detail=origin)])]
+    if origin.startswith("pypi:"):
+        dist = ctx.distribution or {}
+        want = (pub.get(dist.get("filename", "")) or {}).get("sha256")
+        diffs = [] if want and want == dist.get("sha256") else [f"{dist.get('filename', 'distribution')}: " + ("not published" if not want else "sha256 differs")]
+        ctx.origin_files = {rel: ("matching" if not diffs else "changed") for rel in ctx.files}
+    else:
+        base = ctx.root
+        diffs = []
+        for rel in sorted(ctx.files):
+            exp = pub.get(rel)
+            if exp is None:
+                diffs.append(f"{rel}: not in the published repo")
+            elif exp.get("sha256"):
+                if exp["sha256"] != ctx.files[rel]:
+                    diffs.append(f"{rel}: sha256 differs from the published file")
+            elif exp.get("git_oid"):
+                if base is None or _git_oid(base / rel) != exp["git_oid"]:
+                    diffs.append(f"{rel}: git object id differs from the published file")
+            else:
+                diffs.append(f"{rel}: the hub published no hash to compare with")
+        diffs += [f"{rel}: published but missing from the upload" for rel in sorted(pub) if rel not in ctx.files and _wanted(rel, kind)]
+        bad = {d.split(":")[0]: ("extra" if "not in the published repo" in d else "missing" if "missing from the upload" in d else "changed") for d in diffs}
+        ctx.origin_files = {rel: bad.get(rel, "matching") for rel in ctx.files}
+        ctx.origin_files.update({rel: "missing" for rel, st in bad.items() if st == "missing"})
+    if diffs:
+        return out + [make_finding("PROV.ORIGIN.MODIFIED", f"{len(diffs)} file(s) differ from what {origin} published: " + "; ".join(diffs[:3]),
+                                   "critical", "provenance", "S2", [Evidence(kind="file_line", ref=d.split(":")[0], detail=d) for d in diffs[:20]])]
+    _promote_pending(ctx, f"hub record for {origin}, hashes verified")
+    return out + [make_finding("PROV.ORIGIN.VERIFIED", f"Every file matches what {origin} published", "info", "provenance", "S2",
+                               [Evidence(kind="field", ref="claimed_origin", detail=origin)])]
+
+
+def _hints(ctx: IntakeContext) -> list[tuple[str, str]]:
+    root, out = ctx.root, []
+    if root is None:
+        return out
+    cfg = root / "config.json"
+    if cfg.is_file():
+        try:
+            v = json.loads(cfg.read_text()).get("_name_or_path")
+            if isinstance(v, str) and "/" in v and not v.startswith((".", "/")):
+                out.append(("config.json:_name_or_path", v))
+        except (OSError, ValueError, AttributeError):
+            pass
+    if ctx.card_text:
+        m = re.search(r"^base_model:\s*([^\s#]+)", ctx.card_text, re.M)
+        if m:
+            out.append(("README base_model", m.group(1)))
+    return out
+
+
 @register("*", "S2")
 def publisher_policy(ctx: IntakeContext) -> list[Finding]:
+    """S2c. Block list and look-alike run on whatever name we have (they only add risk). The allow list is consulted only
+    for a publisher backed by a trusted fact; a declared-only publisher is `PROV.PUBLISHER.UNVERIFIED`."""
     out: list[Finding] = []
-    pub = ctx.publisher
-    names = [n for n in (ctx.source.repo, pub, ctx.name) if n]
+    trusted = ctx.fact("publisher")
+    declared = ctx.fact("publisher", trusted_only=False)
+    pub = trusted.value if trusted else (declared.value if declared else None)
+    repo = ctx.fact_value("source_repo", trusted_only=False)
+    names = [n for n in (repo, pub, ctx.name) if n]
     for pattern in ctx.policy.publishers.block:
         if any(fnmatchcase(n.lower(), pattern.lower()) for n in names):
             out.append(make_finding("PROV.PUBLISHER.BLOCKED", f"Publisher matches block rule '{pattern}'", "high",
-                                    "provenance", "S2", [Evidence(kind="field", ref="source.repo", detail=str(ctx.source.repo))]))
+                                    "provenance", "S2", [Evidence(kind="field", ref="source.repo", detail=str(repo or pub))]))
             break
     if pub:
         allow = ctx.policy.publishers.allow
         near = [a for a in allow if a.lower() != pub.lower() and _levenshtein(a.lower(), pub.lower()) <= 2]
+        basis = "" if trusted else " (basis: declared)"
         if near and pub not in allow:
-            out.append(make_finding("PROV.LOOKALIKE.PUBLISHER", f"Publisher '{pub}' looks like allow-listed '{near[0]}'",
+            out.append(make_finding("PROV.LOOKALIKE.PUBLISHER", f"Publisher '{pub}' looks like allow-listed '{near[0]}'{basis}",
                                     "high", "provenance", "S2", [Evidence(kind="field", ref="source.repo", detail=f"{pub} ~ {near[0]}")]))
+        elif not trusted:
+            out.append(make_finding("PROV.PUBLISHER.UNVERIFIED",
+                                    f"Publisher '{pub}' is only declared ({declared.source if declared else 'unknown'}); the allow list does not apply",
+                                    "medium", "provenance", "S2", [Evidence(kind="field", ref="publisher", detail="basis: declared")]))
         elif allow and pub not in allow:
             out.append(make_finding("PROV.PUBLISHER.UNLISTED", f"Publisher '{pub}' is not on the allow list", "low",
                                     "provenance", "S2", [Evidence(kind="field", ref="source.repo", detail=pub)]))
@@ -167,36 +311,104 @@ def _signature_ok(signed: SignedPassport, public_key: Ed25519PublicKey) -> bool:
     return True
 
 
+def _key_id(public_key: Ed25519PublicKey) -> str:
+    from cryptography.hazmat.primitives import serialization
+    import hashlib
+
+    raw = public_key.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+    return hashlib.sha256(raw).hexdigest()[:16]
+
+
+def resolve_signer(ctx: IntakeContext, key_id: str) -> tuple[Ed25519PublicKey | None, list[str] | None, str]:
+    """(public key, scope patterns, who) for a passport signer. The policy's `trusted_publishers` is the source of truth.
+    `LINEAGE_TRUSTED_KEYS` (the registry's key table) is a dev bootstrap that only applies when the policy lists none, and has
+    no scope limit. Scope None means the key is unknown."""
+    for tp in ctx.policy.trusted_publishers:
+        try:
+            pub = Ed25519PublicKey.from_public_bytes(bytes.fromhex(tp.key))
+        except ValueError:
+            continue
+        if _key_id(pub) == key_id:
+            return pub, list(tp.scope), tp.name
+    if not ctx.policy.trusted_publishers:
+        legacy = ctx.registry.trusted_key(key_id)
+        if legacy is not None:
+            log.warning("trusting key %s from LINEAGE_TRUSTED_KEYS (dev bootstrap): the policy defines no trusted_publishers", key_id)
+            return legacy, ["*"], "dev bootstrap key (LINEAGE_TRUSTED_KEYS)"
+    return None, None, ""
+
+
+def in_scope(patterns: list[str], source_ids: list[str]) -> bool:
+    return all(any(fnmatchcase(sid, pat) for pat in patterns) for sid in source_ids)
+
+
 @register("*", "S2")
 def signed_passport(ctx: IntakeContext) -> list[Finding]:
-    """Verify a passport shipped with the artifact: signature, file hashes, expiry."""
+    """S2b. Verify a creator passport shipped with the artifact: signature, trusted-publisher list, key scope, file hashes,
+    expiry. Only a passport that passes every check makes its facts `signed` and lets trust reach `signed`."""
     sp = ctx.claimed
     if sp is None:
         return []
     out: list[Finding] = []
-    pub = ctx.registry.trusted_key(sp.key_id)
-    if pub is None:
-        out.append(make_finding("PROV.SIGNATURE.UNTRUSTED_KEY", f"Passport is signed with unknown key {sp.key_id}; treated as unsigned",
+    body = sp.passport.predicate
+    pub, scope, who = resolve_signer(ctx, sp.key_id)
+    ok = True
+    rep = ctx.passport_report = {"present": True, "claimed_publisher": body.source.repo or body.issued_by.name, "claimed_source": source_id_of(body.source.hub, body.source.repo),
+                                 "key_id": sp.key_id, "signature": "not_checked", "key_status": "unknown_key", "signer": None, "bytes_match": None}
+    if sp.key_id in ctx.policy.revoked_keys:
+        rep["key_status"] = "revoked"
+        out.append(make_finding("PROV.SIGNATURE.REVOKED_KEY", f"Passport is signed with revoked key {sp.key_id}; treated as unsigned",
+                                "high", "provenance", "S2", [Evidence(kind="field", ref="key_id", detail=sp.key_id)]))
+        ok = False
+    elif pub is None:
+        rep["key_status"] = "not_a_trusted_publisher"
+        out.append(make_finding("PROV.SIGNATURE.UNTRUSTED_KEY", f"Passport is signed with key {sp.key_id}, which is not a trusted publisher; treated as unsigned",
                                 "medium", "provenance", "S2", [Evidence(kind="field", ref="key_id", detail=sp.key_id)]))
+        ok = False
     elif not _signature_ok(sp, pub):
+        rep.update(signature="invalid", key_status="trusted_key", signer=who)
         out.append(make_finding("PROV.SIGNATURE.INVALID", "Passport signature does not verify", "critical", "provenance", "S2",
                                 [Evidence(kind="field", ref="signature", detail=f"key {sp.key_id}")]))
-    body = sp.passport.predicate
+        ok = False
+    else:
+        rep.update(signature="valid", key_status="trusted_in_scope", signer=who)
+        claimed_id = source_id_of(body.source.hub, body.source.repo)
+        wanted = [x for x in (claimed_id, ctx.source_id) if x]
+        if scope is not None and wanted and not in_scope(scope, wanted):
+            rep["key_status"] = "outside_scope"
+            out.append(make_finding(
+                "PROV.SIGNATURE.SCOPE_MISMATCH",
+                f"Trusted key of {who} signs outside its scope: {', '.join(wanted)} is not covered by {', '.join(scope) or 'no scope'}; treated as unsigned",
+                "high", "provenance", "S2", [Evidence(kind="field", ref="key_id", detail=f"{sp.key_id} scope={scope}")]))
+            ok = False
     if body.expires_at and body.expires_at <= ctx.now:
         out.append(make_finding("PROV.PASSPORT.EXPIRED", f"Passport expired {body.expires_at:%Y-%m-%d}", "medium", "provenance", "S2"))
+        ok = False
     if ctx.path is not None:
-        # Intake does not hash its own sidecars (passport.json, lineage.meta.json), so a passport made by
-        # `lineage sign` that pins them is not mismatched on their account.
         pinned = {rel: want for rel, want in body.contents.files.items() if rel not in SIDECARS}
         bad = [(rel, want, ctx.files.get(rel)) for rel, want in sorted(pinned.items()) if ctx.files.get(rel) != want]
         for rel, want, got in bad[:10]:
             out.append(make_finding("INTEGRITY.HASH_MISMATCH", f"{rel} " + ("is missing" if got is None else "does not match the passport"),
                                     "critical", "integrity", "S2",
                                     [Evidence(kind="file_line", ref=rel, detail=f"expected {want[:12]}, got {(got or 'none')[:12]}")]))
+        ok = ok and not bad
+        rep["bytes_match"] = not bad
         extra = sorted(set(ctx.files) - set(body.contents.files))
         if extra:
             out.append(make_finding("INTEGRITY.UNPINNED_FILE", f"{len(extra)} file(s) are not covered by the passport", "medium",
                                     "integrity", "S2", [Evidence(kind="file_line", ref=p) for p in extra[:10]]))
+    if ok:
+        ctx.signature_in_scope = True
+        src = f"passport {sp.passport_id[:19]} signed by {who}"
+        for f in body.facts:  # what the creator asserts becomes `signed` only now
+            ctx.add_fact(f.key, f.value, "signed", src)
+        ctx.add_fact("source_repo", body.source.repo, "signed", src)
+        if body.source.repo:
+            ctx.add_fact("publisher", body.source.repo.split("/")[0], "signed", src)
+        ctx.add_fact("source_revision", body.source.commit, "signed", src)
+    else:
+        for f in body.facts:
+            ctx.add_fact(f.key, f.value, "declared", f"unverified passport {sp.passport_id[:19]}")
     return out
 
 
@@ -218,21 +430,75 @@ def parent_chain(ctx: IntakeContext) -> list[Finding]:
 
 @register("*", "S2")
 def licence(ctx: IntakeContext) -> list[Finding]:
-    value = ctx.metadata.get("licence") or ctx.metadata.get("license")
-    if not value and ctx.card_text:
-        m = re.search(r"^license:\s*([^\s#]+)", ctx.card_text, re.I | re.M)
-        value = m.group(1) if m else None
+    """S2d. An allowed licence needs a trusted fact. A declared-only licence is `POLICY.LICENCE.UNVERIFIED` (low); a declared
+    licence that is not allowed still adds risk."""
+    trusted = ctx.fact("licence")
+    declared = ctx.fact("licence", trusted_only=False)
+    f = trusted or declared
     allowed = {x.lower() for x in ctx.policy.licences_allowed}
-    if not value or not allowed or str(value).lower() in allowed:
+    if f is None or not allowed:
         return []
-    return [make_finding("POLICY.LICENCE.NOT_ALLOWED", f"Licence '{value}' is not on the allow list", "medium", "policy",
-                         "S2", [Evidence(kind="field", ref="licence", detail=str(value))])]
+    value = f.value
+    if str(value).lower() not in allowed:
+        return [make_finding("POLICY.LICENCE.NOT_ALLOWED", f"Licence '{value}' is not on the allow list" + ("" if trusted else " (basis: declared)"),
+                             "medium", "policy", "S2", [Evidence(kind="field", ref="licence", detail=f"{value} ({f.provenance}: {f.source})")])]
+    if trusted is None:
+        return [make_finding("POLICY.LICENCE.UNVERIFIED", f"Licence '{value}' is only declared, so it does not count as allowed", "low",
+                             "policy", "S2", [Evidence(kind="field", ref="licence", detail=f"basis: declared ({f.source})")])]
+    return []
+
+
+@register(("package", "model", "dataset", "tool"), "S2")
+def release_age(ctx: IntakeContext) -> list[Finding]:
+    """S2e. The cooldown needs a `fetched` or `signed` release date. Without one it is not cleared, and the engine
+    quarantines (a human can approve)."""
+    if not ctx.policy.cooldown_days.get(ctx.artifact_type):
+        return []
+    f = ctx.fact("released_at")
+    if f is None:
+        declared = ctx.fact("released_at", trusted_only=False)
+        why = f"release date is only declared ({declared.source})" if declared else "no release date is known"
+        return [make_finding("PROV.COOLDOWN.UNVERIFIED", f"Cooldown cannot be cleared: {why}", "medium", "provenance", "S2",
+                             [Evidence(kind="field", ref="released_at", detail="basis: declared" if declared else "none")], score=0)]
+    return []
+
+
+def _req_name(req: str) -> str | None:
+    """`name` of a PEP 508 requirement; None for requirements that only apply to an extra."""
+    if "extra ==" in req.replace('"', "").replace("'", "").replace("extra==", "extra =="):
+        return None
+    m = re.match(r"\s*([A-Za-z0-9][A-Za-z0-9._-]*)", req)
+    return m.group(1) if m else None
+
+
+@register("package", "S4")
+def package_dependency_closure(ctx: IntakeContext) -> list[Finding]:
+    """S4. Resolve `requires_dist` against admitted packages. Every requirement not admitted becomes a ghost node (P6) and a `low`
+    `PKG.DEP.UNREGISTERED`, so the monitor still watches it and a revocation still reaches this package through it."""
+    info = ctx.metadata.get("info", ctx.metadata) if isinstance(ctx.metadata, dict) else {}
+    reqs = list(info.get("requires_dist") or []) or [r for r in str(ctx.fact_value("requires", trusted_only=True) or "").split("\n") if r]
+    if not reqs:
+        return [make_finding("PKG.DEP.NONE", "No declared dependencies to resolve" if ctx.metadata else "No fetched dependency list to resolve",
+                             "info", "provenance", "S4")]
+    out: list[Finding] = []
+    seen: set[str] = set()
+    for r in reqs:
+        name = _req_name(r)
+        if not name or name.lower() in seen:
+            continue
+        seen.add(name.lower())
+        ctx.graph_refs.append({"kind": "depends_on", "type": "package", "name": name, "ref": f"pypi:{name} (required by {ctx.name})"})
+        if ctx.registry.package_status(name) not in ("admitted", "admitted_with_conditions"):
+            out.append(make_finding("PKG.DEP.UNREGISTERED", f"Dependency {name} has not been admitted", "low", "provenance", "S4",
+                                    [Evidence(kind="field", ref="requires_dist", detail=r[:120])]))
+    return out[:30] or [make_finding("PKG.DEP.RESOLVED", f"All {len(seen)} dependencies are admitted", "info", "provenance", "S4")]
 
 
 @register("package", "S2")
 def package_provenance(ctx: IntakeContext) -> list[Finding]:
+    """S2g. Look-alike, repo-owner mismatch, maintainer change: only on `fetched` metadata."""
     if not ctx.metadata:
-        return []
+        return [not_run("PKG_METADATA", "no registry metadata was fetched for this package", "S2")]
     from lineage.inspect import package_provenance as pp
 
     return pp.scan(ctx.name, ctx.version, ctx.metadata, ctx.policy)
@@ -299,12 +565,41 @@ def dataset_stats(ctx: IntakeContext) -> list[Finding]:
     return ds.scan(ctx.path, ctx.card_text) if ctx.path else []
 
 
+@register("dataset", "S4")
+def dataset_v2(ctx: IntakeContext) -> list[Finding]:
+    """S4. Poisoning checks v2: characters, injected content, trigger -> behaviour, spectral signature, kNN labels."""
+    from lineage.inspect import dataset_v2 as v2
+
+    return v2.scan(ctx.path, ctx.card_text) if ctx.path else [not_run("DATASET_V2", "no bytes", "S4")]
+
+
+@register("dataset", "S4")
+def dataset_upstream_diff(ctx: IntakeContext) -> list[Finding]:
+    """S4. Row-level diff against the earlier admitted version (or `previous_path` in the hub record). Without one, says so."""
+    from lineage.inspect import dataset_diff
+
+    if ctx.path is None:
+        return [not_run("DATASET_DIFF", "no bytes", "S4")]
+    prev = ctx.metadata.get("previous_path")
+    tmp = None
+    if not prev:
+        import tempfile
+
+        tmp = Path(tempfile.mkdtemp(prefix="lineage-prev-"))
+        prev = ctx.registry.previous_version_path("dataset", ctx.name, tmp)
+    if not prev or not Path(prev).exists():
+        return [make_finding("DATA.DIFF.NO_BASELINE", "No earlier version of this dataset is known; nothing to diff against", "info", "data", "S4")]
+    return dataset_diff.diff(ctx.path, Path(prev))
+
+
 # ----------------------------------------------------------------------------------------------- S3 package / tool
 @register("package", "S3")
 def package_osv(ctx: IntakeContext) -> list[Finding]:
     from lineage.inspect import package_osv as osv
 
-    return osv.scan(ctx.name, ctx.version)
+    found = osv.scan(ctx.name, ctx.version)
+    return [not_run("OSV", "the OSV service could not be reached and nothing is cached", "S3") if f.id == "PKG.OSV.UNAVAILABLE" else f
+            for f in found]
 
 
 def _dist_identity(root: Path) -> tuple[str, str] | None:
@@ -356,6 +651,14 @@ def package_taint(ctx: IntakeContext) -> list[Finding]:
     return taint.scan(ctx.root, ctx.name, ctx.metadata) if ctx.root else []
 
 
+@register(("package", "tool"), "S3")
+def package_rules(ctx: IntakeContext) -> list[Finding]:
+    """S3. atexit effects, import hooks, run-time-built targets, git-hook writes, beacon threads."""
+    from lineage.inspect import package_rules as pr
+
+    return pr.scan(ctx.root) if ctx.root else []
+
+
 def _manifest(ctx: IntakeContext) -> Path | None:
     return ctx.root / "manifest.json" if ctx.root and (ctx.root / "manifest.json").exists() else None
 
@@ -377,12 +680,15 @@ def tool_intent(ctx: IntakeContext) -> list[Finding]:
 
 
 # ----------------------------------------------------------------------------------------------- S4 model (GPU)
-def _gpu_skip(ctx: IntakeContext, what: str, err: Exception) -> list[Finding]:
+def _gpu_skip(ctx: IntakeContext, what: str, err: Exception, checks: tuple[str, ...] = ("WEIGHT_BACKDOOR", "BEHAVIOUR_DIFF")) -> list[Finding]:
+    """The GPU worker is optional (P2): every check that needed it says it did not run, and the policy prices that."""
     ctx.gpu_down = True
     if isinstance(err, gpu.GpuRejected):
         # The worker is up; it reads model paths on its own host and only knows bank-sized models.
-        return [gpu.skipped_finding("S4", what, f"not applicable to this model: the GPU worker is up but cannot analyse it, since its weights are not on the worker's host or not a model it supports ({err.detail.split(':')[0]})")]
-    return [gpu.skipped_finding("S4", what, "needs GPU worker; unreachable")]
+        why = f"the GPU worker is up but cannot analyse this model, since its weights are not on the worker's host or not a model it supports ({err.detail.split(':')[0]})"
+    else:
+        why = "needs the GPU worker (LINEAGE_GPU_URL); it is unset or unreachable"
+    return [not_run(c, f"{what}: {why}", "S4") for c in checks]
 
 
 def _template_vs_parent(child: Path, parent: Path, label: str) -> list[Finding]:
@@ -408,10 +714,10 @@ def local_parent_diff(ctx: IntakeContext) -> list[Finding]:
     from lineage.diff.parent import fingerprint_parent
 
     if ctx.path is None or not list(ctx.path.rglob("*.safetensors")):
-        return []
+        return [not_run("PARENT_ID", "no safetensors weights to fingerprint", "S4")]
     bank = ctx.registry.reference_models()
     if not bank:
-        return []
+        return [not_run("PARENT_ID", "no admitted model on this host to compare the weights with", "S4")]
     match = fingerprint_parent(ctx.path, {pid: path for pid, (_, path) in bank.items()})
     if match.parent is None:
         return [make_finding("MODEL.PARENT.UNIDENTIFIED", "No admitted model matches these weights", "low", "model", "S4",
@@ -425,12 +731,15 @@ def local_parent_diff(ctx: IntakeContext) -> list[Finding]:
         ctx.parents.append(match.parent)
     out = [make_finding("MODEL.PARENT.IDENTIFIED", f"Parent identified from weights: {label} (similarity {match.similarity:.3f})",
                         "info", "model", "S4", [Evidence(kind="field", ref=match.parent, detail=label)], source="statistical")]
-    claimed = ctx.metadata.get("claimed_base")
+    claimed = ctx.fact_value("base_model", trusted_only=False)
     if claimed and claimed not in (label, label.split("@")[0]):
         out.append(make_finding("MODEL.PARENT.CLAIM_MISMATCH", f"Card claims base '{claimed}' but weights match '{label}'", "medium",
                                 "model", "S4", [Evidence(kind="field", ref="claimed_base", detail=f"{claimed} != {label}")],
                                 source="statistical"))
     out += _template_vs_parent(ctx.path, parent_path, label)
+    from lineage.inspect import tokenizer
+
+    out += [f for f in tokenizer.scan(ctx.path, parent_path) if f.id != "MODEL.TOKENIZER.NO_BASE"]  # the parent's tokenizer is the base to diff against
     out.append(make_finding(
         "MODEL.WEIGHTS.CHANGED_LAYERS", f"{len(changed)} tensor(s) differ from parent {label}: " + ", ".join(d.tensor for d in changed[:4]) + ("…" if len(changed) > 4 else ""), "info", "model", "S4",
         [Evidence(kind="tensor", ref=d.tensor, detail="shape/dtype changed" if d.relative_l2 == float("inf")
@@ -439,18 +748,64 @@ def local_parent_diff(ctx: IntakeContext) -> list[Finding]:
 
 
 @register("model", "S4")
+def hub_parent(ctx: IntakeContext) -> list[Finding]:
+    """S4. Compare the weights with the named base model on the hub without downloading it (range requests: config, tokenizer, the safetensors
+    header and the first embedding rows). A match identifies the parent; a base the weights contradict is `MODEL.PARENT.CLAIM_MISMATCH`.
+    The base's tokenizer is then diffed against the model's, which until now never ran."""
+    from lineage.diff import hub_parent as hp
+    from lineage.inspect import tokenizer
+
+    base = ctx.fact_value("base_model", trusted_only=False)
+    if not base:
+        return [make_finding("MODEL.PARENT.NO_CLAIMED_BASE", "No base model is named by the hub, the passport or the uploader; nothing to fetch and compare", "info", "model", "S4")]
+    if ctx.path is None:
+        return [not_run("PARENT_FETCH", "no model bytes", "S4")]
+    fact = ctx.fact("base_model", trusted_only=False)
+    base_url = getattr(ctx.hub, "base_url", None) or None
+    from lineage.intake import fetch
+
+    if not base_url and not os.environ.get("LINEAGE_HF_URL") and not os.environ.get("LINEAGE_HUB_URL"):
+        base_url = fetch.hf_url()
+    import tempfile
+
+    work = Path(tempfile.mkdtemp(prefix="lineage-base-"))
+    try:
+        m = hp.compare(ctx.path, base, "main", base_url=base_url or fetch.hf_url(), client=getattr(ctx.hub, "client", None), work_dir=work)
+    except (hp.HubParentError, ValueError, OSError) as e:
+        return [not_run("PARENT_FETCH", f"could not fetch the base {base}: {e}", "S4")]
+    out: list[Finding] = []
+    basis = "" if fact and fact.provenance != "declared" else " (the base is only declared)"
+    ev_ = [Evidence(kind="field", ref=base, detail=f"{m.tensor}: mean row cosine {m.similarity}; {m.bytes_fetched} bytes fetched" if m.similarity is not None else "; ".join(m.notes))]
+    if m.similarity is None:
+        out.append(not_run("PARENT_FETCH", "; ".join(m.notes) or "no comparable tensor", "S4"))
+    elif m.similarity >= hp.IDENTIFIED:
+        out.append(make_finding("MODEL.PARENT.IDENTIFIED", f"Parent identified from the weights: {base} (embedding cosine {m.similarity:.3f}, {m.bytes_fetched} bytes fetched){basis}",
+                                "info", "model", "S4", ev_, source="statistical"))
+        if base not in ctx.parents:
+            ctx.graph_refs.append({"kind": "derived_from", "type": "model", "name": base.split("/")[-1], "ref": f"base model {base}"})
+        if m.base_dir is not None:
+            out += [f for f in tokenizer.scan(ctx.path, m.base_dir) if f.id != "MODEL.TOKENIZER.NO_BASE"]
+    else:
+        out.append(make_finding("MODEL.PARENT.CLAIM_MISMATCH", f"The weights do not match the named base {base} (embedding cosine {m.similarity:.3f}){basis}",
+                                "high", "model", "S4", ev_, source="statistical"))
+    return out
+
+
+@register("model", "S4")
 def gpu_weights(ctx: IntakeContext) -> list[Finding]:
     """Parent identification, spectral backdoor score, behavioural diff and Notary spot-check."""
     if ctx.path is None:
-        return [gpu.skipped_finding("S4", "weight analysis", "no model bytes available")]
+        return [not_run(c, "no model bytes available", "S4") for c in ("WEIGHT_BACKDOOR", "BEHAVIOUR_DIFF")]
     out: list[Finding] = []
     path = str(ctx.path)
     try:
         parent = gpu.post("/weights/parent", ParentRequest(model_path=path), ParentResponse, ctx.gpu_url)
     except gpu.GpuUnavailable as e:
-        return _gpu_skip(ctx, "spectral and behavioural weight analysis", e)
+        has_cert = bool(ctx.claimed and ctx.signature_in_scope and ctx.claimed.passport.predicate.certificates)
+        return _gpu_skip(ctx, "spectral and behavioural weight analysis", e,
+                         ("WEIGHT_BACKDOOR", "BEHAVIOUR_DIFF") + (("NOTARY",) if has_cert else ()))
 
-    claimed = ctx.metadata.get("claimed_base")
+    claimed = ctx.fact_value("base_model", trusted_only=False)
     local = {f.id for f in ctx.findings}
     if parent.changed_layers and "MODEL.WEIGHTS.CHANGED_LAYERS" not in local:
         shown = parent.changed_layers[:12]
@@ -467,6 +822,8 @@ def gpu_weights(ctx: IntakeContext) -> list[Finding]:
             return out
         out.append(make_finding("MODEL.PARENT.UNIDENTIFIED", "No known parent matches these weights", "low", "model", "S4",
                                 source="statistical"))
+        out += [not_run(c, "no parent was identified, so there is nothing to compare the weights with", "S4")
+                for c in ("WEIGHT_BACKDOOR", "BEHAVIOUR_DIFF")]
         return out
 
     try:
@@ -489,14 +846,17 @@ def gpu_weights(ctx: IntakeContext) -> list[Finding]:
                 [Evidence(kind="metric", ref="divergence", detail=f"{diff.divergence:.3f}")]
                 + [Evidence(kind="metric", ref=str(p.get("id", i)), detail=str(p)[:160]) for i, p in enumerate(diff.flagged_probes[:5])],
                 source="statistical"))
-        if ctx.claimed:
-            for cert in ctx.claimed.passport.predicate.certificates:
-                chk = gpu.post("/notary/check", NotaryCheckRequest(model_path=path, cert_id=cert), NotaryCheckResponse, ctx.gpu_url)
-                if not chk.match:
-                    out.append(make_finding("MODEL.NOTARY.MISMATCH", f"Notary spot-check failed for {cert}: {chk.detail}", "high",
-                                            "behaviour", "S4", [Evidence(kind="field", ref=cert, detail=chk.detail)], source="statistical"))
+        certs = ctx.claimed.passport.predicate.certificates if ctx.claimed and ctx.signature_in_scope else []
+        if not certs:
+            out.append(make_finding("MODEL.NOTARY.NOT_APPLICABLE", "No Notary certificate in a verified creator passport; spot-check not applicable",
+                                    "info", "behaviour", "S4"))
+        for cert in certs:
+            chk = gpu.post("/notary/check", NotaryCheckRequest(model_path=path, cert_id=cert), NotaryCheckResponse, ctx.gpu_url)
+            if not chk.match:
+                out.append(make_finding("MODEL.NOTARY.MISMATCH", f"Notary spot-check failed for {cert}: {chk.detail}", "high",
+                                        "behaviour", "S4", [Evidence(kind="field", ref=cert, detail=chk.detail)], source="statistical"))
     except gpu.GpuUnavailable as e:
-        out += _gpu_skip(ctx, "spectral / behavioural checks", e)
+        out += _gpu_skip(ctx, "spectral / behavioural checks", e, ("WEIGHT_BACKDOOR", "BEHAVIOUR_DIFF", "NOTARY"))
     return out
 
 
@@ -542,13 +902,28 @@ def claims_to_findings(resp: ReviewResponse, root: Path, id_prefix: str) -> list
 def gpu_card_review(ctx: IntakeContext) -> list[Finding]:
     if not ctx.card_text or ctx.root is None:
         return [make_finding("LLM.CARD.MISSING", "No model/dataset card to review", "low", "llm", "S5", source="deterministic")]
-    measured = {"files": len(ctx.files), "claimed_base": ctx.metadata.get("claimed_base"),
+    measured = {"files": len(ctx.files), "claimed_base": ctx.fact_value("base_model", trusted_only=False),
                 "findings": sorted({f"{f.id}:{f.severity}" for f in ctx.findings})}
+    from lineage.inspect.llm_review import client as lc
+
     try:
-        resp = gpu.post("/review/card", ReviewCardRequest(card_text=ctx.card_text, measured=measured), ReviewResponse, ctx.gpu_url)
-    except gpu.GpuUnavailable:
-        return [gpu.skipped_finding("S5", "card review", "GPU worker unreachable")]
-    return claims_to_findings(resp, ctx.root, "LLM.CARD")
+        req = ReviewCardRequest(card_text=ctx.card_text, measured=measured)
+        if ctx.gpu_url is None and lc.GpuClient().hosted:  # hosted NVIDIA API, no GPU worker needed
+            resp = lc.review_card_hosted(req)
+        else:
+            resp = gpu.post("/review/card", req, ReviewResponse, ctx.gpu_url)
+    except (gpu.GpuUnavailable, lc.GpuUnavailable):
+        return [not_run("LLM_REVIEW", "the reviewer backend is unreachable (card review)", "S5")]
+    out = claims_to_findings(resp, ctx.root, "LLM.CARD")
+    from lineage.inspect.llm_review import policy_hosted
+
+    try:  # the organisation's policy against the card, by a hosted content-safety model
+        if not policy_hosted.available():
+            raise policy_hosted.PolicyCheckUnavailable("no hosted API key (the policy model otherwise needs the GPU worker)")
+        out += claims_to_findings(ReviewResponse(claims=policy_hosted.check(ctx.card_text, ctx.policy), verdict="suspicious"), ctx.root, "LLM.POLICY")
+    except policy_hosted.PolicyCheckUnavailable as e:
+        out.append(not_run("POLICY_CHECK", str(e), "S5"))
+    return out
 
 
 @register(("package", "tool"), "S5")
@@ -559,18 +934,22 @@ def gpu_code_review(ctx: IntakeContext) -> list[Finding]:
     from lineage.inspect.llm_review import client
 
     if ctx.root is None:
-        return []
+        return [not_run("LLM_REVIEW", "no bytes to review", "S5")]
     analysis = package_capabilities.analyse(ctx.root)
     refs = [e.ref for f in ctx.findings if f.severity != "info" or f.id.startswith("PKG.SIGNAL.") for e in f.evidence if e.kind == "file_line"]
     slices = client.build_slices(ctx.root, analysis, refs)
     if not slices:
-        return []
+        return [make_finding("LLM.REVIEW.NOTHING_TO_REVIEW", "Reviewer ran: no source-to-sink flow, hook or risky capability to send", "info", "llm", "S5")]
     caps = sorted({h.cap for h in analysis.hits} | {k.kind for k in analysis.hooks})
-    purpose = ctx.metadata.get("summary") or ctx.metadata.get("description") or _manifest_description(ctx) or ctx.name
+    # the artifact's purpose comes from trusted facts first (PyPI summary, hub card), then its own description; a mismatch only adds risk
+    purpose = ctx.fact_value("description") or ctx.metadata.get("summary") or (ctx.metadata.get("info") or {}).get("summary") \
+        or ctx.fact_value("description", trusted_only=False) or _manifest_description(ctx) or ctx.name
     diff = client.make_diff(ctx.previous[0], ctx.root) if ctx.previous else None
     static = [f for f in ctx.findings if f.severity != "info"]
-    return client.review_to_findings(ReviewCodeRequest(purpose=purpose, capabilities=caps, slices=slices, diff=diff or None),
-                                     ctx.gpu_url or gpu.DEFAULT_URL, root=ctx.root, static_findings=static)
+    found = client.review_to_findings(ReviewCodeRequest(purpose=purpose, capabilities=caps, slices=slices, diff=diff or None),
+                                      ctx.gpu_url, root=ctx.root, static_findings=static)
+    return [not_run("LLM_REVIEW", "the reviewer backend is unreachable (code review)", "S5") if f.id == "LLM.REVIEW.SKIPPED" else f
+            for f in found]
 
 
 def _manifest_description(ctx: IntakeContext) -> str | None:
