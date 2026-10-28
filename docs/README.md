@@ -19,3 +19,8 @@
 | `check_matrix.json` | Which check fired on which fixture in a real offline run (`scripts/check_matrix.py`) |
 | `REPO_STRUCTURE.md` | What each folder is |
 | `review_audit/` | Source-code audit of the review pipeline and scoring |
+| `PASSPORTS.md` | The two passports, their fields, how signatures work, what `lineage.db` is |
+| `DEVELOPER_GUIDE.md` | What an engineer does before, during and after approval: exact commands |
+| `TEST_COVERAGE.md` | For every check, the tests that exercise it (generated) |
+| `PLAN.md` | Problem, story, honest status and plan |
+

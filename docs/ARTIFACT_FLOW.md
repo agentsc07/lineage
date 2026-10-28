@@ -206,7 +206,7 @@ Corpora are in `bench/` (inert fixtures built by `bench/build_*.py`; real PyPI w
 3. The GPU worker and live LLM paths were not run here (section 5).
 4. `PKG.PROV.COOLDOWN` is scored but the engine only quarantines on `PROV.COOLDOWN*`; the release-age rule that works is `released_at`-based.
 5. Graph overlap fix is visual and unverified in a browser here; the graph page is the one to eyeball first.
-6. Names for uploads come from the folder/file name, so two different uploads called `model.zip` both become `model@0.0.0`; use the artifact id to tell them apart.
+6. Without a typed Name and Version an upload is named after its file and is `0.0.0`; two such uploads look alike in the catalogue (use the artifact id).
 
 
 ## 13. Versions: how they work today
