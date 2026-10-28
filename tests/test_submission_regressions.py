@@ -72,3 +72,69 @@ def test_a_claim_that_abbreviates_a_long_literal_with_an_ellipsis_is_still_groun
     assert not api_on_line("subprocess.run(...)", line)            # fragments that are not on the line stay ungrounded
     assert not api_on_line("os.system(...)", line)
     assert not api_on_line("...", line) and not api_on_line("(...)", line)  # an ellipsis alone proves nothing
+
+
+# --- gpu_weights must not contradict the local parent check (Brev run: worker bank empty, local bank has the parent) ---
+class _BankRegistry:
+    """Only what gpu_weights asks of a registry: the admitted models on this host."""
+
+    def __init__(self, bank):
+        self.bank = bank
+
+    def reference_models(self):
+        return self.bank
+
+
+def _weights_ctx(tmp_path, policy_path, local_findings, bank):
+    from lineage.intake.inspectors import IntakeContext
+    from lineage.schemas.finding import Evidence
+
+    pol = PolicyPack.from_yaml(policy_path)
+    model = tmp_path / "child"; model.mkdir(); (model / "model.safetensors").write_bytes(b"x")
+    ctx = IntakeContext(artifact_type="model", ref=str(model), environment="prod", policy=pol, registry=_BankRegistry(bank), now=NOW, path=model)
+    ctx.findings = [insp.make_finding(fid, "t", "info", "model", "S4", [Evidence(kind="field", ref="lp:parent", detail="triage-base@1")]) for fid in local_findings]
+    return ctx
+
+
+def _fake_worker(monkeypatch, calls):
+    from lineage.intake import gpu
+    from lineage.schemas.gpu import BehaviourDiffResponse, ParentResponse, SpectralResponse
+
+    def post(path, request, response_model, base_url=None, timeout=0):
+        calls.append((path, getattr(request, "parent", None)))
+        if path == "/weights/parent":
+            return ParentResponse(parent=None, similarity=0.0, changed_layers=[])  # the worker's own bank is empty
+        if path == "/weights/spectral":
+            return SpectralResponse(score=0.1, per_layer={})
+        if path == "/behaviour/diff":
+            return BehaviourDiffResponse(divergence=0.0, flagged_probes=[])
+        raise AssertionError(path)
+
+    monkeypatch.setattr(gpu, "post", post)
+
+
+def test_identical_to_an_admitted_parent_is_not_reported_as_unidentified_or_not_run(tmp_path, policy_path, monkeypatch):
+    calls: list = []
+    _fake_worker(monkeypatch, calls)
+    parent_dir = tmp_path / "parent"; parent_dir.mkdir()
+    ctx = _weights_ctx(tmp_path, policy_path, ["MODEL.PARENT.IDENTICAL"], {"lp:parent": ("triage-base@1", parent_dir)})
+    got = {f.id for f in insp.gpu_weights(ctx)}
+    assert got == {"MODEL.WEIGHTS.NO_DELTA"}  # no UNIDENTIFIED (+5), no CHECK.NOT_RUN.* (+24)
+
+
+def test_a_parent_found_locally_but_unknown_to_the_worker_is_compared_not_silently_skipped(tmp_path, policy_path, monkeypatch):
+    calls: list = []
+    _fake_worker(monkeypatch, calls)
+    parent_dir = tmp_path / "parent"; parent_dir.mkdir()
+    ctx = _weights_ctx(tmp_path, policy_path, ["MODEL.PARENT.IDENTIFIED"], {"lp:parent": ("triage-base@1", parent_dir)})
+    got = {f.id for f in insp.gpu_weights(ctx)}
+    assert ("/weights/spectral", str(parent_dir)) in calls and ("/behaviour/diff", str(parent_dir)) in calls  # the worker is told which directory
+    assert not any(i.startswith("CHECK.NOT_RUN") or i == "MODEL.PARENT.UNIDENTIFIED" for i in got)
+
+
+def test_no_parent_anywhere_is_unidentified_and_both_checks_are_priced_as_not_run(tmp_path, policy_path, monkeypatch):
+    calls: list = []
+    _fake_worker(monkeypatch, calls)
+    ctx = _weights_ctx(tmp_path, policy_path, [], {})
+    got = {f.id for f in insp.gpu_weights(ctx)}
+    assert got == {"MODEL.PARENT.UNIDENTIFIED", "CHECK.NOT_RUN.WEIGHT_BACKDOOR", "CHECK.NOT_RUN.BEHAVIOUR_DIFF"}
