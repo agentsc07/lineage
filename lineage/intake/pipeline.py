@@ -149,6 +149,42 @@ def add_dict_facts(ctx: IntakeContext, meta: dict, provenance: str, source: str)
         ctx.add_fact("released_at", meta["urls"][0].get("upload_time_iso_8601"), provenance, source)
 
 
+def _name_from_source(source: str) -> tuple[str, str]:
+    """`pypi:requests==2.32.3` -> (requests, 2.32.3); `hf:org/name@rev` -> (org/name, rev); `hf-dataset:org/name` -> (org/name, unresolved)."""
+    body = source.split(":", 1)[1] if ":" in source else source
+    if "==" in body:
+        n, v = body.split("==", 1)
+        return n, v
+    if "@" in body:
+        n, v = body.split("@", 1)
+        return n, v[:12]
+    return body, "unresolved"
+
+
+def _declared_parents(ctx: IntakeContext, claims: dict | None, root: Path | None) -> list[Finding]:
+    """Parents the uploader names (form field `parents`, or `"parents"` in lineage.meta.json): `lp:<id>` or `name@version` of artifacts that are
+    already in the registry. This is a statement, not proof: it adds graph edges (so a revoked parent reaches this artifact and the parent
+    checks run) and can only add risk. A reference that matches nothing is flagged and drawn as an unregistered node."""
+    raw: list = []
+    meta = _load_json(root / "lineage.meta.json") if root and (root / "lineage.meta.json").is_file() else {}
+    for src in ((claims or {}).get("parents"), meta.get("parents") if isinstance(meta, dict) else None):
+        raw += src.replace("\n", ",").split(",") if isinstance(src, str) else list(src or [])
+    out: list[Finding] = []
+    for ref in dict.fromkeys(str(r).strip() for r in raw if str(r).strip()):
+        pid = ctx.registry.resolve_ref(ref) if hasattr(ctx.registry, "resolve_ref") else None
+        if pid is None:
+            out.append(insp.make_finding("PROV.PARENT.UNRESOLVED", f"Declared parent '{ref}' is not in the registry, so it cannot be checked", "medium",
+                                         "provenance", "S1", [Evidence(kind="field", ref=ref, detail="declared by the uploader")]))
+            ctx.graph_refs.append({"kind": "derived_from", "type": "model", "name": ref.split("@")[0], "version": ref.split("@")[1] if "@" in ref else "",
+                                   "ref": f"parent declared by the uploader: {ref}"})
+            continue
+        if pid not in ctx.parents:
+            ctx.parents.append(pid)
+        out.append(insp.make_finding("PROV.PARENT.DECLARED", f"Parent '{ref}' declared by the uploader ({pid[:19]}); stated, not proven", "info",
+                                     "provenance", "S1", [Evidence(kind="field", ref=pid, detail="declared by the uploader")]))
+    return out
+
+
 def _identify(ctx: IntakeContext, claims: dict | None, hub: Hub | None, claimed_origin: str | None,
               uploader: str) -> tuple[str, list[Finding]]:
     out: list[Finding] = []
@@ -209,7 +245,9 @@ def _identify(ctx: IntakeContext, claims: dict | None, hub: Hub | None, claimed_
 
     # name / version / source / parents
     name, version = ref, "0.0.0"
-    if "==" in ref and ctx.path is None:
+    if not ref and ctx.path is None and ctx.claimed_origin:  # the fetch failed: name the row after what was asked for
+        name, version = _name_from_source(ctx.claimed_origin)
+    elif "==" in ref and ctx.path is None:
         name, version = ref.split("==", 1)
     elif ctx.path is not None:
         name = ctx.path.name if ctx.path.is_dir() else ctx.path.stem
@@ -228,6 +266,7 @@ def _identify(ctx: IntakeContext, claims: dict | None, hub: Hub | None, claimed_
         name = rec.get("name") or (rec.get("repo") or name).split("/")[-1]
         version = rec.get("version") or str(rec.get("source_revision") or version)[:12]
     ctx.parents = ctx.parents or list(ctx.metadata.get("parents", []))
+    out += _declared_parents(ctx, claims, root)
 
     if ctx.claimed:
         b = ctx.claimed.passport.predicate

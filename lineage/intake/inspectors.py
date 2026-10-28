@@ -89,8 +89,10 @@ class IntakeContext:
     def add_fact(self, key: str, value: str | None, provenance: str, source: str) -> None:
         if value is None or value == "":
             return
-        self.facts.setdefault(key, []).append(
-            Fact(key=key, value=str(value), provenance=provenance, source=source, at=self.now))  # type: ignore[arg-type]
+        seen = self.facts.setdefault(key, [])
+        if any(f.value == str(value) and f.provenance == provenance and f.source == source for f in seen):
+            return  # the same statement from the same source is one fact, not two
+        seen.append(Fact(key=key, value=str(value), provenance=provenance, source=source, at=self.now))  # type: ignore[arg-type]
 
     def fact(self, key: str, trusted_only: bool = True) -> Fact | None:
         """Best fact for `key` by class: signed > fetched > computed > declared. `trusted_only` never returns a declared one."""
@@ -354,7 +356,9 @@ def signed_passport(ctx: IntakeContext) -> list[Finding]:
     pub, scope, who = resolve_signer(ctx, sp.key_id)
     ok = True
     rep = ctx.passport_report = {"present": True, "claimed_publisher": body.source.repo or body.issued_by.name, "claimed_source": source_id_of(body.source.hub, body.source.repo),
-                                 "key_id": sp.key_id, "signature": "not_checked", "key_status": "unknown_key", "signer": None, "bytes_match": None}
+                                 "key_id": sp.key_id, "signature": "not_checked", "key_status": "unknown_key", "signer": None, "bytes_match": None,
+                                 "key_scope": list(scope or []), "passport_name": f"{body.name}@{body.version}", "issued_by": body.issued_by.name,
+                                 "issued_at": body.issued_at.isoformat(), "expires_at": body.expires_at.isoformat() if body.expires_at else None}
     if sp.key_id in ctx.policy.revoked_keys:
         rep["key_status"] = "revoked"
         out.append(make_finding("PROV.SIGNATURE.REVOKED_KEY", f"Passport is signed with revoked key {sp.key_id}; treated as unsigned",
@@ -393,6 +397,7 @@ def signed_passport(ctx: IntakeContext) -> list[Finding]:
                                     [Evidence(kind="file_line", ref=rel, detail=f"expected {want[:12]}, got {(got or 'none')[:12]}")]))
         ok = ok and not bad
         rep["bytes_match"] = not bad
+        rep["files_pinned"], rep["files_bad"] = len(pinned), [rel for rel, _, _ in bad]
         extra = sorted(set(ctx.files) - set(body.contents.files))
         if extra:
             out.append(make_finding("INTEGRITY.UNPINNED_FILE", f"{len(extra)} file(s) are not covered by the passport", "medium",

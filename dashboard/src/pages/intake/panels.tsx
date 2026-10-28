@@ -202,6 +202,15 @@ const keyStatus: Record<string, string> = {
   revoked: "REVOKED key: treated as unsigned", trusted_key: "trusted key", unknown_key: "unknown",
 };
 
+function Fields({ rows, note }: { rows: [string, string][]; note?: string }) {
+  return (
+    <div className="mt-1.5">
+      <dl className="grid grid-cols-[190px_1fr] gap-y-0.5 text-xs">{rows.map(([k, v]) => <div key={k} className="contents"><dt className="text-faint">{k}</dt><dd className="break-all">{v}</dd></div>)}</dl>
+      {note && <p className="text-xs text-faint mt-1">{note}</p>}
+    </div>
+  );
+}
+
 function Pill({ ok, children }: { ok: boolean | null; children: React.ReactNode }) {
   const c = ok === null ? "text-faint border-line" : ok ? "text-allow border-allow/40" : "text-block border-block/40";
   return <span className={`border rounded px-1.5 py-px text-xs ${c}`}>{children}</span>;
@@ -233,16 +242,20 @@ export function PassportPanel({ view, decision, env }: { view: ArtifactView; dec
       <div className="p-4">
         {err && <p className="text-sm text-block mb-2">{err}</p>}
         {tab === "checks" && (
-          <ol className="space-y-3 text-sm" data-testid="five-checks">
-            <li><span className="text-mute">1. Claimed publisher </span><Pill ok={null}>declared</Pill><p className="mt-1">{cp.present ? <>{cp.claimed_publisher || "none named"} <span className="text-faint">(from the creator passport; anyone can write this)</span></> : "No creator passport was supplied."}</p></li>
-            <li><span className="text-mute">2. Signature verifies against the signer's key{cp.key_id ? <> (key <span className="mono">{cp.key_id}</span>)</> : null} </span><Pill ok={cp.signature === "valid" ? true : cp.signature === "invalid" ? false : null}>{cp.present ? (cp.signature === "not_checked" ? "not checked" : cp.signature) : "no passport"}</Pill>
-              {cp.signature === "not_checked" && <p className="mt-1 text-faint">The signing key is not one the policy trusts, so the signature was not used.</p>}</li>
-            <li><span className="text-mute">3. Key trusted for this source </span><Pill ok={cp.key_status === "trusted_in_scope" ? true : cp.present ? false : null}>{cp.present ? (cp.key_status ?? "unknown") : "n/a"}</Pill>
-              {cp.present && <p className="mt-1">{keyStatus[cp.key_status ?? "unknown"] ?? cp.key_status}{cp.signer ? ` · ${cp.signer}` : ""}{cp.claimed_source ? ` · claims ${cp.claimed_source}` : ""} <span className="text-faint">(trusted publishers and their scope are set in the policy, never by the upload)</span></p>}</li>
-            <li><span className="text-mute">4. Bytes match the hashes </span><Pill ok={view.files.some((f) => f.origin === "changed" || f.origin === "missing") ? false : bytesOk ?? (matches.length ? true : null)}>
-              {view.files.some((f) => f.origin === "changed" || f.origin === "missing") ? "differs from the hub" : bytesOk != null ? (bytesOk ? "match the passport" : "do not match the passport") : matches.length ? "match the hub" : "nothing to compare with"}</Pill></li>
+          <ol className="space-y-4 text-sm" data-testid="five-checks">
+            <li><span className="text-mute">1. Who the creator says they are </span><Pill ok={null}>declared</Pill>
+              <Fields rows={cp.present ? [["Claimed publisher", cp.claimed_publisher || "none named"], ["Claimed source", cp.claimed_source ?? "none"], ["Passport is for", cp.passport_name ?? "?"], ["Issued by (a name)", cp.issued_by ?? "?"], ["Issued / expires", `${cp.issued_at ? dt(cp.issued_at) : "?"} / ${cp.expires_at ? dt(cp.expires_at) : "never"}`]] : [["Creator passport", "none was supplied with this artifact"]]} note="Anyone can write these words, so they decide nothing on their own." /></li>
+            <li><span className="text-mute">2. The signature verifies </span><Pill ok={cp.signature === "valid" ? true : cp.signature === "invalid" ? false : null}>{cp.present ? (cp.signature === "not_checked" ? "not checked" : cp.signature) : "no passport"}</Pill>
+              <Fields rows={cp.present ? [["Signed with key", cp.key_id ?? "?"], ["Algorithm", "Ed25519 over the canonical JSON of the passport"], ["Result", cp.signature === "not_checked" ? "not checked: the key is not one the policy trusts, so there is nothing to check it against" : cp.signature ?? "?"]] : [["Result", "nothing to verify"]]} /></li>
+            <li><span className="text-mute">3. That key may speak for this source </span><Pill ok={cp.key_status === "trusted_in_scope" ? true : cp.present ? false : null}>{cp.present ? (cp.key_status ?? "unknown") : "n/a"}</Pill>
+              <Fields rows={cp.present ? [["Policy entry", cp.signer ?? "no entry for this key"], ["Key scope in the policy", cp.key_scope?.length ? cp.key_scope.join(", ") : "none"], ["Passport claims", cp.claimed_source ?? "none"], ["Verdict", keyStatus[cp.key_status ?? "unknown"] ?? cp.key_status ?? "?"]] : [["Verdict", "nothing to check"]]} note="Trusted publishers, their keys and their scope are set in the policy (Publishers page), never by the upload. One publisher can have several keys." /></li>
+            <li><span className="text-mute">4. The bytes are the bytes </span><Pill ok={view.files.some((f) => f.origin === "changed" || f.origin === "missing") ? false : bytesOk ?? (matches.length ? true : null)}>
+              {view.files.some((f) => f.origin === "changed" || f.origin === "missing") ? "differs from the hub" : bytesOk != null ? (bytesOk ? "match the passport" : "do not match the passport") : matches.length ? "match the hub" : "nothing to compare with"}</Pill>
+              <Fields rows={[["Files hashed", String(view.files.filter((f) => f.sha256).length)], ["Contents hash (Merkle root)", view.merkle_root ? `${view.merkle_root.slice(0, 16)}…` : "?"],
+                ["Compared with the passport", cp.present && cp.bytes_match != null ? `${cp.files_pinned ?? "?"} pinned file(s), ${cp.files_bad?.length ?? 0} differ${cp.files_bad?.length ? `: ${cp.files_bad.join(", ")}` : ""}` : "no passport to compare with"],
+                ["Compared with the hub", view.origin_checked ? `${matches.length} file(s) against ${view.claimed_origin ?? "the hub"}: ${view.files.filter((f) => f.origin === "changed").length} changed, ${view.files.filter((f) => f.origin === "missing").length} missing` : "no origin claimed, so nothing to compare with"]]} /></li>
             <li><span className="text-mute">5. The organisation's attestation </span><Pill ok={a ? (a.outcome === "allow" || a.outcome === "allow_with_conditions") && !a.revoked && att!.signature_ok : null}>{a ? `${a.outcome} for ${a.environment}${a.revoked ? " (revoked)" : ""}` : "loading"}</Pill>
-              {a && <p className="mt-1 text-faint">Issued {dt(a.issued_at)}, expires {dt(a.expires_at)}. This is the only statement the loader trusts.</p>}</li>
+              {a && att && <Fields rows={[["Environment", a.environment], ["Outcome", a.outcome + (a.revoked ? " (revoked)" : "")], ["Policy version", a.policy_version], ["Signed with key", att.attestation.key_id], ["Signature", att.signature_ok ? `verifies (checked by ${att.verified_by})` : "does NOT verify"], ["Issued / expires", `${dt(a.issued_at)} / ${dt(a.expires_at)}`]]} note="This is the only statement a loader trusts. `lineage pull` checks it against the registry key you pinned." />}</li>
           </ol>)}
         {tab === "passport" && (passport ? (
           <div>
@@ -257,7 +270,7 @@ export function PassportPanel({ view, decision, env }: { view: ArtifactView; dec
             <dt className="text-mute">Policy version</dt><dd className="mono">{a.policy_version}</dd>
             <dt className="text-mute">Issued / expires</dt><dd>{dt(a.issued_at)} / {dt(a.expires_at)}</dd>
             <dt className="text-mute">Signing key</dt><dd className="mono">{att.attestation.key_id}</dd>
-            <dt className="text-mute">Signature</dt><dd><Pill ok={att.signature_ok}>{att.signature_ok ? "verifies" : "does NOT verify"}</Pill> <span className="text-faint text-xs">checked by {att.verified_by}; `lineage pull` checks it against the key you pinned</span></dd>
+            <dt className="text-mute">Signature</dt><dd><Pill ok={att.signature_ok}>{att.signature_ok ? "verifies" : "does NOT verify"}</Pill> <span className="text-faint text-xs">checked by {att.verified_by}. `lineage pull` checks it against the registry key you pinned.</span></dd>
           </dl>) : <p className="text-sm text-faint">Loading…</p>)}
         {view.pull_command && (
           <div className="mt-5 border-t border-line pt-4" data-testid="pull">

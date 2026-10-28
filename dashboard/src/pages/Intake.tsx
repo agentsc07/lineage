@@ -14,17 +14,18 @@ const columns: { title: string; hint: string; ids: string[] }[] = [
   { title: "Review", hint: "What it intends to do", ids: ["S5"] },
   { title: "Decide", hint: "Policy verdict and record", ids: ["S6", "S7"] },
 ];
-const presets: { label: string; type: ArtifactType; source: string; env: string }[] = [
+const defaultPresets: { label: string; type: ArtifactType; source: string; env: string }[] = [
   { label: "Hub model, fetched", type: "model", source: "hf:org/small-model", env: "prod" },
   { label: "Hub dataset, fetched", type: "dataset", source: "hf-dataset:org/notes", env: "prod" },
   { label: "PyPI package", type: "package", source: "pypi:requests==2.32.3", env: "prod" },
 ];
-interface Sample { label: string; file: string; type: ArtifactType; env: string; claimed_origin?: string; expect: string }
+interface Sample { name?: string; version?: string; publisher?: string; label: string; file: string; type: ArtifactType; env: string; claimed_origin?: string; expect: string }
 
 const CLAIM_FIELDS = [
   { key: "name", label: "Name (uploads)", placeholder: "triage-ft", help: "What the catalogue calls it. Without it, the file or folder name is used. Hub sources are named by the hub." },
   { key: "version", label: "Version (uploads)", placeholder: "0.2.0", help: "Your own version label. Without it an upload is 0.0.0. Hub sources use the commit (hf:) or the release (pypi:)." },
   { key: "publisher", label: "Publisher", placeholder: "nvidia", help: "A name. Checked against the publisher allow and block lists and for look-alikes. A name you type is never treated as verified." },
+  { key: "parents", label: "Parents (artifacts already in the catalogue)", placeholder: "triage-base@67d0bdf167ed, instructions@2.0.0", help: "Comma-separated name@version or lp: ids of admitted artifacts this was built from (base model, training data). A statement, not proof: it adds graph edges and the parent checks run, so a revoked parent reaches this artifact. Unknown names are flagged. A lineage.meta.json with \"parents\": [...] inside the upload does the same." },
   { key: "base_model", label: "Base model (Hugging Face repo id)", placeholder: "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1", help: "The repository id of the model this was fine-tuned from. Lineage fetches that repo's weights header and compares embeddings; a mismatch raises risk. It is not a passport id." },
   { key: "licence", label: "Licence", placeholder: "apache-2.0", help: "Compared with the policy's allowed licences. A declared licence is never counted as allowed." },
   { key: "released_at", label: "Released at (date)", placeholder: "2026-10-01", help: "Shown only. The release-age cooldown ignores a date you type; it needs one from the hub or a signed passport." },
@@ -49,6 +50,8 @@ export default function Intake() {
   const [label, setLabel] = useState("");
   const [limits, setLimits] = useState<Limits | null>(null);
   const [samples, setSamples] = useState<Sample[]>([]);
+  const [presets, setPresets] = useState(defaultPresets);
+  const [known, setKnown] = useState<string[]>([]);
   const close = useRef<() => void>(() => {});
   const queue = useRef<StageEvent[]>([]);
   const timer = useRef<number>();
@@ -56,7 +59,7 @@ export default function Intake() {
   const started = useRef<string | null>(null); // the job this page started itself (so the URL change does not trigger a recovery)
 
   useEffect(() => () => { close.current(); clearInterval(timer.current); }, []);
-  useEffect(() => { api.limits().then(setLimits).catch(() => {}); fetch("/samples/manifest.json").then((r) => (r.ok ? r.json() : [])).then(setSamples).catch(() => {}); }, []);
+  useEffect(() => { api.limits().then(setLimits).catch(() => {}); api.artifacts().then((a) => setKnown(a.filter((x) => !["blocked", "rejected", "revoked"].includes(x.status)).map((x) => `${x.name}@${x.version}`))).catch(() => {}); fetch("/samples/manifest.json").then((r) => (r.ok ? r.json() : [])).then(setSamples).catch(() => {}); fetch("/samples/presets.json").then((r) => (r.ok ? r.json() : null)).then((p) => { if (Array.isArray(p) && p.length) setPresets(p); }).catch(() => {}); }, []);
 
   const refreshView = useCallback((id: string) => api.artifactView(id).then((v) => { setView(v); if (v.decision) setDecision(v.decision); }).catch((e) => setErr(describeError(e))), []);
 
@@ -95,7 +98,7 @@ export default function Intake() {
       .catch((e) => setErr(describeError(e)));
   }, [jobId, follow]);
 
-  const submit = async (o?: { file?: File; type?: ArtifactType; env?: string; origin?: string; source?: string }) => {
+  const submit = async (o?: { claims?: Record<string, string>; file?: File; type?: ArtifactType; env?: string; origin?: string; source?: string }) => {
     const f = o?.file ?? (mode === "file" ? file : null);
     const src = o?.source ?? (mode === "source" ? source.trim() : "");
     const t = o?.type ?? type, e = o?.env ?? env, org = o?.origin ?? origin.trim();
@@ -103,7 +106,7 @@ export default function Intake() {
     setStages({}); setDecision(null); setView(null); setErr(null); setRunning(true);
     try {
       if (f && limits && f.size > limits.max_upload_mb * 1024 * 1024) throw new Error(`File too large: ${(f.size / 1048576).toFixed(1)} MB; this server accepts up to ${limits.max_upload_mb} MB (LINEAGE_MAX_UPLOAD_MB).`);
-      const used = Object.fromEntries(Object.entries(claims).filter(([, v]) => v.trim()));
+      const used = Object.fromEntries(Object.entries(o?.claims ?? claims).filter(([, v]) => v.trim()));
       let source_ = src;
       if (f) { const up = await api.upload(f); source_ = `upload:${up.upload_id}`; }
       setLabel(f?.name ?? src);
@@ -119,8 +122,10 @@ export default function Intake() {
       const r = await fetch(`/samples/${encodeURIComponent(s.file)}`);
       if (!r.ok) throw new Error(`sample ${s.file} is not available`);
       const f = new File([await r.blob()], s.file);
-      setMode("file"); setFile(f); setType(s.type); setEnv(s.env); setOrigin(s.claimed_origin ?? "");
-      await submit({ file: f, type: s.type, env: s.env, origin: s.claimed_origin ?? "" });
+      const c: Record<string, string> = {};
+      for (const k of ["name", "version", "publisher"] as const) if (s[k]) c[k] = s[k]!;
+      setMode("file"); setFile(f); setType(s.type); setEnv(s.env); setOrigin(s.claimed_origin ?? ""); setClaims((x) => ({ ...x, ...c }));
+      await submit({ file: f, type: s.type, env: s.env, origin: s.claimed_origin ?? "", claims: { ...claims, ...c } });
     } catch (x) { setErr(describeError(x)); }
   };
 
@@ -156,12 +161,13 @@ export default function Intake() {
           <label className="text-sm text-mute block mt-3">Claimed origin (optional)
             <input className="input mt-1 font-mono" placeholder="hf:meta-llama/Llama-3.2-1B@<commit sha>: every file is compared with what that repo published" value={origin} onChange={(e) => setOrigin(e.target.value)} />
             <span className="text-xs text-faint">No claim means trust stays <span className="mono">unknown</span>. Hints found inside the upload are shown but never trusted.</span></label>)}
+        <datalist id="known-artifacts">{known.map((k) => <option key={k} value={k} />)}</datalist>
         <details className="mt-3">
           <summary className="text-sm text-mute cursor-pointer">Optional: what you say about this artifact (recorded as <span className="mono">declared</span>; it can add risk but never earns trust)</summary>
           <div className="grid sm:grid-cols-2 gap-3 mt-2">
             {CLAIM_FIELDS.map((c) => (
               <label key={c.key} className="text-xs text-mute">{c.label}
-                <input className="input mt-1" placeholder={c.placeholder} value={claims[c.key] ?? ""} onChange={(e) => setClaims((m) => ({ ...m, [c.key]: e.target.value }))} />
+                <input className="input mt-1" list={c.key === "parents" ? "known-artifacts" : undefined} placeholder={c.placeholder} value={claims[c.key] ?? ""} onChange={(e) => setClaims((m) => ({ ...m, [c.key]: e.target.value }))} />
                 <span className="text-faint block mt-0.5">{c.help}</span></label>))}
           </div>
           <p className="text-xs text-faint mt-2">Publisher keys are not entered here. A passport shipped with the artifact is verified against the keys your administrator lists under Trusted publishers; a key that arrives with an upload is never trusted.</p>

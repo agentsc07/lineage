@@ -20,6 +20,9 @@ class Registry(Protocol):
     def artifact_status(self, passport_id: str) -> str | None:
         """`Artifact.status` of a registered artifact, or None if it is unknown."""
 
+    def resolve_ref(self, ref: str) -> str | None:
+        """Passport id for `lp:<sha256>` or `name@version` (or a bare name: the newest). None if nothing registered matches."""
+
     def trusted_key(self, key_id: str) -> Ed25519PublicKey | None:
         """Public key of a signer we trust, by key id."""
 
@@ -56,6 +59,9 @@ class NullRegistry:
         return None
 
     def artifact_status(self, passport_id: str) -> str | None:
+        return None
+
+    def resolve_ref(self, ref: str) -> str | None:
         return None
 
     def trusted_key(self, key_id: str) -> Ed25519PublicKey | None:

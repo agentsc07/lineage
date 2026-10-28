@@ -24,7 +24,7 @@ from lineage_server.jobs import Job
 from lineage_server.registry import SqliteRegistry
 
 router = APIRouter()
-CLAIM_KEYS = {"publisher", "licence", "base_model", "released_at", "description", "name", "version"}
+CLAIM_KEYS = {"publisher", "licence", "base_model", "released_at", "description", "name", "version", "parents"}
 
 
 class UploadReceipt(BaseModel):

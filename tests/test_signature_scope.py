@@ -101,3 +101,24 @@ def test_bootstrap_keys_apply_only_when_the_policy_lists_no_publishers(policy_pa
     other = bare.model_copy(update={"trusted_publishers": [TrustedPublisher(name="x", key="00" * 32, scope=["*"])]})
     d2, _ = run_to_decision("model", str(tiny_model), "dev", other, "j", now=NOW, hub=old_release_hub(), registry=reg)
     assert "PROV.SIGNATURE.UNTRUSTED_KEY" in ids(d2)
+
+
+def test_one_publisher_can_hold_several_keys_and_each_is_checked_on_its_own(policy_path, tiny_model):
+    old, new = Ed25519PrivateKey.generate(), Ed25519PrivateKey.generate()
+    pol = PolicyPack.from_yaml(policy_path).model_copy(update={"trusted_publishers": [
+        TrustedPublisher(name="Apollo ML team", key=trust.public_hex(old.public_key()), scope=["hf:apollo-health/*"]),
+        TrustedPublisher(name="Apollo ML team", key=trust.public_hex(new.public_key()), scope=["hf:apollo-health/*"])]})
+    for key in (old, new):  # a rotated-in key is trusted without touching the other
+        passport_for(tiny_model, key, "apollo-health/triage")
+        assert run(tiny_model, pol).trust_level == "signed"
+    pol = pol.model_copy(update={"revoked_keys": [trust.key_id(old.public_key())]})  # revoking the old key leaves the new one working
+    passport_for(tiny_model, old, "apollo-health/triage")
+    assert "PROV.SIGNATURE.REVOKED_KEY" in ids(run(tiny_model, pol))
+    passport_for(tiny_model, new, "apollo-health/triage")
+    assert run(tiny_model, pol).trust_level == "signed"
+
+
+def test_a_malformed_shipped_passport_is_reported_not_crashed(policy, tiny_model):
+    (tiny_model / "passport.json").write_text('{"passport": {"not": "a passport"}}')
+    d = run(tiny_model, policy)
+    assert "INTAKE.PASSPORT.MALFORMED" in ids(d) and d.trust_level != "signed"

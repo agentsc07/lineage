@@ -20,9 +20,10 @@ const nav = [
 export default function Layout() {
   const [theme, setTheme] = useState(document.documentElement.dataset.theme ?? "dark");
   const sess = useSession();
-  const { token, me } = useMe();
+  const { token, me, known } = useMe();
   const [loginErr, setLoginErr] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  useEffect(() => { fetch("/demo-users.json").then((r) => (r.ok ? r.json() : null)).then((u) => { if (u && typeof u === "object") auth.preload(u); }).catch(() => {}); }, []);
   useEffect(() => {
     if (!token) return;
     api.whoami().then((m) => { auth.setMe(m); setLoginErr(null); }).catch((e) => { auth.setToken(null); setLoginErr(String(e.message ?? e)); });
@@ -40,6 +41,9 @@ export default function Layout() {
           <h1 className="font-semibold tracking-tight text-lg mb-1">Lineage</h1>
           <p className="text-sm text-mute mb-4">Paste your API token. It is kept for this tab only.</p>
           <input className="input font-mono" type="password" autoFocus placeholder="lg_…" value={draft} onChange={(e) => setDraft(e.target.value)} aria-label="API token" />
+          {known.length > 0 && (
+            <div className="mb-4"><p className="text-xs text-mute mb-1.5">Demo users</p>
+              <div className="flex gap-2 flex-wrap">{known.map((k) => <button type="button" key={k.token} className="btn" onClick={() => auth.switchTo(k.token)}>{k.name}</button>)}</div></div>)}
           {loginErr && <p className="text-sm text-block mt-3">{loginErr}</p>}
           <button className="btn btn-primary mt-4 w-full" disabled={!draft.trim() || (!!token && !me)}>{token && !me ? "Checking…" : "Sign in"}</button>
         </form>
@@ -68,8 +72,12 @@ export default function Layout() {
           ))}
         </nav>
         <div className="px-3 pt-3 text-xs text-mute">
-          <p className="text-ink font-medium truncate">{me.name}</p>
-          <p className="truncate">{me.roles.join(", ")}</p>
+          <label className="block">Signed in as
+            <select className="input mt-1 !h-8 text-ink font-medium" aria-label="Switch user" value={token ?? ""} onChange={(e) => e.target.value === "__new" ? auth.setToken(null) : auth.switchTo(e.target.value)}>
+              {known.map((k) => <option key={k.token} value={k.token}>{k.name}</option>)}
+              <option value="__new">Another token…</option>
+            </select></label>
+          <p className="truncate mt-1">{me.roles.join(", ")}</p>
           <button className="underline mt-1" onClick={() => auth.setToken(null)}>Sign out</button>
         </div>
         <div className="p-3 border-t border-line flex items-center justify-between">
@@ -79,7 +87,7 @@ export default function Layout() {
           </button>
         </div>
       </aside>
-      <main className="flex-1 min-w-0"><Outlet /></main>
+      <main className="flex-1 min-w-0"><Outlet key={me.name} /></main>
     </div>
   );
 }

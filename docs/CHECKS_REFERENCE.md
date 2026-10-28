@@ -57,7 +57,7 @@ def _identify(ctx: IntakeContext, claims: dict | None, hub: Hub | None, claimed_
         sidecar = next((c for c in candidates if c.exists()), candidates[0])
         if sidecar.exists():
             try:
-    # ... 69 more lines in lineage/intake/pipeline.py
+    # ... 72 more lines in lineage/intake/pipeline.py
 ```
 
 ## S2 Provenance
@@ -186,7 +186,9 @@ def signed_passport(ctx: IntakeContext) -> list[Finding]:
     pub, scope, who = resolve_signer(ctx, sp.key_id)
     ok = True
     rep = ctx.passport_report = {"present": True, "claimed_publisher": body.source.repo or body.issued_by.name, "claimed_source": source_id_of(body.source.hub, body.source.repo),
-                                 "key_id": sp.key_id, "signature": "not_checked", "key_status": "unknown_key", "signer": None, "bytes_match": None}
+                                 "key_id": sp.key_id, "signature": "not_checked", "key_status": "unknown_key", "signer": None, "bytes_match": None,
+                                 "key_scope": list(scope or []), "passport_name": f"{body.name}@{body.version}", "issued_by": body.issued_by.name,
+                                 "issued_at": body.issued_at.isoformat(), "expires_at": body.expires_at.isoformat() if body.expires_at else None}
     if sp.key_id in ctx.policy.revoked_keys:
         rep["key_status"] = "revoked"
         out.append(make_finding("PROV.SIGNATURE.REVOKED_KEY", f"Passport is signed with revoked key {sp.key_id}; treated as unsigned",
@@ -212,9 +214,7 @@ def signed_passport(ctx: IntakeContext) -> list[Finding]:
                 "PROV.SIGNATURE.SCOPE_MISMATCH",
                 f"Trusted key of {who} signs outside its scope: {', '.join(wanted)} is not covered by {', '.join(scope) or 'no scope'}; treated as unsigned",
                 "high", "provenance", "S2", [Evidence(kind="field", ref="key_id", detail=f"{sp.key_id} scope={scope}")]))
-            ok = False
-    if body.expires_at and body.expires_at <= ctx.now:
-    # ... 28 more lines in lineage/intake/inspectors.py
+    # ... 31 more lines in lineage/intake/inspectors.py
 ```
 
 ### Is the parent admitted and not revoked?

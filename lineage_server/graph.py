@@ -25,10 +25,16 @@ _CTE = {
 }
 
 
+def _short_version(v: str | None) -> str:
+    """A hub revision is a 12-character commit prefix; show 7 (the usual git short form) so the node label fits."""
+    import re
+    return v[:7] if v and re.fullmatch(r"[0-9a-f]{12}", v) else (v or "")
+
+
 def _node(row: sqlite3.Row) -> GraphNode:
     return GraphNode(
         id=row["id"],
-        label=f"{row['name']}@{row['version']}",
+        label=f"{row['name']}@{_short_version(row['version'])}",
         artifact_type=row["artifact_type"],
         trust_level=row["trust_level"],
         status=row["status"],
@@ -38,7 +44,7 @@ def _node(row: sqlite3.Row) -> GraphNode:
 
 def _ghost(row: sqlite3.Row) -> GraphNode:
     """A referenced thing Lineage never admitted (P6): shown, never silently dropped."""
-    return GraphNode(id=row["id"], label=row["ref"] or f"{row['name']}@{row['version']}", artifact_type=row["artifact_type"],
+    return GraphNode(id=row["id"], label=row["ref"] or f"{row['name']}@{_short_version(row['version'])}", artifact_type=row["artifact_type"],
                      trust_level="unknown", status="unregistered", risk_score=0, version=row["version"] or None,
                      advisories=json.loads(row["advisories"] or "[]") if "advisories" in row.keys() else [])
 

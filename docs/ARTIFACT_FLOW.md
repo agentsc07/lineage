@@ -243,3 +243,20 @@ Each intake is a **new artifact with a new id**, even for identical bytes; `INTA
 | Manifest (tool) | `TOOL.MANIFEST.MISSING` (high); no description or intent checks | `tool_description` |
 
 A parent is therefore **declared** (by the hub card, the uploader, or a passport) or **found** (from weights on this host, or recorded by `lineage run`). A declared parent is checked against the weights when the hub is reachable; an unfound parent only costs points. It never blocks by itself.
+
+## 15. Declaring parents on upload
+
+An uploader can name artifacts that are already in the catalogue as parents (base model, training data):
+
+* the **Parents** field under "what you say about this artifact" (comma-separated `name@version` or `lp:` ids; the box suggests catalogue entries), or
+* `"parents": ["triage-base@67d0bdf167ed"]` in a `lineage.meta.json` inside the upload.
+
+What happens (`pipeline._declared_parents`, tests in `tests/test_declared_parents.py`): a name that resolves becomes a passport parent, so the graph draws a `derived_from` edge, the parent checks run (`PROV.PARENT.REVOKED/NOT_ADMITTED`), and revoking the parent reaches the child. A name that resolves to nothing raises `PROV.PARENT.UNRESOLVED` (medium) and is drawn as an unregistered node. The statement is recorded as `PROV.PARENT.DECLARED` (info): **stated, not proven**. It can only add risk. Proof of a parent still comes from the weights (`MODEL.PARENT.*`), a signed passport, or `lineage run` + `lineage.load`.
+
+## 16. Names of rows whose fetch failed
+
+A failed hub fetch is recorded under what was asked for (`pypi:requests==2.32.3` -> `requests@2.32.3`; `hf-dataset:org/notes` -> `org/notes@unresolved`), not as `@0.0.0`. The demo hub is a stand-in: only `hf:apollo-health/triage-base`, `hf-dataset:apollo-health/instructions` and `pypi:acme-llm==1.4.0/1.4.1` exist there, so the Intake page's "Try" buttons are filled from `presets.json` written by `examples/make_dashboard_samples.py`. Other names answer 404 on the demo hub by design. Set `LINEAGE_DEMO_REAL_HUB=1` for real Hugging Face models.
+
+## 17. Switching user in the demo
+
+`examples/run_dashboard_demo.sh` lets the dev server publish its tokens file at `/demo-users.json` (dev only, opt-in through `LINEAGE_DEMO_TOKENS`). The login page then shows one button per user and the sidebar has a "Signed in as" menu that switches identity without signing out. Tokens are kept per browser tab. Separation of duties is unchanged: the server still refuses an approval from the person who requested it.
