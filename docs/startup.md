@@ -1,6 +1,6 @@
 # Startup
 
-Lineage: admission control for AI artifacts (models, datasets, packages, MCP tools). Demo commands: `DEMO.md` (this folder).
+Lineage: admission control for AI artifacts (models, datasets, packages, MCP tools). Demo commands and click path: `FINAL_DEMO_RUNBOOK.md` (this folder).
 
 ## Prerequisites
 Python 3.11, [`uv`](https://docs.astral.sh/uv/), Node 18+ (dashboard only). No GPU and no API key are needed for the server, the dashboard or the demo.

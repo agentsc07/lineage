@@ -22,7 +22,6 @@
 | `API.md` | HTTP API reference (a contract: do not change without saying so) |
 | `LINEAGE_SPEC.md`, `BUILD_PLAN.md`, `REFACTOR_SPEC.md`, `DECISIONS.md` | Original spec, build plan, the refactor brief, design decisions (referenced from the code) |
 | `CHECKS_REFERENCE.md`, `TEST_COVERAGE.md`, `check_matrix.json` | Generated: every check, its tests, where it fired on fixtures |
-| `PLAN.md` | GPU worker and live-LLM steps (Brev), honest status |
 | `../bench/results_*.md` | Benchmark reports (read with `CLAIMS.md`) |
 
 `../archive/` holds superseded audits, screenshots, the old demo script, Q&A and roadmap. Nothing there is needed to run the application.

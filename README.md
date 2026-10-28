@@ -4,6 +4,15 @@
 re-checked at the moment of use, and watched afterwards. Source of truth: `docs/LINEAGE_SPEC.md` and, for the current design, `docs/REFACTOR_SPEC.md`.
 How to run it: `docs/FINAL_DEMO_RUNBOOK.md` and `docs/startup.md`. What is verified and what is not: `docs/FINAL_LOGICAL_AUDIT.md`, `docs/FINAL_BLOCKERS.md`, `docs/CLAIMS.md`. Why each design choice: `docs/DECISIONS.md`. Older material: `archive/`.
 
+## For a reviewer: start here
+
+1. `docs/FINAL_LOGICAL_AUDIT.md`: the flow from intake to revocation, step by step, with what was executed and what was not.
+2. `docs/FINAL_BLOCKERS.md`: defects found and fixed, and what must **not** be claimed (GPU checks and live LLM review were not executed in the audit environment; detection is screening, not proof).
+3. `docs/FINAL_TEST_MATRIX.md`: every registered check with its test status. `docs/CLAIMS.md`: every benchmark number traced to its file.
+4. Run it: `uv sync && uv run pytest -q` (GPU test files skip without torch), then `examples/run_dashboard_demo.sh`.
+
+Layout: `lineage/` library, pipeline, checks, policy, CLI · `lineage_server/` registry API · `dashboard/` React UI · `gpu_worker/` optional GPU and reviewer worker · `mcp_gateway/` MCP tool gateway · `examples/` demo (fake hub, scenario, inert samples) · `tests/` · `scripts/` generators and checks · `bench/` benchmark corpora (inert) and results · `bank/` adapter-bank manifest for the GPU benchmark · `docs/` · `archive/` (superseded, not needed to run).
+
 ## The idea in four rules
 
 1. **One mandatory flow.** Every artifact of a type goes through every stage (S0 acquire, S1 identify, S2 provenance, S3 static inspection, S4 deep inspection,

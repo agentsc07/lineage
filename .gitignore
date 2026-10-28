@@ -24,3 +24,6 @@ lineage-store/
 lineage-uploads/
 lineage-fetch/
 examples/demo_tokens.json
+
+# demo database backups made by examples/run_dashboard_demo.sh (contain the registry signing key)
+*.bak

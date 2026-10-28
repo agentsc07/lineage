@@ -10,7 +10,7 @@ export PYTHONPATH="$PWD" && uv sync
 uv run pytest -q --ignore=tests/test_gpu_app.py --ignore=tests/test_gpu_weights.py --ignore=tests/test_gpu_behaviour_notary.py --ignore=tests/test_gpu_reviewer.py   # expect all green (GPU files need torch)
 (cd dashboard && npm install)
 ```
-Optional, **only if you really have them**: `export NVIDIA_API_KEY=...` (live AI review) and `export LINEAGE_GPU_URL=http://localhost:8800` (GPU worker, see `docs/PLAN.md`). Without them the demo honestly shows "did not run".
+Optional, **only if you really have them**: `export NVIDIA_API_KEY=...` (live AI review) and `export LINEAGE_GPU_URL=http://localhost:8800` (GPU worker, section 5 below). Without them the demo honestly shows "did not run".
 
 ## 1. Clean start
 ```bash
@@ -44,3 +44,19 @@ Say: every check runs or says it did not and is priced; every decision is signed
 | `Something already answers on :8000` | stop the old run, or set `LINEAGE_PORT` / `DASH_PORT` |
 | `valid API token is required` | tokens are new each run: use the printed export lines |
 | Intake stage "did not run" | expected without a key or GPU worker |
+
+## 5. Optional: GPU worker and live AI review (NVIDIA Brev)
+
+Run the registry and the worker **on the same GPU machine**: the worker reads model files from its own disk.
+```bash
+git clone https://github.com/agentsc07/lineage.git && cd lineage && git checkout main
+uv sync --extra gpu
+uv run pytest tests/test_gpu_app.py tests/test_gpu_weights.py tests/test_gpu_behaviour_notary.py tests/test_gpu_reviewer.py -q
+# parent bank: the worker identifies parents only among models in its local Hugging Face cache (gpu_worker/models.yaml: parent_bank)
+uv run python -c "import yaml; from huggingface_hub import snapshot_download as d; [print(m, d(m, allow_patterns=['*.safetensors','*.json'])) for m in yaml.safe_load(open('gpu_worker/models.yaml'))['parent_bank']]"
+export NVIDIA_API_KEY=<key> LINEAGE_GPU_TOKEN=<shared secret>     # the key lets the worker answer /review/code and /review/card through the hosted API
+scripts/restart_worker.sh && curl -s localhost:8800/health        # parent_bank listed, /review/* true
+export PYTHONPATH="$PWD" LINEAGE_GPU_URL=http://localhost:8800
+examples/run_dashboard_demo.sh                                    # then on your laptop: brev port-forward <instance> -p 5173:5173
+```
+What needs what: the **GPU** is used only by the worker (spectral score of weight changes, behaviour comparison, notary); the **NVIDIA API** only by the reviewer. Of `gpu_worker/models.yaml`, only `parent_bank` must be downloaded; `reviewer_llm` is used only if you self-host the reviewer with vLLM (`scripts/serve_reviewer.sh`), `base_model` only by the adapter-training script, `policy_model` only by the worker's optional local policy check. The demo's stand-in models are too small for the spectral detector (it answers "outside the calibrated range"): intake `hf:Qwen/Qwen2.5-0.5B-Instruct` for a real result. These GPU paths were not executed in the audit environment (`FINAL_BLOCKERS.md`).
