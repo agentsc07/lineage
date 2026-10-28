@@ -11,6 +11,37 @@ const css = (v: string) => `rgb(var(--${v}))`;
 const tip = { contentStyle: { background: css("panel"), border: `1px solid ${css("line")}`, borderRadius: 8, fontSize: 12, color: css("ink") }, cursor: { fill: css("raised") } };
 const axis = { stroke: css("faint"), fontSize: 12, tickLine: false } as const;
 
+// bench/results_final.json: the frozen three-tier evaluation (in-sample, tuned-on, final held-out). See docs/CLAIMS.md.
+const TIERS: { key: string; title: string; note: string }[] = [
+  { key: "in-sample (bench/corpus)", title: "In-sample", note: "the set the rules were built against: measures fit, not generalisation" },
+  { key: "dev (tuned on)", title: "Tuned-on sets", note: "rules were tuned on these after the first runs" },
+  { key: "FINAL unseen", title: "Final held-out", note: "built after the code was frozen, run once: the only unseen result" },
+];
+const frac = (a?: number, b?: number) => (a == null || !b ? "not measured" : `${Math.round((1000 * a) / b) / 10}% (${a}/${b})`);
+
+function Tiers() {
+  const { data } = useAsync(() => fetch("/bench-data/results_final.json").then((r) => (r.ok ? r.json() : null)).catch(() => null), []);
+  const cols = data?.columns;
+  if (!cols) return null;
+  return (
+    <section className="card mb-4">
+      <div className="card-h flex-col !items-start !gap-0"><h2 className="h-title">Three evaluation tiers (frozen run)</h2>
+        <p className="text-xs text-faint">Full system on our own inert samples; real PyPI packages are presumed benign. Intakes that timed out count as not flagged. Source: bench/results_final.json; read docs/CLAIMS.md before quoting.</p></div>
+      <div className="grid md:grid-cols-3 gap-4 p-4">
+        {TIERS.map((t) => { const c = cols[t.key]; if (!c) return null; const s = c.synthetic_full, py = c.pypi; return (
+          <div key={t.key} className="border border-line rounded-lg p-3">
+            <p className="font-medium">{t.title}</p><p className="text-xs text-faint mb-2">{t.note}</p>
+            <dl className="grid grid-cols-[1fr_auto] gap-y-1 text-sm">
+              <dt className="text-mute">Attacks caught</dt><dd className="mono">{frac(s?.tp, s?.n_mal)}</dd>
+              <dt className="text-mute">Benign stopped</dt><dd className="mono">{frac(s?.fp, s?.n_ben)}</dd>
+              <dt className="text-mute">Real packages flagged</dt><dd className="mono">{py?.n ? `${frac(py.flagged, py.n)}${py.timeouts ? ` · ${py.timeouts} timed out` : ""}` : "none in this tier"}</dd>
+            </dl>
+          </div>); })}
+      </div>
+    </section>
+  );
+}
+
 export default function Bench() {
   const { data, error, reload } = useAsync(loadBench);
   const [mode, setMode] = useState<string | null>(null);
@@ -30,9 +61,11 @@ export default function Bench() {
           <select className="input !w-72" aria-label="Bench run" value={m?.name} onChange={(e) => setMode(e.target.value)}>
             {data.modes.map((x) => <option key={x.name} value={x.name}>{x.name}</option>)}</select>) : undefined} />
 
+      <Tiers />
+      <p className="text-xs text-faint mb-2">Below: the in-sample LineageBench run, by category (built against this set).</p>
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
-        <Kpi label="Detection (attacks caught)" value={pct(m?.tpr ?? null)} sub={m ? `${m.malicious} labelled attacks · ${data.items ?? "?"} items in the corpus` : "not measured"} />
-        <Kpi label="False positives" value={pct(m?.fpr ?? null)} sub={m ? `of ${m.benign} benign artifacts wrongly stopped` : undefined} />
+        <Kpi label="Detection, in-sample (attacks caught)" value={pct(m?.tpr ?? null)} sub={m ? `${m.malicious} labelled attacks · ${data.items ?? "?"} items in the corpus` : "not measured"} />
+        <Kpi label="False positives, in-sample" value={pct(m?.fpr ?? null)} sub={m ? `of ${m.benign} benign artifacts wrongly stopped` : undefined} />
         <Kpi label="Weight-space AUROC" value={dec(w?.auroc ?? null, 2)} sub={w ? `${ci} · ${w.nTest ?? "?"} held-out adapters` : undefined} />
         <div title={data.cost?.formula ?? "not measured: bench/cost_log.csv missing"}>
           <Kpi label="GPU cost per artifact ⓘ" value={data.cost?.usdPerArtifact == null ? "not measured" : `$${data.cost.usdPerArtifact.toFixed(3)}`}
@@ -64,7 +97,7 @@ export default function Bench() {
               </dl>)}
           </section>
           <section className="card">
-            <div className="card-h flex-col !items-start !gap-0"><h2 className="h-title">LLM reviewer</h2><p className="text-xs text-faint">Nemotron reviewer on labelled code, cards and templates; can only raise risk</p></div>
+            <div className="card-h flex-col !items-start !gap-0"><h2 className="h-title">LLM reviewer</h2><p className="text-xs text-faint">Nemotron reviewer on a small, partly tuned set of labelled code, cards and templates (bench/reviewer.json); can only raise risk</p></div>
             {!rv ? <p className="p-4 text-sm text-mute">not measured: bench/reviewer.json is missing.</p> : (
               <>
                 <dl className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 text-sm">
