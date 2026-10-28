@@ -213,9 +213,13 @@ def run_recorded_full(
 
     read: set[Path] = set()
     written: set[Path] = set()
+    used: list[str] = []  # artifacts verified by lineage.load() during the run
     for line in opened:
         p, _, mode = line.rpartition("\t")
-        (written if mode == "w" else read).add(Path(p))
+        if mode == "p":
+            used.append(p)
+        else:
+            (written if mode == "w" else read).add(Path(p))
 
     def rel(p: Path) -> str:
         try:
@@ -236,7 +240,7 @@ def run_recorded_full(
 
     sbom = _freeze(command)
     (record_dir / "sbom.txt").write_text(sbom)
-    all_parents = list(dict.fromkeys([*(parents or []), *_find_parent_ids(in_hashes, workdir)]))
+    all_parents = list(dict.fromkeys([*(parents or []), *used, *_find_parent_ids(in_hashes, workdir)]))
     run_name = name or f"{workdir.name}-run"
     passport = build_passport(
         workdir,

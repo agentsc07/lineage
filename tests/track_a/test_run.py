@@ -152,3 +152,35 @@ def test_input_pulled_from_the_registry_becomes_a_parent(project, tmp_path):
     assert run_recorded([sys.executable, "train.py"], project).predicate.parents == [att.artifact_id]
     (pulled / "weights.bin").write_bytes(b"edited after the pull")
     assert run_recorded([sys.executable, "train.py"], project).predicate.parents == []
+
+
+def test_a_verified_load_inside_a_run_names_its_parent_even_when_the_weights_are_read_natively(project, tmp_path):
+    """safetensors reads weights without a Python `open`, so the file hook misses them; `lineage.load()` reports the artifact it verified."""
+    from datetime import datetime, timedelta, timezone
+
+    from lineage.client import cache_path
+    from lineage.hashing.files import hash_tree
+    from lineage.schemas.attestation import Attestation, SignedAttestation
+
+    pulled = project / "admitted" / "m"
+    pulled.mkdir(parents=True)
+    from safetensors.numpy import save_file
+    import numpy as np
+
+    save_file({"w": np.ones((2, 2), np.float32)}, str(pulled / "model.safetensors"))
+    now = datetime.now(timezone.utc)
+    att = Attestation(artifact_id="lp:" + "cd" * 32, digest="d", files=hash_tree(pulled), outcome="allow", environment="dev", trust="origin_verified",
+                      policy_version="pp:x", issued_at=now, expires_at=now + timedelta(days=1))
+    cache_path(pulled).write_text(SignedAttestation(attestation=att, signature="", key_id="k").model_dump_json())
+    (project / "train.py").write_text(textwrap.dedent("""
+        from lineage import client
+        from safetensors.numpy import load_file
+        from pathlib import Path
+        from lineage.signing.keys import generate_keypair
+        # what load() does after its checks pass, without needing a registry in this test
+        client.note_use("%s")
+        load_file("admitted/m/model.safetensors")
+        open("out.txt", "w").write("x")
+    """ % att.artifact_id))
+    rec = run_recorded_full([sys.executable, "train.py"], project)
+    assert rec.passport.predicate.parents == [att.artifact_id] and "admitted/m/model.safetensors" not in rec.inputs

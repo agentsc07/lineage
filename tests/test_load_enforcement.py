@@ -160,3 +160,15 @@ def test_a_rotated_registry_key_is_explained_not_just_refused(client, admitted, 
     stale = "ab" * 32  # a key pinned before the registry's database (and signing key) was recreated
     problems = lc.check_for_use(dest, env="dev", server=SERVER, registry_pubkey=stale, client=client)
     assert len(problems) == 1 and "now signs with" in problems[0] and "--pin" in problems[0]
+
+
+def test_a_successful_check_tells_a_running_recorder_which_artifact_was_used(client, admitted, tmp_path, monkeypatch):
+    dest = tmp_path / "pulled"
+    lc.pull(admitted, dest, **kw(client))
+    rec = tmp_path / "opens.log"
+    monkeypatch.setenv("LINEAGE_RECORD_FILE", str(rec))
+    assert lc.check_for_use(dest, env="dev", server=SERVER, registry_pubkey=client.pubkey, client=client) == []
+    assert rec.read_text() == f"{admitted}\tp\n"
+    (dest / "model.safetensors").write_bytes(b"tampered")  # a refused check records nothing
+    rec.unlink()
+    assert lc.check_for_use(dest, env="dev", server=SERVER, registry_pubkey=client.pubkey, client=client) and not rec.exists()

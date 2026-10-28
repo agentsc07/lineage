@@ -37,5 +37,9 @@ LINEAGE_API="$API_URL" LINEAGE_DEMO_DIR="$WORK" LINEAGE_DEMO_DB="$DB" LINEAGE_DE
   examples/demo_scenario.sh
 
 uv run --quiet --project "$REPO" python "$REPO/examples/make_dashboard_samples.py" "$WORK/demo" "$WORK/samples" >/dev/null && export LINEAGE_SAMPLES_DIR="$WORK/samples"
+BOB_TOKEN="$(python3 -c "import json,sys;print(json.load(open('$TOKENS'))['bob'])" 2>/dev/null)"
+echo; echo "Command line, in another terminal (tokens change on every run of this script):"
+echo "  export PYTHONPATH=\"$REPO\" LINEAGE_SERVER=$API_URL LINEAGE_TOKEN=$BOB_TOKEN"
+echo "  uv run lineage pull <name or lp:id> ./admitted/x -e prod --pin"
 echo; echo "Dashboard: http://localhost:$DASH_PORT  (sign in with alice or bob from $TOKENS; Ctrl+C stops the dashboard and the API server)"
 cd dashboard && { [[ -d node_modules ]] || npm install; } && LINEAGE_API="$API_URL" npm run dev -- --port "$DASH_PORT" --strictPort
