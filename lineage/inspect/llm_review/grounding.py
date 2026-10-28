@@ -74,6 +74,17 @@ def api_on_line(api: str, line: str) -> bool:
     code = _norm(code_part(line))
     if _norm(api) in code:
         return True
+    if "..." in api or "\u2026" in api:  # the model abbreviated a long literal: every real fragment must appear, in order
+        parts = [p for p in re.split(r"\.\.\.|\u2026", _norm(api)) if len(p) >= MIN_API_LEN]
+        if parts and max(len(p) for p in parts) >= 4:
+            pos = 0
+            for part in parts:
+                i = code.find(part, pos)
+                if i < 0:
+                    break
+                pos = i + len(part)
+            else:
+                return True
     last = api.rsplit(".", 1)[-1]
     if "." in api and len(last) >= MIN_API_LEN and last.lower() not in _GENERIC_APIS:
         return re.search(rf"(?<![\w.]){re.escape(last)}\b", code_part(line)) is not None  # `from os import system`

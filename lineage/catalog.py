@@ -134,7 +134,7 @@ CHECKERS: list[Checker] = [
             detects="Weight updates whose singular-value structure resembles a backdoor fine-tune",
             how="For each changed layer takes the singular values of (child - parent), computes concentration, kurtosis, entropy and norms, and scores them with a calibrated logistic regression.",
             reads="Child and parent weights, on the GPU worker's own disk", needs="the GPU worker (LINEAGE_GPU_URL), a parent it knows, a calibration file",
-            entry="lineage.intake.inspectors:gpu_weights", prefixes=["MODEL.WEIGHTS.SPECTRAL_ANOMALY"]),
+            entry="lineage.intake.inspectors:gpu_weights", prefixes=["MODEL.WEIGHTS.SPECTRAL_ANOMALY", "MODEL.WEIGHTS.NO_DELTA"]),
     Checker(key="behaviour", name="Behaviour compared with the parent (GPU worker)", stage="S4", types=["model"],
             detects="A child model that answers differently from its parent on safety probes",
             how="Runs the same prompts through both models and measures Jensen-Shannon divergence of next-token distributions and refusal flips.", reads="Both models, loaded on the GPU worker",

@@ -939,7 +939,7 @@ def local_parent_diff(ctx: IntakeContext) -> list[Finding]:
 - **Needs:** the GPU worker (LINEAGE_GPU_URL), a parent it knows, a calibration file
 - **Applies to:** model
 - **Code:** `lineage.intake.inspectors:gpu_weights`
-- **Finding codes:** `MODEL.WEIGHTS.SPECTRAL_ANOMALY`
+- **Finding codes:** `MODEL.WEIGHTS.NO_DELTA`, `MODEL.WEIGHTS.SPECTRAL_ANOMALY`
 - **Exercised by:** tests/test_intake_pipeline.py (fake worker); gpu_worker/weights_api.py tests need torch (tests/test_gpu_weights.py, run on the GPU machine)
 
 ```python
@@ -969,21 +969,21 @@ def gpu_weights(ctx: IntakeContext) -> list[Finding]:
         out.append(make_finding("MODEL.PARENT.CLAIM_MISMATCH", f"Card claims base '{claimed}' but weights match '{parent.parent}'",
                                 "medium", "model", "S4", [Evidence(kind="field", ref="claimed_base", detail=f"{claimed} != {parent.parent}")],
                                 source="statistical"))
-    if parent.parent is None:
-        if "MODEL.PARENT.IDENTIFIED" in local:
+    parent_ref = parent.parent  # the worker's bank entry, or (below) the directory of the parent that the local check identified
+    if parent_ref is None:
+        local_parent = _local_parent(ctx)
+        if local_parent is not None and local_parent[2]:  # byte-identical to an admitted model: there is no update to analyse
+            out.append(make_finding("MODEL.WEIGHTS.NO_DELTA", f"Identical to admitted model {local_parent[1]}: no weight update, so the spectral and behaviour comparisons have nothing to measure",
+                                    "info", "model", "S4", [Evidence(kind="field", ref=local_parent[0], detail=local_parent[1])], source="statistical"))
             return out
-        out.append(make_finding("MODEL.PARENT.UNIDENTIFIED", "No known parent matches these weights", "low", "model", "S4",
-                                source="statistical"))
-        out += [not_run(c, "no parent was identified, so there is nothing to compare the weights with", "S4")
-                for c in ("WEIGHT_BACKDOOR", "BEHAVIOUR_DIFF")]
-        return out
-
-    try:
-        spec = gpu.post("/weights/spectral", SpectralRequest(model_path=path, parent=parent.parent), SpectralResponse, ctx.gpu_url)
-        if spec.score >= SPECTRAL_MEDIUM:
-            top = sorted(spec.per_layer.items(), key=lambda kv: -max(kv[1].values(), default=0.0))[:5]
-            out.append(make_finding(
-    # ... 27 more lines in lineage/intake/inspectors.py
+        if local_parent is not None:  # the local check found a parent the worker's bank does not hold: compare against that directory
+            parent_ref = str(local_parent[3])
+        else:
+            out.append(make_finding("MODEL.PARENT.UNIDENTIFIED", "No known parent matches these weights", "low", "model", "S4",
+                                    source="statistical"))
+            out += [not_run(c, "no parent was identified, so there is nothing to compare the weights with", "S4")
+                    for c in ("WEIGHT_BACKDOOR", "BEHAVIOUR_DIFF")]
+    # ... 34 more lines in lineage/intake/inspectors.py
 ```
 
 ### Behaviour compared with the parent (GPU worker)
@@ -1024,21 +1024,21 @@ def gpu_weights(ctx: IntakeContext) -> list[Finding]:
         out.append(make_finding("MODEL.PARENT.CLAIM_MISMATCH", f"Card claims base '{claimed}' but weights match '{parent.parent}'",
                                 "medium", "model", "S4", [Evidence(kind="field", ref="claimed_base", detail=f"{claimed} != {parent.parent}")],
                                 source="statistical"))
-    if parent.parent is None:
-        if "MODEL.PARENT.IDENTIFIED" in local:
+    parent_ref = parent.parent  # the worker's bank entry, or (below) the directory of the parent that the local check identified
+    if parent_ref is None:
+        local_parent = _local_parent(ctx)
+        if local_parent is not None and local_parent[2]:  # byte-identical to an admitted model: there is no update to analyse
+            out.append(make_finding("MODEL.WEIGHTS.NO_DELTA", f"Identical to admitted model {local_parent[1]}: no weight update, so the spectral and behaviour comparisons have nothing to measure",
+                                    "info", "model", "S4", [Evidence(kind="field", ref=local_parent[0], detail=local_parent[1])], source="statistical"))
             return out
-        out.append(make_finding("MODEL.PARENT.UNIDENTIFIED", "No known parent matches these weights", "low", "model", "S4",
-                                source="statistical"))
-        out += [not_run(c, "no parent was identified, so there is nothing to compare the weights with", "S4")
-                for c in ("WEIGHT_BACKDOOR", "BEHAVIOUR_DIFF")]
-        return out
-
-    try:
-        spec = gpu.post("/weights/spectral", SpectralRequest(model_path=path, parent=parent.parent), SpectralResponse, ctx.gpu_url)
-        if spec.score >= SPECTRAL_MEDIUM:
-            top = sorted(spec.per_layer.items(), key=lambda kv: -max(kv[1].values(), default=0.0))[:5]
-            out.append(make_finding(
-    # ... 27 more lines in lineage/intake/inspectors.py
+        if local_parent is not None:  # the local check found a parent the worker's bank does not hold: compare against that directory
+            parent_ref = str(local_parent[3])
+        else:
+            out.append(make_finding("MODEL.PARENT.UNIDENTIFIED", "No known parent matches these weights", "low", "model", "S4",
+                                    source="statistical"))
+            out += [not_run(c, "no parent was identified, so there is nothing to compare the weights with", "S4")
+                    for c in ("WEIGHT_BACKDOOR", "BEHAVIOUR_DIFF")]
+    # ... 34 more lines in lineage/intake/inspectors.py
 ```
 
 ### Certified-behaviour spot check (GPU worker)
@@ -1079,21 +1079,21 @@ def gpu_weights(ctx: IntakeContext) -> list[Finding]:
         out.append(make_finding("MODEL.PARENT.CLAIM_MISMATCH", f"Card claims base '{claimed}' but weights match '{parent.parent}'",
                                 "medium", "model", "S4", [Evidence(kind="field", ref="claimed_base", detail=f"{claimed} != {parent.parent}")],
                                 source="statistical"))
-    if parent.parent is None:
-        if "MODEL.PARENT.IDENTIFIED" in local:
+    parent_ref = parent.parent  # the worker's bank entry, or (below) the directory of the parent that the local check identified
+    if parent_ref is None:
+        local_parent = _local_parent(ctx)
+        if local_parent is not None and local_parent[2]:  # byte-identical to an admitted model: there is no update to analyse
+            out.append(make_finding("MODEL.WEIGHTS.NO_DELTA", f"Identical to admitted model {local_parent[1]}: no weight update, so the spectral and behaviour comparisons have nothing to measure",
+                                    "info", "model", "S4", [Evidence(kind="field", ref=local_parent[0], detail=local_parent[1])], source="statistical"))
             return out
-        out.append(make_finding("MODEL.PARENT.UNIDENTIFIED", "No known parent matches these weights", "low", "model", "S4",
-                                source="statistical"))
-        out += [not_run(c, "no parent was identified, so there is nothing to compare the weights with", "S4")
-                for c in ("WEIGHT_BACKDOOR", "BEHAVIOUR_DIFF")]
-        return out
-
-    try:
-        spec = gpu.post("/weights/spectral", SpectralRequest(model_path=path, parent=parent.parent), SpectralResponse, ctx.gpu_url)
-        if spec.score >= SPECTRAL_MEDIUM:
-            top = sorted(spec.per_layer.items(), key=lambda kv: -max(kv[1].values(), default=0.0))[:5]
-            out.append(make_finding(
-    # ... 27 more lines in lineage/intake/inspectors.py
+        if local_parent is not None:  # the local check found a parent the worker's bank does not hold: compare against that directory
+            parent_ref = str(local_parent[3])
+        else:
+            out.append(make_finding("MODEL.PARENT.UNIDENTIFIED", "No known parent matches these weights", "low", "model", "S4",
+                                    source="statistical"))
+            out += [not_run(c, "no parent was identified, so there is nothing to compare the weights with", "S4")
+                    for c in ("WEIGHT_BACKDOOR", "BEHAVIOUR_DIFF")]
+    # ... 34 more lines in lineage/intake/inspectors.py
 ```
 
 ### Dataset poisoning checks

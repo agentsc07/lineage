@@ -9,6 +9,10 @@
 6. A failed hub fetch was recorded as `@0.0.0`; it is now recorded under the requested name. The demo's "Try" buttons pointed at sources the demo hub does not have (HTTP 404); they now use ones it has.
 7. Four missing creator-passport tests added (expired, file changed after signing, modified payload, multi-key publisher).
 
+8. **Contradictory deep-inspection output on a GPU box.** With the worker's own parent bank empty, an artifact byte-identical to an admitted model showed `IDENTICAL` *and* `No known parent matches` (+5) *and* two `did not run` costs (+24); a child of a locally admitted model silently skipped the spectral and behaviour checks with no finding at all. Now: identical bytes give `MODEL.WEIGHTS.NO_DELTA` (info, nothing to measure); a parent found locally is passed to the worker as a directory and compared; only when no parent exists anywhere do `UNIDENTIFIED` and the priced `NOT_RUN` findings appear (`tests/test_submission_regressions.py`, worker faked).
+9. **LLM claims that quote a long literal with `...` were dropped** ("cited line does not contain the cited API"), including the real `exec(base64.b64decode(...))` line of the demo's bad wheel. Fragments around the ellipsis are now matched in order; invented fragments stay ungrounded.
+10. **The OSV "could not be reached" message was false in the demo**: the demo server runs with `LINEAGE_OFFLINE=1` on purpose, so no request was made. The message now says so; `LINEAGE_DEMO_ONLINE=1 examples/run_dashboard_demo.sh` queries api.osv.dev.
+
 ## Must not be claimed
 * **GPU checks (spectral, behaviour, notary): not run on this version.** Code and fake-worker tests only. The worker also reads model files from its own disk and knows 7 bank models.
 * **Live LLM review: no request has been made in this audit** (no credentials or route). Hosted tests are mocked. The model in the frozen benchmark (Nemotron-Nano on vLLM) differs from the hosted default (`nemotron-3.5-lightning-30b-a3b`).
@@ -23,7 +27,7 @@
 ## Unresolved, smallest safe next step
 | Issue | Impact | Smallest fix | Not done because |
 |---|---|---|---|
-| Same bytes get a new `lp:` id on every intake | duplicates in the catalogue | deduplicate by Merkle root + environment before signing | changes identity semantics before a deadline |
+| Same bytes get a new `lp:` id on every intake and the **full pipeline runs again** (the known digest is only an info finding, `INTAKE.DIGEST.KNOWN`) | duplicates in the catalogue, repeated work | deduplicate by Merkle root + environment before signing | changes identity semantics before a deadline |
 | Hub downloads are read into memory | large models fail | stream to disk | not safe to change untested |
 | Very large packages can time out in the intake (`kubernetes`, `torch`, etc., 7 of 199 in the benchmark) | no decision | per-package time budget that returns `CHECK.NOT_RUN` | needs a benchmark re-run |
 | In dev a revoked artifact stays loadable up to 24 h if the registry is down | stale permission | set `offline_grace_hours.dev: 0` in the policy | a policy choice for you |

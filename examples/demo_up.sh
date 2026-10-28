@@ -19,7 +19,9 @@ PIDS+=($!)
 python3 -m http.server "$SITE_PORT" --bind 127.0.0.1 --directory "$WORK/site" >"$WORK/site.log" 2>&1 &
 PIDS+=($!)
 SERVER_ENV=(LINEAGE_POLICY="$WORK/policy.yaml" LINEAGE_HUB_URL="http://127.0.0.1:$HUB_PORT" LINEAGE_STORE="$WORK/store" LINEAGE_UPLOADS="$WORK/uploads"
-  LINEAGE_FETCH_DIR="$WORK/fetch" LINEAGE_OFFLINE=1 LINEAGE_MONITOR_MINUTES=0 LINEAGE_DB="$DB" LINEAGE_ADVISORY_FEED="$WORK/feed.json")
+  LINEAGE_FETCH_DIR="$WORK/fetch" LINEAGE_MONITOR_MINUTES=0 LINEAGE_DB="$DB" LINEAGE_ADVISORY_FEED="$WORK/feed.json")
+# Hermetic by default: no OSV request, the shipped advisory snapshot answers. LINEAGE_DEMO_ONLINE=1 lets the server query api.osv.dev (needs internet).
+[[ -z "${LINEAGE_DEMO_ONLINE:-}" ]] && SERVER_ENV+=(LINEAGE_OFFLINE=1)
 [[ -n "${DEMO_HF_URL:-}" ]] && SERVER_ENV+=(LINEAGE_HF_URL="$DEMO_HF_URL")   # the real Hugging Face hub, for the model fetch only
 env "${SERVER_ENV[@]}" uv run --quiet --project "$REPO" uvicorn lineage_server.app:app --port "$PORT" >"$WORK/server.log" 2>&1 &
 PIDS+=($!)

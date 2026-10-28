@@ -604,7 +604,7 @@ def package_osv(ctx: IntakeContext) -> list[Finding]:
     from lineage.inspect import package_osv as osv
 
     found = osv.scan(ctx.name, ctx.version)
-    return [not_run("OSV", "the OSV service could not be reached and nothing is cached", "S3") if f.id == "PKG.OSV.UNAVAILABLE" else f
+    return [not_run("OSV", ("offline mode (LINEAGE_OFFLINE is set): no request to OSV was made and the shipped snapshot has no entry for this version" if os.environ.get("LINEAGE_OFFLINE") else "the OSV service could not be reached and nothing is cached"), "S3") if f.id == "PKG.OSV.UNAVAILABLE" else f
             for f in found]
 
 
@@ -801,6 +801,17 @@ def hub_parent(ctx: IntakeContext) -> list[Finding]:
     return out
 
 
+def _local_parent(ctx: IntakeContext) -> tuple[str, str, bool, Path] | None:
+    """(passport id, label, identical?, directory) of the admitted parent that `local_parent_diff` found, or None. Same host as the worker only."""
+    for f in ctx.findings:
+        if f.id in ("MODEL.PARENT.IDENTICAL", "MODEL.PARENT.IDENTIFIED") and f.evidence:
+            ref = f.evidence[0].ref
+            hit = ctx.registry.reference_models().get(ref)
+            if hit is not None:
+                return ref, hit[0], f.id == "MODEL.PARENT.IDENTICAL", hit[1]
+    return None
+
+
 @register("model", "S4")
 def gpu_weights(ctx: IntakeContext) -> list[Finding]:
     """Parent identification, spectral backdoor score, behavioural diff and Notary spot-check."""
@@ -827,17 +838,24 @@ def gpu_weights(ctx: IntakeContext) -> list[Finding]:
         out.append(make_finding("MODEL.PARENT.CLAIM_MISMATCH", f"Card claims base '{claimed}' but weights match '{parent.parent}'",
                                 "medium", "model", "S4", [Evidence(kind="field", ref="claimed_base", detail=f"{claimed} != {parent.parent}")],
                                 source="statistical"))
-    if parent.parent is None:
-        if "MODEL.PARENT.IDENTIFIED" in local:
+    parent_ref = parent.parent  # the worker's bank entry, or (below) the directory of the parent that the local check identified
+    if parent_ref is None:
+        local_parent = _local_parent(ctx)
+        if local_parent is not None and local_parent[2]:  # byte-identical to an admitted model: there is no update to analyse
+            out.append(make_finding("MODEL.WEIGHTS.NO_DELTA", f"Identical to admitted model {local_parent[1]}: no weight update, so the spectral and behaviour comparisons have nothing to measure",
+                                    "info", "model", "S4", [Evidence(kind="field", ref=local_parent[0], detail=local_parent[1])], source="statistical"))
             return out
-        out.append(make_finding("MODEL.PARENT.UNIDENTIFIED", "No known parent matches these weights", "low", "model", "S4",
-                                source="statistical"))
-        out += [not_run(c, "no parent was identified, so there is nothing to compare the weights with", "S4")
-                for c in ("WEIGHT_BACKDOOR", "BEHAVIOUR_DIFF")]
-        return out
+        if local_parent is not None:  # the local check found a parent the worker's bank does not hold: compare against that directory
+            parent_ref = str(local_parent[3])
+        else:
+            out.append(make_finding("MODEL.PARENT.UNIDENTIFIED", "No known parent matches these weights", "low", "model", "S4",
+                                    source="statistical"))
+            out += [not_run(c, "no parent was identified, so there is nothing to compare the weights with", "S4")
+                    for c in ("WEIGHT_BACKDOOR", "BEHAVIOUR_DIFF")]
+            return out
 
     try:
-        spec = gpu.post("/weights/spectral", SpectralRequest(model_path=path, parent=parent.parent), SpectralResponse, ctx.gpu_url)
+        spec = gpu.post("/weights/spectral", SpectralRequest(model_path=path, parent=parent_ref), SpectralResponse, ctx.gpu_url)
         if spec.score >= SPECTRAL_MEDIUM:
             top = sorted(spec.per_layer.items(), key=lambda kv: -max(kv[1].values(), default=0.0))[:5]
             out.append(make_finding(
@@ -846,7 +864,7 @@ def gpu_weights(ctx: IntakeContext) -> list[Finding]:
                 "high" if spec.score >= SPECTRAL_HIGH else "medium", "model", "S4",
                 [Evidence(kind="tensor", ref=layer, detail=", ".join(f"{k}={v:.3g}" for k, v in m.items())) for layer, m in top]
                 + [Evidence(kind="metric", ref="spectral_score", detail=f"{spec.score:.3f}")], source="statistical"))
-        diff = gpu.post("/behaviour/diff", BehaviourDiffRequest(child=path, parent=parent.parent, probe_set="safety-default"),
+        diff = gpu.post("/behaviour/diff", BehaviourDiffRequest(child=path, parent=parent_ref, probe_set="safety-default"),
                         BehaviourDiffResponse, ctx.gpu_url)
         if diff.divergence >= DIVERGENCE_MEDIUM:
             out.append(make_finding(
