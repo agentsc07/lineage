@@ -875,7 +875,7 @@ def scan(manifest_path: Path, code_dir: Path) -> list[Finding]:
 
 ## S4 Deep inspection
 
-### Find the parent model from its weights
+### Find the parent among admitted models on this host (weights)
 
 - **Looks for:** Which admitted model this one was fine-tuned from, and which tensors changed
 - **How:** Compares every tensor with each admitted model on this host (relative L2 distance; similarity above 0.5 means related). If the base is named it also compares the base's embedding rows over HTTP range requests without downloading it (cosine above 0.90 means the same family).
@@ -883,7 +883,7 @@ def scan(manifest_path: Path, code_dir: Path) -> list[Finding]:
 - **Needs:** safetensors weights and either an admitted model on this host or a named base on the hub
 - **Applies to:** model
 - **Code:** `lineage.intake.inspectors:local_parent_diff`
-- **Finding codes:** `MODEL.PARENT.CLAIM_MISMATCH`, `MODEL.PARENT.IDENTICAL`, `MODEL.PARENT.IDENTIFIED`, `MODEL.PARENT.NO_CLAIMED_BASE`, `MODEL.PARENT.UNIDENTIFIED`, `MODEL.WEIGHTS.CHANGED_LAYERS`
+- **Finding codes:** `MODEL.PARENT.CLAIM_MISMATCH`, `MODEL.PARENT.IDENTICAL`, `MODEL.PARENT.IDENTIFIED`, `MODEL.PARENT.NO_CLAIMED_BASE`, `MODEL.PARENT.UNIDENTIFIED`, `MODEL.WEIGHTS.CHANGED_LAYERS`, `MODEL.WEIGHTS.NO_DELTA`
 - **Seen firing on (real run, offline):** clean tiny model → MODEL.PARENT.NO_CLAIMED_BASE; model with a backdoored chat template and a URL token → MODEL.PARENT.NO_CLAIMED_BASE; model with a malicious pickle → MODEL.PARENT.NO_CLAIMED_BASE; model with remote code in its config → MODEL.PARENT.NO_CLAIMED_BASE
 - **Exercised by:** tests/test_hub_parent.py, tests/test_intake_pipeline.py (needs an admitted model or a named base on a hub)
 
@@ -929,6 +929,60 @@ def local_parent_diff(ctx: IntakeContext) -> list[Finding]:
     out += [f for f in tokenizer.scan(ctx.path, parent_path) if f.id != "MODEL.TOKENIZER.NO_BASE"]  # the parent's tokenizer is the base to diff against
     out.append(make_finding(
     # ... 4 more lines in lineage/intake/inspectors.py
+```
+
+### Compare with the base model the hub or uploader names
+
+- **Looks for:** Weights that contradict the base model they claim to be fine-tuned from
+- **How:** When a base model is named, fetches its config, tokenizer, safetensors header and the first 512 embedding rows over HTTP range requests (the base is not downloaded) and compares them with the upload (cosine above 0.90 means the same family). Nothing named, nothing compared.
+- **Reads:** The named base on the hub (a Hugging Face repo id) and this model's embedding rows
+- **Needs:** a base model named by the hub record, a signed passport or the uploader, and a reachable hub
+- **Applies to:** model
+- **Code:** `lineage.intake.inspectors:hub_parent`
+- **Finding codes:** `MODEL.PARENT.CLAIM_MISMATCH`, `MODEL.PARENT.NO_CLAIMED_BASE`
+
+```python
+@register("model", "S4")
+def hub_parent(ctx: IntakeContext) -> list[Finding]:
+    """S4. Compare the weights with the named base model on the hub without downloading it (range requests: config, tokenizer, the safetensors
+    header and the first embedding rows). A match identifies the parent; a base the weights contradict is `MODEL.PARENT.CLAIM_MISMATCH`.
+    The base's tokenizer is then diffed against the model's, which until now never ran."""
+    from lineage.diff import hub_parent as hp
+    from lineage.inspect import tokenizer
+
+    base = ctx.fact_value("base_model", trusted_only=False)
+    if not base:
+        return [make_finding("MODEL.PARENT.NO_CLAIMED_BASE", "No base model is named by the hub, the passport or the uploader; nothing to fetch and compare", "info", "model", "S4")]
+    if ctx.path is None:
+        return [not_run("PARENT_FETCH", "no model bytes", "S4")]
+    fact = ctx.fact("base_model", trusted_only=False)
+    base_url = getattr(ctx.hub, "base_url", None) or None
+    from lineage.intake import fetch
+
+    if not base_url and not os.environ.get("LINEAGE_HF_URL") and not os.environ.get("LINEAGE_HUB_URL"):
+        base_url = fetch.hf_url()
+    import tempfile
+
+    work = Path(tempfile.mkdtemp(prefix="lineage-base-"))
+    try:
+        m = hp.compare(ctx.path, base, "main", base_url=base_url or fetch.hf_url(), client=getattr(ctx.hub, "client", None), work_dir=work)
+    except (hp.HubParentError, ValueError, OSError) as e:
+        return [not_run("PARENT_FETCH", f"could not fetch the base {base}: {e}", "S4")]
+    out: list[Finding] = []
+    basis = "" if fact and fact.provenance != "declared" else " (the base is only declared)"
+    ev_ = [Evidence(kind="field", ref=base, detail=f"{m.tensor}: mean row cosine {m.similarity}; {m.bytes_fetched} bytes fetched" if m.similarity is not None else "; ".join(m.notes))]
+    if m.similarity is None:
+        out.append(not_run("PARENT_FETCH", "; ".join(m.notes) or "no comparable tensor", "S4"))
+    elif m.similarity >= hp.IDENTIFIED:
+        out.append(make_finding("MODEL.PARENT.IDENTIFIED", f"Parent identified from the weights: {base} (embedding cosine {m.similarity:.3f}, {m.bytes_fetched} bytes fetched){basis}",
+                                "info", "model", "S4", ev_, source="statistical"))
+        if base not in ctx.parents:
+            ctx.graph_refs.append({"kind": "derived_from", "type": "model", "name": base.split("/")[-1], "ref": f"base model {base}"})
+        if m.base_dir is not None:
+            out += [f for f in tokenizer.scan(ctx.path, m.base_dir) if f.id != "MODEL.TOKENIZER.NO_BASE"]
+    else:
+        out.append(make_finding("MODEL.PARENT.CLAIM_MISMATCH", f"The weights do not match the named base {base} (embedding cosine {m.similarity:.3f}){basis}",
+    # ... 2 more lines in lineage/intake/inspectors.py
 ```
 
 ### Backdoor signature in the weight changes (GPU worker)
@@ -1260,8 +1314,8 @@ def gpu_code_review(ctx: IntakeContext) -> list[Finding]:
     static = [f for f in ctx.findings if f.severity != "info"]
     found = client.review_to_findings(ReviewCodeRequest(purpose=purpose, capabilities=caps, slices=slices, diff=diff or None),
                                       ctx.gpu_url, root=ctx.root, static_findings=static)
-    return [not_run("LLM_REVIEW", "the reviewer backend is unreachable (code review)", "S5") if f.id == "LLM.REVIEW.SKIPPED" else f
-            for f in found]
+    return [not_run("LLM_REVIEW", "the reviewer backend is unreachable (code review): " + (f.evidence[0].detail if f.evidence and f.evidence[0].detail else "no detail"), "S5")
+            if f.id == "LLM.REVIEW.SKIPPED" else f for f in found]
 ```
 
 ### AI review of the model or dataset card
@@ -1291,8 +1345,9 @@ def gpu_card_review(ctx: IntakeContext) -> list[Finding]:
             resp = lc.review_card_hosted(req)
         else:
             resp = gpu.post("/review/card", req, ReviewResponse, ctx.gpu_url)
-    except (gpu.GpuUnavailable, lc.GpuUnavailable):
-        return [not_run("LLM_REVIEW", "the reviewer backend is unreachable (card review)", "S5")]
+    except (gpu.GpuUnavailable, lc.GpuUnavailable) as e:
+        where = "the GPU worker at " + (ctx.gpu_url or "LINEAGE_GPU_URL") if (ctx.gpu_url or os.environ.get("LINEAGE_GPU_URL")) else "the hosted NVIDIA API"
+        return [not_run("LLM_REVIEW", f"the reviewer backend is unreachable (card review; asked {where}): {str(e)[:200]}", "S5")]
     card_file = next((n for n in CARD_NAMES if (ctx.root / n).is_file()), "card.md")
     shown = _card_slices(ctx.card_text, measured, card_file)
     out = claims_to_findings(resp, shown, "LLM.CARD", {"card.md": card_file})

@@ -1,6 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { useSession } from "../lib/session";
 import { api } from "../lib/api";
 import { auth, useMe } from "../lib/auth";
 
@@ -19,20 +18,24 @@ const nav = [
 
 export default function Layout() {
   const [theme, setTheme] = useState(document.documentElement.dataset.theme ?? "dark");
-  const sess = useSession();
+  const [pending, setPending] = useState(0);
   const { token, me, known } = useMe();
   const [loginErr, setLoginErr] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   useEffect(() => { fetch("/demo-users.json").then((r) => (r.ok ? r.json() : null)).then((u) => { if (u && typeof u === "object") auth.preload(u); }).catch(() => {}); }, []);
   useEffect(() => {
     if (!token) return;
-    api.whoami().then((m) => { auth.setMe(m); setLoginErr(null); }).catch((e) => { auth.setToken(null); setLoginErr(String(e.message ?? e)); });
+    api.whoami().then((m) => { auth.setMe(m); setLoginErr(null); }).catch((e) => { if (token) auth.forget(token); auth.setToken(null); setLoginErr(String(e.message ?? e)); });
   }, [token]);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     try { localStorage.setItem("lineage.theme", theme); } catch { /* ignore */ }
   }, [theme]);
-  const pending = sess.filter((s) => s.decision.outcome === "quarantine" && !s.approved).length;
+  useEffect(() => {
+    if (!token || !me) return;
+    const load = () => api.artifacts().then((a) => setPending(a.filter((x) => x.status === "quarantined").length)).catch(() => {});
+    load(); const t = window.setInterval(load, 10000); return () => window.clearInterval(t);
+  }, [token, me?.name]);
 
   if (!token || !me) {
     return (
@@ -40,7 +43,7 @@ export default function Layout() {
         <form className="card p-6 w-full max-w-sm" onSubmit={(e) => { e.preventDefault(); if (draft.trim()) { setLoginErr(null); auth.setToken(draft.trim()); } }}>
           <h1 className="font-semibold tracking-tight text-lg mb-1">Lineage</h1>
           <p className="text-sm text-mute mb-4">Paste your API token. It is kept for this tab only.</p>
-          <input className="input font-mono" type="password" autoFocus placeholder="lg_…" value={draft} onChange={(e) => setDraft(e.target.value)} aria-label="API token" />
+          <input className="input font-mono" type="password" autoComplete="off" name="lineage-token" data-lpignore="true" autoFocus placeholder="lg_…" value={draft} onChange={(e) => setDraft(e.target.value)} aria-label="API token" />
           {known.length > 0 && (
             <div className="mb-4"><p className="text-xs text-mute mb-1.5">Demo users</p>
               <div className="flex gap-2 flex-wrap">{known.map((k) => <button type="button" key={k.token} className="btn" onClick={() => auth.switchTo(k.token)}>{k.name}</button>)}</div></div>)}

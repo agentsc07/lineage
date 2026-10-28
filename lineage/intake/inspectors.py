@@ -953,8 +953,9 @@ def gpu_card_review(ctx: IntakeContext) -> list[Finding]:
             resp = lc.review_card_hosted(req)
         else:
             resp = gpu.post("/review/card", req, ReviewResponse, ctx.gpu_url)
-    except (gpu.GpuUnavailable, lc.GpuUnavailable):
-        return [not_run("LLM_REVIEW", "the reviewer backend is unreachable (card review)", "S5")]
+    except (gpu.GpuUnavailable, lc.GpuUnavailable) as e:
+        where = "the GPU worker at " + (ctx.gpu_url or "LINEAGE_GPU_URL") if (ctx.gpu_url or os.environ.get("LINEAGE_GPU_URL")) else "the hosted NVIDIA API"
+        return [not_run("LLM_REVIEW", f"the reviewer backend is unreachable (card review; asked {where}): {str(e)[:200]}", "S5")]
     card_file = next((n for n in CARD_NAMES if (ctx.root / n).is_file()), "card.md")
     shown = _card_slices(ctx.card_text, measured, card_file)
     out = claims_to_findings(resp, shown, "LLM.CARD", {"card.md": card_file})
@@ -991,8 +992,8 @@ def gpu_code_review(ctx: IntakeContext) -> list[Finding]:
     static = [f for f in ctx.findings if f.severity != "info"]
     found = client.review_to_findings(ReviewCodeRequest(purpose=purpose, capabilities=caps, slices=slices, diff=diff or None),
                                       ctx.gpu_url, root=ctx.root, static_findings=static)
-    return [not_run("LLM_REVIEW", "the reviewer backend is unreachable (code review)", "S5") if f.id == "LLM.REVIEW.SKIPPED" else f
-            for f in found]
+    return [not_run("LLM_REVIEW", "the reviewer backend is unreachable (code review): " + (f.evidence[0].detail if f.evidence and f.evidence[0].detail else "no detail"), "S5")
+            if f.id == "LLM.REVIEW.SKIPPED" else f for f in found]
 
 
 def _manifest_description(ctx: IntakeContext) -> str | None:

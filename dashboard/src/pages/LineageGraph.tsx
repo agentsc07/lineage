@@ -49,10 +49,12 @@ export default function GraphPage() {
   // Default to the artifact whose chain (ancestors + descendants) is largest, so the full story shows on load.
   const biggest = useAsync(async () => {
     const list = arts.data ?? [];
-    const sizes = await Promise.all(list.slice(0, 40).map(async (a) => {
+    // newest 20 only, and one failing request must not blank the page
+    const settled = await Promise.allSettled(list.slice(0, 20).map(async (a) => {
       const [up, down] = await Promise.all([api.graph(a.id, "up"), api.graph(a.id, "down")]);
       return { id: a.id, size: new Set([...up.nodes, ...down.nodes].filter((n) => n.status !== "unregistered").map((n) => n.id)).size * 10 + new Set([...up.nodes, ...down.nodes].map((n) => n.id)).size };
     }));
+    const sizes = settled.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
     return sizes.reduce<{ id: string; size: number } | null>((b, c) => (!b || c.size > b.size ? c : b), null)?.id ?? null;
   }, [arts.data]);
   const rootId = id ?? biggest.data ?? undefined;

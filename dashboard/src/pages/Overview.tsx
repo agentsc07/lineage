@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
-import { useSession } from "../lib/session";
 import { ago, shortId, statusOutcome, verdictKey, type VerdictKey } from "../lib/format";
 import { useMonitorIds } from "../lib/monitor";
 import type { MonitorTick, Outcome } from "../lib/types";
@@ -10,7 +9,6 @@ import { Empty, ErrorBox, Header, Kpi, Loading, Risk, Severity_, TypeTag, Verdic
 
 export default function Overview() {
   const arts = useAsync(api.artifacts);
-  const sess = useSession();
   const monitorIds = useMonitorIds();
   const [tick, setTick] = useState<MonitorTick | null>(null);
   const [ticking, setTicking] = useState(false);
@@ -28,13 +26,12 @@ export default function Overview() {
   if (arts.error) return <div className="page"><ErrorBox msg={arts.error} retry={arts.reload} /></div>;
   if (!arts.data) return <div className="page"><Loading /></div>;
   const rows = arts.data;
-  const count = (o: Outcome) => rows.filter((a) => (a.status === "revoked" ? "block" : a.outcome ?? statusOutcome[a.status]) === o).length + sess.filter((s) => s.decision.outcome === o).length;
-  const total = rows.length + sess.length;
+  const count = (o: Outcome) => rows.filter((a) => (a.status === "revoked" ? "block" : a.outcome ?? statusOutcome[a.status]) === o).length;
+  const total = rows.length;
   const avg = rows.length ? Math.round(rows.reduce((s, a) => s + a.risk_score, 0) / rows.length) : 0;
 
-  // Recent decisions: this session's intake results first, then the catalogue.
+  // Recent decisions: the catalogue (the server is the source of truth; every intake is recorded at S7).
   const recent = [
-    ...sess.map((s) => ({ key: s.decision.artifact_id + s.decision.decided_at, name: s.ref, type: s.artifact_type, outcome: (s.approved ? "allow_with_conditions" : s.decision.outcome) as VerdictKey, risk: s.decision.risk_score, env: s.decision.environment, at: s.decision.decided_at, id: s.decision.artifact_id })),
     ...rows.map((a) => ({ key: a.id, name: `${a.name}@${a.version}`, type: a.artifact_type, outcome: verdictKey(a.status, a.outcome, a.id, monitorIds) as VerdictKey, risk: a.risk_score, env: a.environment, at: a.created_at, id: a.id })),
   ].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 8);
 

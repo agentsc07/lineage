@@ -138,3 +138,15 @@ def test_no_parent_anywhere_is_unidentified_and_both_checks_are_priced_as_not_ru
     ctx = _weights_ctx(tmp_path, policy_path, [], {})
     got = {f.id for f in insp.gpu_weights(ctx)}
     assert got == {"MODEL.PARENT.UNIDENTIFIED", "CHECK.NOT_RUN.WEIGHT_BACKDOOR", "CHECK.NOT_RUN.BEHAVIOUR_DIFF"}
+
+
+def test_a_refused_api_call_does_not_make_a_browser_open_its_own_login_dialog(tmp_path, policy_path):
+    """Basic auth challenges pop up a native login box in a browser; only the pip index (which pip answers with Basic credentials) may use one."""
+    from fastapi.testclient import TestClient
+    from lineage_server.app import create_app
+
+    api = TestClient(create_app(tmp_path / "p.db", policy_path, require_auth=True))
+    r = api.get("/artifacts")
+    assert r.status_code == 401 and r.headers["www-authenticate"].startswith("Bearer")
+    assert api.get("/whoami").headers["www-authenticate"].startswith("Bearer")
+    assert api.get("/simple/").headers["www-authenticate"].startswith("Basic")

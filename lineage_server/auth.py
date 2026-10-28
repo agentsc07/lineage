@@ -117,7 +117,7 @@ def current_user(request: Request, conn: sqlite3.Connection = Depends(get_conn))
     token = _token_of(request)
     user = user_for_token(conn, token) if token else None
     if user is None:
-        raise HTTPException(401, "a valid API token is required (Authorization: Bearer <token>)", headers={"WWW-Authenticate": 'Basic realm="lineage"'})
+        raise HTTPException(401, "a valid API token is required (Authorization: Bearer <token>)", headers={"WWW-Authenticate": 'Basic realm="lineage"' if request.url.path.startswith("/simple") else 'Bearer realm="lineage"'})  # Basic only for pip: on any other path a browser would pop up its own login dialog
     return user
 
 

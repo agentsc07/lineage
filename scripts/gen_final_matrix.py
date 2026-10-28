@@ -17,7 +17,7 @@ by_key = {c.key: c for c in CHECKERS}
 KEY = {"model_pickle": "pickle", "model_config": "config", "model_tokenizer": "tokenizer", "model_chat_template": "template", "dataset_format": "data_format",
        "dataset_pii": "pii", "dataset_stats": "data_stats", "package_osv": "osv", "package_baseline": "pkg_baseline", "package_capabilities": "capabilities",
        "package_taint": "taint", "package_rules": "rules", "tool_description": "tool_desc", "tool_intent": "tool_intent", "dataset_v2": "data_poison",
-       "dataset_upstream_diff": "data_diff", "local_parent_diff": "parent_id", "package_dependency_closure": "pkg_deps",
+       "dataset_upstream_diff": "data_diff", "local_parent_diff": "parent_id", "hub_parent": "hub_parent", "package_dependency_closure": "pkg_deps",
        "package_provenance": "pkg_provenance", "gpu_weights": "spectral", "gpu_code_review": "llm_code", "gpu_card_review": "llm_card",
        "signed_passport": "signature", "origin_check": "origin", "publisher_policy": "publisher", "parent_chain": "parents", "release_age": "cooldown", "licence": "licence"}
 by_fn = {fn: by_key[k] for fn, k in KEY.items() if k in by_key}

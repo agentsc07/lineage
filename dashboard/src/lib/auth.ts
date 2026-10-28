@@ -30,12 +30,15 @@ export const auth = {
   },
   setMe(m: Me | null) {
     me = m;
-    if (m && token) { known = [...known.filter((k) => k.token !== token), { name: m.name, token, roles: m.roles }]; save(); }
+    if (m && token) { known = [...known.filter((k) => k.token !== token && k.name !== m.name), { name: m.name, token, roles: m.roles }]; save(); }
     emit();
   },
+  /** A token the server refused: drop it so it is not offered again. */
+  forget(t: string) { known = known.filter((k) => k.token !== t); save(); emit(); },
   /** Demo only: remember users the dev server lists in /demo-users.json ({name: token}). Their roles show once each has been used. */
   preload(users: Record<string, string>) {
-    for (const [name, t] of Object.entries(users)) if (!known.some((k) => k.token === t)) known = [...known, { name, token: t }];
+    // the file is the truth for this run: one entry per name, and tokens from an earlier run of the demo are replaced
+    known = [...known.filter((k) => !(k.name in users)), ...Object.entries(users).map(([name, t]) => ({ name, token: t, roles: known.find((k) => k.token === t)?.roles }))];
     save(); emit();
   },
   can: (...roles: string[]) => !!me && (me.roles.includes("admin") || roles.some((r) => me!.roles.includes(r))),

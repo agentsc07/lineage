@@ -13,6 +13,13 @@
 9. **LLM claims that quote a long literal with `...` were dropped** ("cited line does not contain the cited API"), including the real `exec(base64.b64decode(...))` line of the demo's bad wheel. Fragments around the ellipsis are now matched in order; invented fragments stay ungrounded.
 10. **The OSV "could not be reached" message was false in the demo**: the demo server runs with `LINEAGE_OFFLINE=1` on purpose, so no request was made. The message now says so; `LINEAGE_DEMO_ONLINE=1 examples/run_dashboard_demo.sh` queries api.osv.dev.
 
+11. **Overview counted stored browser entries on top of the server** (37 vs 7 in the Catalogue) and listed old, oddly named rows (`@0.0.0`, `lp:...`) from earlier runs. Overview, the Approvals badge and the recent list now use only what the server holds.
+12. **A native browser login dialog on reload**: the API answered 401 with a Basic challenge. Only the pip index does that now; everything else uses Bearer (`tests/test_submission_regressions.py`).
+13. **Duplicate users in the sign-in list**: tokens from earlier demo runs were kept next to the new ones. One entry per name now, refused tokens are dropped.
+14. **"Find the parent model from its weights" appeared three times** because three different checks shared one catalogue name. The hub-base comparison now has its own name.
+15. **The "reviewer unreachable" message hid the cause.** It now names where it asked (hosted API or worker URL) and the error returned.
+16. **The Lineage graph page could stay blank** if any one of its start-up requests failed (it asked for up to 40 artifacts at once). It uses the newest 20 and tolerates failures. The Monitor page has a "Run a check now" button.
+
 ## Must not be claimed
 * **GPU checks (spectral, behaviour, notary): not run on this version.** Code and fake-worker tests only. The worker also reads model files from its own disk and knows 7 bank models.
 * **Live LLM review: no request has been made in this audit** (no credentials or route). Hosted tests are mocked. The model in the frozen benchmark (Nemotron-Nano on vLLM) differs from the hosted default (`nemotron-3.5-lightning-30b-a3b`).
