@@ -351,7 +351,16 @@ def pull(
     srv = (server or cfg["server"]).rstrip("/")
     key = cfg["registry_pubkey"]
     if pin and srv:
-        key = httpx.get(f"{srv}/registry-key", headers={"Authorization": f"Bearer {cfg['token']}"} if cfg["token"] else {}).json()["public_key"]
+        try:
+            r = httpx.get(f"{srv}/registry-key", headers={"Authorization": f"Bearer {cfg['token']}"} if cfg["token"] else {}, timeout=10.0)
+        except httpx.HTTPError as e:
+            err.print(f"[red]✗[/] cannot reach the registry at {srv}: {e}")
+            raise typer.Exit(code=1)
+        if r.status_code != 200:
+            why = "LINEAGE_TOKEN is not set or not valid for this server (a fresh database issues new tokens)" if r.status_code in (401, 403) else r.text[:120]
+            err.print(f"[red]✗[/] the registry at {srv} refused /registry-key ({r.status_code}): {why}")
+            raise typer.Exit(code=1)
+        key = r.json()["public_key"]
         where = client.pin_registry_key(key)
         err.print(f"[yellow]![/] pinned registry key {key[:16]}… in {where} (trust on first use; check it out of band)")
     try:
