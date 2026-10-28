@@ -122,3 +122,28 @@ def test_a_malformed_shipped_passport_is_reported_not_crashed(policy, tiny_model
     (tiny_model / "passport.json").write_text('{"passport": {"not": "a passport"}}')
     d = run(tiny_model, policy)
     assert "INTAKE.PASSPORT.MALFORMED" in ids(d) and d.trust_level != "signed"
+
+
+def test_an_expired_creator_passport_is_not_trusted(policy, apollo, tiny_model):
+    from datetime import timedelta
+    passport_for(tiny_model, apollo, "apollo-health/triage", expires_at=NOW - timedelta(days=1))
+    d = run(tiny_model, policy)
+    assert "PROV.PASSPORT.EXPIRED" in ids(d) and d.trust_level != "signed"
+
+
+def test_a_file_changed_after_signing_is_a_hash_mismatch_that_blocks(policy, apollo, tiny_model):
+    passport_for(tiny_model, apollo, "apollo-health/triage")
+    w = next(tiny_model.glob("*.safetensors"))
+    b = bytearray(w.read_bytes()); b[-1] ^= 0xFF; w.write_bytes(bytes(b))
+    d = run(tiny_model, policy)
+    assert "INTEGRITY.HASH_MISMATCH" in ids(d) and d.outcome == "block" and d.trust_level != "signed"
+
+
+def test_a_modified_signed_payload_fails_the_signature(policy, apollo, tiny_model):
+    import json
+    passport_for(tiny_model, apollo, "apollo-health/triage")
+    pj = json.loads((tiny_model / "passport.json").read_text())
+    pj["passport"]["predicate"]["risk_score"] = 1 if pj["passport"]["predicate"].get("risk_score") != 1 else 2  # change one signed field
+    (tiny_model / "passport.json").write_text(json.dumps(pj))
+    d = run(tiny_model, policy)
+    assert "PROV.SIGNATURE.INVALID" in ids(d) and d.outcome == "block"

@@ -77,3 +77,32 @@ def test_the_view_reports_the_creator_passport_fields_and_facts_are_not_duplicat
     assert v["creator_passport"] == {"present": False}
     keys = [(f["key"], f["value"], f["provenance"], f["source"]) for f in detail["passport"]["passport"]["predicate"]["facts"]]
     assert len(keys) == len(set(keys))
+
+
+def test_a_declared_parent_that_the_weights_contradict_is_flagged(tmp_path, policy_path, hubroot):
+    from tests.fixtures.builders import make_tiny_model
+
+    api = make_api(tmp_path, policy_path, hubroot)
+
+    def put(tag, src_dir, claims):
+        z = zipped(src_dir, tmp_path / f"{tag}.zip")
+        uid = api.post("/uploads", files={"file": (f"{tag}.zip", z.read_bytes())}).json()["upload_id"]
+        job = api.post("/intake", json={"artifact_type": "model", "source": f"upload:{uid}", "environment": "dev", "claims": claims}).json()
+        ev = [json.loads(e) for e in api.get(job["events_url"]).text.split("data: ")[1:]]
+        aid = next(e["decision"] for e in ev if e.get("decision"))["artifact_id"]
+        return aid, api.get(f"/artifacts/{aid}").json()
+
+    from datetime import datetime, timedelta, timezone
+
+    def admit(aid):  # an unclaimed upload waits for a human; only admitted models are reference models
+        r = api.post(f"/decisions/{aid}/approve", json={"approver": "bob", "reason": "test", "expires": (datetime.now(timezone.utc) + timedelta(days=3)).isoformat()})
+        assert r.status_code == 200, r.text
+
+    a_id, _ = put("a", make_tiny_model(tmp_path / "ma", seed=0), {"name": "model-a", "version": "1"})
+    o_id, _ = put("o", make_tiny_model(tmp_path / "mo", seed=5), {"name": "model-other", "version": "1"})
+    admit(a_id), admit(o_id)
+    child = make_tiny_model(tmp_path / "mc", seed=0, perturb="layers.1.weight")
+    _, honest = put("c1", child, {"name": "c1", "version": "1", "parents": "model-a@1"})
+    _, lying = put("c2", child, {"name": "c2", "version": "1", "parents": "model-other@1"})
+    assert "MODEL.PARENT.CLAIM_MISMATCH" not in ids(honest)
+    assert "MODEL.PARENT.CLAIM_MISMATCH" in ids(lying)

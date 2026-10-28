@@ -180,6 +180,7 @@ def _declared_parents(ctx: IntakeContext, claims: dict | None, root: Path | None
             continue
         if pid not in ctx.parents:
             ctx.parents.append(pid)
+        ctx.declared_parents.append(pid)
         out.append(insp.make_finding("PROV.PARENT.DECLARED", f"Parent '{ref}' declared by the uploader ({pid[:19]}); stated, not proven", "info",
                                      "provenance", "S1", [Evidence(kind="field", ref=pid, detail="declared by the uploader")]))
     return out

@@ -73,6 +73,7 @@ class IntakeContext:
     passport_report: dict | None = None  # what the creator-passport check found, for the five-way trust panel
     origin_files: dict[str, str] = field(default_factory=dict)  # path -> matching | changed | missing | extra | unchecked (what the origin check saw)
     origin_verified: bool = False  # every file matches what the hub published, or Lineage fetched the bytes itself
+    declared_parents: list[str] = field(default_factory=list)  # passport ids the uploader named (a statement, never trusted)
     graph_refs: list[dict] = field(default_factory=list)  # things this artifact references: become edges or ghost nodes (P6)
     store: object | None = None  # lineage.store.Store: where every inspected file is kept
     hub: object | None = None  # the Hub used for origin checks (S2a)
@@ -728,14 +729,18 @@ def local_parent_diff(ctx: IntakeContext) -> list[Finding]:
         return [make_finding("MODEL.PARENT.UNIDENTIFIED", "No admitted model matches these weights", "low", "model", "S4",
                              source="statistical")]
     label, parent_path = bank[match.parent]
+    contradiction = []
+    if ctx.declared_parents and match.parent not in ctx.declared_parents:  # the weights point one way, the uploader's declaration another
+        contradiction = [make_finding("MODEL.PARENT.CLAIM_MISMATCH", f"Declared parent(s) {', '.join(p[:19] for p in ctx.declared_parents)} but the weights match '{label}'",
+                                      "medium", "model", "S4", [Evidence(kind="field", ref=match.parent, detail=f"declared {ctx.declared_parents[0]}")], source="statistical")]
     changed = sorted((d for d in diff_models(parent_path, ctx.path) if d.changed), key=lambda d: -d.relative_l2)
     if not changed:
         return [make_finding("MODEL.PARENT.IDENTICAL", f"Weights are identical to admitted model {label}", "info", "model", "S4",
-                             [Evidence(kind="field", ref=match.parent, detail=label)], source="statistical")]
+                             [Evidence(kind="field", ref=match.parent, detail=label)], source="statistical")] + contradiction
     if match.parent not in ctx.parents:
         ctx.parents.append(match.parent)
     out = [make_finding("MODEL.PARENT.IDENTIFIED", f"Parent identified from weights: {label} (similarity {match.similarity:.3f})",
-                        "info", "model", "S4", [Evidence(kind="field", ref=match.parent, detail=label)], source="statistical")]
+                        "info", "model", "S4", [Evidence(kind="field", ref=match.parent, detail=label)], source="statistical")] + contradiction
     claimed = ctx.fact_value("base_model", trusted_only=False)
     if claimed and claimed not in (label, label.split("@")[0]):
         out.append(make_finding("MODEL.PARENT.CLAIM_MISMATCH", f"Card claims base '{claimed}' but weights match '{label}'", "medium",
@@ -959,7 +964,7 @@ def gpu_code_review(ctx: IntakeContext) -> list[Finding]:
     refs = [e.ref for f in ctx.findings if f.severity != "info" or f.id.startswith("PKG.SIGNAL.") for e in f.evidence if e.kind == "file_line"]
     slices = client.build_slices(ctx.root, analysis, refs)
     if not slices:
-        return [make_finding("LLM.REVIEW.NOTHING_TO_REVIEW", "Reviewer ran: no source-to-sink flow, hook or risky capability to send", "info", "llm", "S5")]
+        return [make_finding("LLM.REVIEW.NOTHING_TO_REVIEW", "No model request was made: nothing in the code was flagged, so there was nothing to send to the reviewer", "info", "llm", "S5")]
     caps = sorted({h.cap for h in analysis.hits} | {k.kind for k in analysis.hooks})
     # the artifact's purpose comes from trusted facts first (PyPI summary, hub card), then its own description; a mismatch only adds risk
     purpose = ctx.fact_value("description") or ctx.metadata.get("summary") or (ctx.metadata.get("info") or {}).get("summary") \
