@@ -883,7 +883,7 @@ def scan(manifest_path: Path, code_dir: Path) -> list[Finding]:
 - **Needs:** safetensors weights and either an admitted model on this host or a named base on the hub
 - **Applies to:** model
 - **Code:** `lineage.intake.inspectors:local_parent_diff`
-- **Finding codes:** `MODEL.PARENT.CLAIM_MISMATCH`, `MODEL.PARENT.IDENTICAL`, `MODEL.PARENT.IDENTIFIED`, `MODEL.PARENT.NO_CLAIMED_BASE`, `MODEL.PARENT.UNIDENTIFIED`, `MODEL.WEIGHTS.CHANGED_LAYERS`, `MODEL.WEIGHTS.NO_DELTA`
+- **Finding codes:** `MODEL.PARENT.CLAIM_MISMATCH`, `MODEL.PARENT.IDENTICAL`, `MODEL.PARENT.IDENTIFIED`, `MODEL.PARENT.NO_CLAIMED_BASE`, `MODEL.PARENT.UNIDENTIFIED`, `MODEL.WEIGHTS.CHANGED_LAYERS`
 - **Seen firing on (real run, offline):** clean tiny model → MODEL.PARENT.NO_CLAIMED_BASE; model with a backdoored chat template and a URL token → MODEL.PARENT.NO_CLAIMED_BASE; model with a malicious pickle → MODEL.PARENT.NO_CLAIMED_BASE; model with remote code in its config → MODEL.PARENT.NO_CLAIMED_BASE
 - **Exercised by:** tests/test_hub_parent.py, tests/test_intake_pipeline.py (needs an admitted model or a named base on a hub)
 

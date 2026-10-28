@@ -150,3 +150,28 @@ def test_a_refused_api_call_does_not_make_a_browser_open_its_own_login_dialog(tm
     assert r.status_code == 401 and r.headers["www-authenticate"].startswith("Bearer")
     assert api.get("/whoami").headers["www-authenticate"].startswith("Bearer")
     assert api.get("/simple/").headers["www-authenticate"].startswith("Basic")
+
+
+def test_a_broken_local_policy_model_does_not_fail_the_card_review(monkeypatch):
+    """Brev: /review/card answered 500 because the optional local policy model (not downloaded) raised. It must be skipped instead."""
+    import sys
+    import types
+
+    from gpu_worker import reviewer_api
+
+    def boom(*a, **k):
+        raise OSError("nvidia/Nemotron-Content-Safety-Reasoning-4B is not in the local cache")
+
+    monkeypatch.setitem(sys.modules, "gpu_worker.modelio", types.SimpleNamespace(have_gpu=lambda: True))
+    monkeypatch.setitem(sys.modules, "gpu_worker.policy_check", types.SimpleNamespace(check=boom))
+    import gpu_worker
+    monkeypatch.setattr(gpu_worker, "modelio", sys.modules["gpu_worker.modelio"], raising=False)
+    monkeypatch.setattr(gpu_worker, "policy_check", sys.modules["gpu_worker.policy_check"], raising=False)
+    assert reviewer_api._policy_claims("card", "# card\nlicense: mit\n", "card.md") == []
+
+
+def test_no_delta_is_named_after_the_gpu_check_not_the_parent_search():
+    from lineage.catalog import checker_for
+
+    assert checker_for("MODEL.WEIGHTS.NO_DELTA").key == "spectral"
+    assert checker_for("MODEL.PARENT.IDENTICAL").key == "parent_id" and checker_for("MODEL.PARENT.NO_CLAIMED_BASE").key == "hub_parent"

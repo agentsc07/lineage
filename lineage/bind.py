@@ -132,8 +132,8 @@ def load(path: Path, *, env: str | None = None, **kwargs: Any) -> Any:
         if cls is not None:
             try:
                 return cls.from_pretrained(path, use_safetensors=True, **loader_kwargs)
-            except (ValueError, OSError):
-                pass  # an architecture transformers does not know (for example a test model): the verified tensors below are still returned
+            except Exception:  # noqa: BLE001  an architecture this transformers version cannot build (a test model, a newer config): the
+                pass           # bytes are already verified, so the verified tensors below are returned instead
     st = [path] if path.suffix == ".safetensors" else sorted(path.glob("*.safetensors")) if path.is_dir() else []
     if st:
         from safetensors.numpy import load_file

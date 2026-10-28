@@ -184,3 +184,17 @@ def test_load_falls_back_to_the_verified_tensors_when_transformers_does_not_know
     dest = tmp_path / "pulled"
     lc.pull(admitted, dest, **kw(client))
     assert "layers.0.weight" in load(dest, **kw(client))
+
+
+@pytest.mark.parametrize("err", [KeyError("tiny"), RuntimeError("size mismatch"), AttributeError("no attribute 'tiny'")])
+def test_load_falls_back_to_verified_tensors_whatever_transformers_raises(client, admitted, tmp_path, monkeypatch, err):
+    """Whatever transformers raises for an architecture it cannot build, the verified tensors are returned (suspected, not confirmed, cause of step 9 failing on the GPU box)."""
+    class Broken:
+        @staticmethod
+        def from_pretrained(*a, **k):
+            raise err
+
+    monkeypatch.setattr("lineage.bind._transformers_class", lambda: Broken)
+    dest = tmp_path / "pulled"
+    lc.pull(admitted, dest, **kw(client))
+    assert "layers.0.weight" in load(dest, **kw(client))

@@ -15,6 +15,7 @@ call with that brief, so the caller's own three-pass orchestration is not triple
 from __future__ import annotations
 
 import json
+import logging
 import re
 from pathlib import Path
 from typing import Literal
@@ -388,7 +389,12 @@ def _policy_claims(kind: str, text: str, file: str, policy_path: str | None = No
     if not modelio.have_gpu():
         return []
     out = []
-    for h in policy_check.check(kind, text, Path(policy_path) if policy_path else None):
+    try:
+        hits = policy_check.check(kind, text, Path(policy_path) if policy_path else None)
+    except Exception as e:  # noqa: BLE001  the model may be missing, gated or out of memory: the card review itself must still answer
+        logging.getLogger(__name__).warning("local policy model unavailable, card reviewed without it: %s", e)
+        return []
+    for h in hits:
         line = text.splitlines()[h.line - 1] if h.line - 1 < len(text.splitlines()) else ""
         api = (line.strip() or h.excerpt.strip())[:60] or "policy"
         out.append(Claim(text=f"Policy violation ({kind}): {h.reason}"[:300], file=file, line=h.line, api=api, severity="medium"))

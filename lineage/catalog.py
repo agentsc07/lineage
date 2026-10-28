@@ -129,7 +129,7 @@ CHECKERS: list[Checker] = [
             detects="Which admitted model this one was fine-tuned from, and which tensors changed",
             how="Compares every tensor with each admitted model on this host (relative L2 distance; similarity above 0.5 means related). If the base is named it also compares the base's embedding rows over HTTP range requests without downloading it (cosine above 0.90 means the same family).",
             reads="Safetensors weights; admitted models stored on this machine; the base model named by the hub or the uploader", needs="safetensors weights and either an admitted model on this host or a named base on the hub",
-            entry="lineage.intake.inspectors:local_parent_diff", prefixes=["MODEL.PARENT.", "MODEL.WEIGHTS.CHANGED_LAYERS", "MODEL.WEIGHTS.NO_DELTA"]),
+            entry="lineage.intake.inspectors:local_parent_diff", prefixes=["MODEL.PARENT.", "MODEL.WEIGHTS.CHANGED_LAYERS"]),
     Checker(key="hub_parent", name="Compare with the base model the hub or uploader names", stage="S4", types=["model"],
             detects="Weights that contradict the base model they claim to be fine-tuned from",
             how="When a base model is named, fetches its config, tokenizer, safetensors header and the first 512 embedding rows over HTTP range requests (the base is not downloaded) and compares them with the upload (cosine above 0.90 means the same family). Nothing named, nothing compared.",
