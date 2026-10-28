@@ -172,3 +172,15 @@ def test_a_successful_check_tells_a_running_recorder_which_artifact_was_used(cli
     (dest / "model.safetensors").write_bytes(b"tampered")  # a refused check records nothing
     rec.unlink()
     assert lc.check_for_use(dest, env="dev", server=SERVER, registry_pubkey=client.pubkey, client=client) and not rec.exists()
+
+
+def test_load_falls_back_to_the_verified_tensors_when_transformers_does_not_know_the_architecture(client, admitted, tmp_path, monkeypatch):
+    class Unknown:
+        @staticmethod
+        def from_pretrained(*a, **k):
+            raise ValueError("The checkpoint has model type `tiny` but Transformers does not recognize this architecture")
+
+    monkeypatch.setattr("lineage.bind._transformers_class", lambda: Unknown)
+    dest = tmp_path / "pulled"
+    lc.pull(admitted, dest, **kw(client))
+    assert "layers.0.weight" in load(dest, **kw(client))

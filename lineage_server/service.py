@@ -53,12 +53,20 @@ def link_refs(conn: sqlite3.Connection, child_id: str, parents: list[str], refs:
     """Edges into `child_id` for everything it references (P6). A reference that matches an admitted artifact links to it; anything
     else becomes a ghost node (`status: unregistered`) so the gap is visible and the monitor and revoke still reach it.
     `refs`: {kind, type, name, version?, ref}; passport parents are {kind: derived_from} by id."""
+    parent_shas: set[str] = set()
     for pid in parents:
         if not conn.execute("SELECT 1 FROM artifacts WHERE id = ?", (pid,)).fetchone():
             ensure_ghost(conn, pid, "model", pid[:19], "", f"passport {pid}")
+        else:
+            sp = models.get_signed_passport(conn, pid)
+            if sp is not None:
+                parent_shas |= set(sp.passport.predicate.contents.files.values())
     for r in refs:
-        if r.get("file_sha"):  # a training input: an edge only if some admitted artifact holds exactly these bytes
-            row = conn.execute("SELECT id FROM passports WHERE body LIKE ? AND id != ? ORDER BY created_at DESC LIMIT 1",
+        if r.get("file_sha"):  # a training input: an edge only if an artifact that was not refused holds exactly these bytes
+            if r["file_sha"] in parent_shas:  # a file of a model it already derives from (a shared config.json): not a separate input
+                continue
+            row = conn.execute("SELECT p.id FROM passports p JOIN artifacts a ON a.id = p.id WHERE p.body LIKE ? AND p.id != ?"
+                               " AND a.status NOT IN ('blocked', 'rejected') ORDER BY p.created_at DESC LIMIT 1",
                                (f"%{r['file_sha']}%", child_id)).fetchone()
             if row:
                 conn.execute("INSERT OR IGNORE INTO edges (parent, child, kind) VALUES (?, ?, ?)", (row["id"], child_id, r["kind"]))

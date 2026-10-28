@@ -129,7 +129,7 @@ def demo_policy() -> None:
     from lineage.signing import wellknown
 
     pol = yaml.safe_load(Path("examples/policy.org.yaml").read_text())
-    pol["trusted_publishers"] = [{"name": "Apollo ML team", "key": wellknown.public_hex_of(Path(sys.argv[2])), "scope": ["upload:*", "hf:apollo-health/*"]}]
+    pol["trusted_publishers"] = [{"name": "apollo-health", "key": wellknown.public_hex_of(Path(sys.argv[2])), "scope": ["upload:*", "hf:apollo-health/*"]}]
     Path(sys.argv[3]).write_text(yaml.safe_dump(pol, sort_keys=False))
 
 
@@ -223,10 +223,13 @@ def gateway() -> None:
 
 
 def intakejson() -> None:
-    """`intakejson <type> <source> <env> [claimed origin]`: the POST /intake body."""
+    """`intakejson <type> <source> <env> [claimed origin] [name] [version]`: the POST /intake body."""
     body = {"artifact_type": sys.argv[2], "source": sys.argv[3], "environment": sys.argv[4]}
     if len(sys.argv) > 5 and sys.argv[5]:
         body["claimed_origin"] = sys.argv[5]
+    claims = {k: v for k, v in (("name", sys.argv[6] if len(sys.argv) > 6 else ""), ("version", sys.argv[7] if len(sys.argv) > 7 else "")) if v}
+    if claims:
+        body["claims"] = claims
     print(json.dumps(body))
 
 

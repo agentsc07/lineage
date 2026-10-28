@@ -2,7 +2,7 @@
 
 **Admission control for AI artifacts.** Datasets, models, packages and agent tools are identified, verified, inspected and decided on before use,
 re-checked at the moment of use, and watched afterwards. Source of truth: `docs/LINEAGE_SPEC.md` and, for the current design, `docs/REFACTOR_SPEC.md`.
-How to run it: `startup.md`. Why each design choice: `DECISIONS.md`. Answers to the questions a reviewer will ask: `docs/PANEL_QA.md`.
+How to run it: `docs/startup.md`. Why each design choice: `docs/DECISIONS.md`. Answers to the questions a reviewer will ask: `docs/PANEL_QA.md`.
 
 ## The idea in four rules
 
@@ -65,7 +65,7 @@ uv sync && uv run pytest -q
 examples/run_dashboard_demo.sh        # fake hub + server + the ten-step story + dashboard (sign in with a token from examples/demo_tokens.json)
 PAUSE=0 examples/demo_scenario.sh     # the story only, no dashboard
 ```
-Exact commands and the click path for the demo: `DEMO.md`. Install and configuration: `startup.md`. Documentation index: `docs/README.md`. Submission zip: `scripts/make_submission_zip.sh`.
+Exact commands and the click path for the demo: `docs/DEMO.md`. Install and configuration: `docs/startup.md`. Documentation index: `docs/README.md`. Submission zip: `scripts/make_submission_zip.sh`.
 
 No GPU and no API key are needed. Optional: `NVIDIA_API_KEY` turns on the hosted reviewer (no Brev), `LINEAGE_GPU_URL` the GPU worker.
 

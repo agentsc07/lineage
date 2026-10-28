@@ -15,7 +15,7 @@ from lineage.schemas.gpu import Claim
 from lineage.schemas.policy import PolicyPack
 
 # nvidia/nemotron-3.5-content-safety was tried first and answers only "User Safety: safe|unsafe" whatever the prompt: it cannot cite a card line
-# or judge a licence, so the default is the general Nemotron reviewer model (DECISIONS.md, Refactor 27 Oct, Phase 5).
+# or judge a licence, so the default is the general Nemotron reviewer model (docs/DECISIONS.md, Refactor 27 Oct, Phase 5).
 DEFAULT_MODEL = "nvidia/nemotron-3.5-lightning-30b-a3b"
 
 

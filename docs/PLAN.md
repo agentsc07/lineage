@@ -89,7 +89,7 @@ Enforcement mode for `lineage run` (fail if an input is not an admitted artifact
 
 ### Repo structure
 
-Judged in `docs/REPO_STRUCTURE.md`: a normal monorepo; nothing junk to delete. Candidate moves for later: `bench/` to its own repository, `startup.md` and `DEMO.md` into `docs/`.
+Judged in `docs/REPO_STRUCTURE.md`: a normal monorepo; nothing junk to delete. Candidate moves for later: `bench/` to its own repository, (`startup.md`, `DEMO.md`, `DECISIONS.md` were moved into `docs/` in the cleanup).
 
 ## 6. Commands for you
 

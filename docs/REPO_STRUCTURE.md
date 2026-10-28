@@ -15,6 +15,6 @@ A single Python 3.11 repository managed with `uv`, with a React dashboard. Nothi
 | `bench/` | Benchmark corpora, runners and result reports (1,000+ files, ~9 MB) | Evidence for the results; not needed to run the product. Could move to its own repository |
 | `docs/` | Documentation. Start with `ARTIFACT_FLOW.md` | |
 | `bank/` | Manifest of the LoRA adapters used to calibrate the weight-space detector (`gpu_worker/train_lora_bank.py`); the adapters themselves are git-ignored | |
-| Root files | `README.md`, `startup.md` (install/run), `DEMO.md`, `DECISIONS.md`, `CLAUDE.md` (rules for contributors), `pyproject.toml`, `uv.lock`, `.env.example` | |
+| Root files | `README.md`, `CLAUDE.md` (rules for contributors), `pyproject.toml`, `uv.lock`, `.python-version`, `.env.example`, `.gitignore` | Only what tooling expects at the root |
 
-Against common practice: a flat multi-package layout (`lineage/`, `lineage_server/`, `gpu_worker/`) is normal for a monorepo; `src/` layout, a `Makefile`, CI configuration and a single `docs/` index would be the usual additions. `startup.md` and `DEMO.md` would conventionally sit in `docs/`; they were left in place because other files link to them. Nothing was deleted: no tracked file was junk (no caches, backups or binaries).
+Against common practice: a flat multi-package layout (`lineage/`, `lineage_server/`, `gpu_worker/`) is normal for a monorepo; `src/` layout, a `Makefile`, CI configuration and a single `docs/` index would be the usual additions. `startup.md`, `DEMO.md` and `DECISIONS.md` were moved into `docs/` (links updated). Nothing was deleted: no tracked file was junk (no caches, backups or binaries).

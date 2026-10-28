@@ -22,6 +22,8 @@ const presets: { label: string; type: ArtifactType; source: string; env: string 
 interface Sample { label: string; file: string; type: ArtifactType; env: string; claimed_origin?: string; expect: string }
 
 const CLAIM_FIELDS = [
+  { key: "name", label: "Name (uploads)", placeholder: "triage-ft", help: "What the catalogue calls it. Without it, the file or folder name is used. Hub sources are named by the hub." },
+  { key: "version", label: "Version (uploads)", placeholder: "0.2.0", help: "Your own version label. Without it an upload is 0.0.0. Hub sources use the commit (hf:) or the release (pypi:)." },
   { key: "publisher", label: "Publisher", placeholder: "nvidia", help: "A name. Checked against the publisher allow and block lists and for look-alikes. A name you type is never treated as verified." },
   { key: "base_model", label: "Base model (Hugging Face repo id)", placeholder: "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1", help: "The repository id of the model this was fine-tuned from. Lineage fetches that repo's weights header and compares embeddings; a mismatch raises risk. It is not a passport id." },
   { key: "licence", label: "Licence", placeholder: "apache-2.0", help: "Compared with the policy's allowed licences. A declared licence is never counted as allowed." },

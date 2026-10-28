@@ -23,7 +23,7 @@ MODELS_YAML = ROOT / "gpu_worker" / "models.yaml"
 DATASET = "yahma/alpaca-cleaned"
 MAX_LEN, BATCH = 256, 4
 # Recipe knobs (env overrides exist for tuning experiments; the committed defaults are what built the bank)
-LR = float(os.environ.get("LB_LR", 5e-4))  # 2e-4 left rank-4 backdoors unlearned (see DECISIONS.md)
+LR = float(os.environ.get("LB_LR", 5e-4))  # 2e-4 left rank-4 backdoors unlearned (see docs/DECISIONS.md)
 SUBSET = int(os.environ.get("LB_SUBSET", 500))
 ALPHA_FIXED = os.environ.get("LB_ALPHA")  # unset: alpha = 2 * rank
 STEPS = [int(x) for x in os.environ.get("LB_STEPS", "300,350,400").split(",")]

@@ -44,13 +44,14 @@ Fixed this pass: `hf:` means a **model** repo and `hf-dataset:` a **dataset** re
 | Source (hub) **or** File | one | the bytes | |
 | Environment | yes | which thresholds and which unrun-check prices apply (dev / staging / prod) | |
 | Claimed origin (uploads only) | no | comparing every file's hash with the hub | |
+| Name, Version (uploads) | no | the catalogue name and version (declared). Without them: the file/folder name and `0.0.0` | trust |
 | Publisher | no | allow/block lists and look-alike check | trust. It is a **name, not a key**. |
 | Base model | no | `hub_parent` fetches that repo's embedding rows and compares with your weights; a mismatch is `MODEL.PARENT.CLAIM_MISMATCH`. **Enter a Hugging Face repo id** (`org/name`), not a passport id | the lineage graph edge (that needs a trusted source) |
 | Licence | no | allow-list check (declared licences never count as allowed) | |
 | Released at | no | shown | clearing the cooldown (needs a hub or signed date) |
 | What it is for | no | stated purpose for the AI code review | |
 
-All five are stored as `declared` facts. They can add risk; they can never lower it.
+All seven are stored as `declared` facts. They can add risk; they can never lower it.
 
 **The publisher key is not entered by the uploader.** The organisation's administrator lists trusted publishers in the policy (`trusted_publishers`: name, Ed25519 public key, `scope` patterns such as `hf:apollo-health/*` and `upload:*`). Keys can also be published at `/.well-known/lineage-keys.json` (`lineage keygen --publish`). An uploader cannot supply a key; a passport signed by an unlisted key is treated as unsigned (`PROV.SIGNATURE.UNTRUSTED_KEY`, medium).
 
@@ -206,3 +207,39 @@ Corpora are in `bench/` (inert fixtures built by `bench/build_*.py`; real PyPI w
 4. `PKG.PROV.COOLDOWN` is scored but the engine only quarantines on `PROV.COOLDOWN*`; the release-age rule that works is `released_at`-based.
 5. Graph overlap fix is visual and unverified in a browser here; the graph page is the one to eyeball first.
 6. Names for uploads come from the folder/file name, so two different uploads called `model.zip` both become `model@0.0.0`; use the artifact id to tell them apart.
+
+
+## 13. Versions: how they work today
+
+| Source | Name | Version | Where decided |
+|---|---|---|---|
+| `pypi:name==1.4.0` | the package name | the release you asked for (`1.4.0`) | `pipeline.py::_identify` (name from the source, version from `==`) |
+| `hf:org/name[@rev]`, `hf-dataset:` | repo name without the org (`triage-base`) | the first 12 characters of the **commit** (`67d0bdf167ed`). Hugging Face has no semantic versions, so the commit is the only exact one | `_identify`, from `Acquired.record["source_revision"]` |
+| Upload | what you typed in **Name**, else the file/folder name (`tiny.zip` is `tiny`) | what you typed in **Version**, else `0.0.0` | `_identify`: `ctx.fact_value("name"/"version", trusted_only=False)` |
+| Upload with a verified passport | the passport's name and version | the passport's | `_identify`: `ctx.claimed` overrides |
+| `lineage run --name --version` | whatever you pass; version defaults to `0.0.0` | | `lineage/cli.py::run` |
+
+Each intake is a **new artifact with a new id**, even for identical bytes; `INTAKE.DIGEST.KNOWN` says when the content was seen before. Two artifacts with the same name and version are allowed (the catalogue lists both); the dataset diff and the package "previous release" check pick the newest admitted artifact of the same name. A name is a label and **never trusted**: a declared name cannot make an artifact more trusted, it only changes what it is called and which earlier version it is compared with.
+
+## 14. When an input is missing, what does not run
+
+| Missing | What happens | Code |
+|---|---|---|
+| Claimed origin (upload) | no hash comparison; `PROV.ORIGIN.UNCLAIMED` (medium); trust stays `unknown` (+15) | `inspectors.py::origin_check` |
+| Hub unreachable / repo unknown | `PROV.ORIGIN.UNVERIFIABLE` (high); no facts promoted | `origin_check` |
+| Creator passport | `signed_passport` returns nothing; trust cannot reach `signed` | `signed_passport` |
+| Trusted key for the passport | `PROV.SIGNATURE.UNTRUSTED_KEY`; its facts stay `declared`; its **inputs and package list are not used** for the graph, but its listed parents still are (they are checked by `parent_chain`: revoked parent = hard block) | `signed_passport`, `pipeline._graph_refs` |
+| Release date from hub or signed passport | cooldown cannot be cleared: `PROV.COOLDOWN.UNVERIFIED` (score 0, quarantines) | `release_age`, `engine.decide` |
+| **Parent model** (none admitted on the host, none named) | `CHECK.NOT_RUN.PARENT_ID`; then **parent-dependent checks cannot run**: tokenizer diff vs parent, chat-template diff vs parent, `MODEL.WEIGHTS.CHANGED_LAYERS`, spectral score and behaviour diff (`CHECK.NOT_RUN.WEIGHT_BACKDOOR`, `BEHAVIOUR_DIFF`: "no parent was identified"). What still runs: pickle, config, tokenizer *content* checks, template AST, everything in S2/S5 | `local_parent_diff`, `gpu_weights` |
+| Declared base model, no match found | the declaration is just a claim; `hub_parent` compares with the named base (needs the hub); no base named → `MODEL.PARENT.NO_CLAIMED_BASE` (info) | `hub_parent` |
+| Parent in a passport but not in the registry | `PROV.PARENT.UNKNOWN` (medium); the graph shows an unregistered node | `parent_chain`, `service.link_refs` |
+| GPU worker | `CHECK.NOT_RUN.WEIGHT_BACKDOOR` / `BEHAVIOUR_DIFF` / `NOTARY`, priced per environment | `gpu_weights`, `apply_unrun_costs` |
+| AI backend (no key, no worker) | `CHECK.NOT_RUN.LLM_REVIEW` (prod high, +25); card policy check `CHECK.NOT_RUN.POLICY_CHECK` | `gpu_code_review`, `gpu_card_review` |
+| Model/dataset card | `LLM.CARD.MISSING` (low, +5); no card-based claims | `gpu_card_review` |
+| Earlier dataset version | `DATA.DIFF.NO_BASELINE` (info); no diff | `dataset_upstream_diff` |
+| Earlier package release (offline, first release, not a wheel) | `PKG.BASELINE.NONE`; `PKG.NEW.*` ("new in this release") cannot fire; capabilities judged by combination only; hooks keep full severity | `package_baseline`, `package_capabilities.scan` |
+| PyPI metadata (uploaded wheel) | `CHECK.NOT_RUN.PKG_METADATA` (prod high); name look-alike, repo-owner and maintainer checks skipped | `package_provenance` |
+| OSV unreachable and nothing cached | `CHECK.NOT_RUN.OSV` | `package_osv` |
+| Manifest (tool) | `TOOL.MANIFEST.MISSING` (high); no description or intent checks | `tool_description` |
+
+A parent is therefore **declared** (by the hub card, the uploader, or a passport) or **found** (from weights on this host, or recorded by `lineage run`). A declared parent is checked against the weights when the hub is reachable; an unfound parent only costs points. It never blocks by itself.

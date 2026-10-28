@@ -184,3 +184,22 @@ def test_a_verified_load_inside_a_run_names_its_parent_even_when_the_weights_are
     """ % att.artifact_id))
     rec = run_recorded_full([sys.executable, "train.py"], project)
     assert rec.passport.predicate.parents == [att.artifact_id] and "admitted/m/model.safetensors" not in rec.inputs
+
+
+def test_packages_installed_into_a_pythonpath_folder_are_in_the_package_list(project, tmp_path, monkeypatch):
+    libs = tmp_path / "libs"
+    (libs / "acme_llm-1.4.0.dist-info").mkdir(parents=True)
+    (libs / "acme_llm-1.4.0.dist-info" / "METADATA").write_text("Metadata-Version: 2.1\nName: acme-llm\nVersion: 1.4.0\n")
+    monkeypatch.setenv("PYTHONPATH", str(libs))
+    rec = run_recorded_full([sys.executable, "train.py"], project)
+    assert "acme-llm==1.4.0" in rec.sbom.splitlines()
+
+
+def test_lineage_own_config_and_attestations_are_not_recorded_as_inputs(project, tmp_path, monkeypatch):
+    cfg = tmp_path / "lineage-config.toml"
+    cfg.write_text('registry_pubkey = "ab"\n')
+    monkeypatch.setenv("LINEAGE_CONFIG", str(cfg))
+    (project / "m.lineage-attestation.json").write_text("{}")
+    (project / "train.py").write_text(f"open({str(cfg)!r}).read(); open('m.lineage-attestation.json').read(); open('data.csv').read(); open('out.txt', 'w').write('x')\n")
+    rec = run_recorded_full([sys.executable, "train.py"], project)
+    assert set(rec.inputs) == {"data.csv", "train.py"}

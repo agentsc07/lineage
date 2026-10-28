@@ -8,7 +8,7 @@ Everything in phases 1 to 3 is required. Phase 4 is required only if time allows
 
 ## 0. Rules for the session
 
-1. **Read first:** this file, `CLAUDE.md`, `DECISIONS.md`, `lineage/intake/pipeline.py`, `lineage/intake/inspectors.py`, `lineage/policy/engine.py`, `lineage/bind.py`, `lineage_server/*.py`, `mcp_gateway/gateway.py`. Do not start coding until you have.
+1. **Read first:** this file, `CLAUDE.md`, `docs/DECISIONS.md`, `lineage/intake/pipeline.py`, `lineage/intake/inspectors.py`, `lineage/policy/engine.py`, `lineage/bind.py`, `lineage_server/*.py`, `mcp_gateway/gateway.py`. Do not start coding until you have.
 2. **Branch:** create `refactor/rigid-flow`. Commit after every numbered task, with the task id in the message (for example `R1.3: fact provenance`). Never commit to `main` directly.
 3. **Keep the suite green:** `uv run pytest -q` must pass after every task. Update tests that encode old behaviour this spec removes, and say so in the commit message. Never delete a test just to make the suite pass.
 4. **No GPU needed.** The only remote AI call is the LLM reviewer, through NVIDIA's hosted API (section 8.1). The GPU worker on Brev stays optional: if `LINEAGE_GPU_URL` is unset or unreachable, the checks that need it emit `CHECK.NOT_RUN.*` findings (section 4.3). Nothing waits on Brev.
