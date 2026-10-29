@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the submission zip from what git tracks plus new, non-ignored files. Ignored files never go in: .env (API key), .venv, node_modules,
+# Prefer `git archive` (tracked files only, no Finder junk): see docs/FINAL_DEMO_RUNBOOK.md. This script builds a zip from what git tracks plus new, non-ignored files. Ignored files never go in: .env (API key), .venv, node_modules,
 # databases and their keys, demo tokens, build output. Refuses to finish if anything secret-looking slipped in.
 #   scripts/make_submission_zip.sh                 # -> dist/lineage-submission-<date>.zip
 #   scripts/make_submission_zip.sh my-name.zip     # custom file name (still written under dist/)
@@ -14,7 +14,7 @@ mkdir -p dist
 rm -f "$OUT"
 
 LIST="$(mktemp)"; trap 'rm -f "$LIST"' EXIT
-git ls-files -co --exclude-standard | grep -v '^dist/' | while IFS= read -r f; do [[ -f "$f" ]] && printf '%s\n' "$f"; done > "$LIST"
+git ls-files -co --exclude-standard | grep -v -E '^(dist|admitted|__MACOSX)/|(^|/)\._|(^|/)\.DS_Store$' | while IFS= read -r f; do [[ -f "$f" ]] && printf '%s\n' "$f"; done > "$LIST"
 
 # Guard: nothing secret-looking may be in the archive.
 if grep -E '(^|/)\.env$|\.db$|\.db\.key|\.db-wal$|\.db-shm$|demo_tokens\.json$|\.key$|\.bak$|(^|/)node_modules/|(^|/)\.venv/' "$LIST"; then

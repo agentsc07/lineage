@@ -27,3 +27,9 @@ examples/demo_tokens.json
 
 # demo database backups made by examples/run_dashboard_demo.sh (contain the registry signing key)
 *.bak
+
+# local outputs that must never be submitted
+admitted/
+__MACOSX/
+._*
+*.zip

@@ -60,3 +60,14 @@ export PYTHONPATH="$PWD" LINEAGE_GPU_URL=http://localhost:8800
 examples/run_dashboard_demo.sh                                    # then on your laptop: brev port-forward <instance> -p 5173:5173
 ```
 What needs what: the **GPU** is used only by the worker (spectral score of weight changes, behaviour comparison, notary); the **NVIDIA API** only by the reviewer. Of `gpu_worker/models.yaml`, only `parent_bank` must be downloaded; `reviewer_llm` is used only if you self-host the reviewer with vLLM (`scripts/serve_reviewer.sh`), `base_model` only by the adapter-training script, `policy_model` only by the worker's optional local policy check. The demo's stand-in models are too small for the spectral detector (it answers "outside the calibrated range"): intake `hf:Qwen/Qwen2.5-0.5B-Instruct` for a real result. These GPU paths were not executed in the audit environment (`FINAL_BLOCKERS.md`).
+
+## 6. Publishing the code as a fresh repository (no history, no local junk)
+
+Do not zip or unzip with Finder (it adds `__MACOSX/` and `._*` files and a wrapper folder). From a clean, merged `main`:
+```bash
+git checkout main && git pull origin main
+mkdir ../lineage-submission && git archive main | tar -x -C ../lineage-submission     # tracked files only
+cd ../lineage-submission && git init -b main && git add -A && git commit -m "Lineage: admission control for AI artifacts (AEGIS 2026 submission)"
+git remote add origin https://github.com/<you>/<new-repo>.git && git push -u origin main
+```
+Then clone it into a temp folder and run `uv sync && PYTHONPATH="$PWD" uv run pytest -q`.
